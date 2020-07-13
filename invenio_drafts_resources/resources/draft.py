@@ -9,9 +9,15 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
+from flask import g
 from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 from flask_resources.resources import ResourceConfig
+from invenio_records_resources.responses import RecordResponse
+from invenio_records_resources.serializers import RecordJSONSerializer
+
+from ..service import DraftService
+from ..service.schemas import DraftSchemaJSONV1
 
 # TODO: Get rid of them when implementation is done
 STUB_ITEM_RESULT = ({"TODO": "IMPLEMENT ME"}, 200)
@@ -22,6 +28,11 @@ class DraftResourceConfig(ResourceConfig):
     """Draft resource config."""
 
     list_route = "/records/<pid_value>/draft"
+    response_handlers = {
+        "application/json": RecordResponse(
+            RecordJSONSerializer(schema=DraftSchemaJSONV1)
+        )
+    }
 
 
 class DraftResource(SingletonResource):
@@ -29,13 +40,25 @@ class DraftResource(SingletonResource):
 
     default_config = DraftResourceConfig
 
+    def __init__(self, config=None, service_cls=DraftService,
+                 *args, **kwargs):
+        """Constructor."""
+        super(DraftResource, self).__init__(
+            config=config if config else self.default_config,
+            *args,
+            **kwargs
+        )
+        self.service_cls = service_cls
+
     def read(self, *args, **kwargs):
         """Read an item."""
         return STUB_ITEM_RESULT
 
     def create(self, *args, **kwargs):
         """Create an item."""
-        return STUB_ITEM_RESULT
+        data = resource_requestctx.request_content
+        identity = g.identity
+        return self.service_cls.create(data, identity), 200
 
     def update(self, *args, **kwargs):
         """Update an item."""

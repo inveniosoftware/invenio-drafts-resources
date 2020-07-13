@@ -102,6 +102,9 @@ setup(
             'invenio_drafts_resources = invenio_drafts_resources.config',
         ],
         "invenio_i18n.translations": ["messages = invenio_drafts_resources",],
+        'invenio_db.models': [
+            'invenio_drafts_resources = invenio_drafts_resources.drafts.models',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

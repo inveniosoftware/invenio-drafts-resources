@@ -15,4 +15,4 @@ from invenio_drafts_resources.resources import DraftFileActionResource, \
 
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
-# TODO: TEST ME!
+# TODO: IMPLEMENT ME!

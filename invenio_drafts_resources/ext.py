@@ -9,6 +9,8 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
+from . import config
+
 
 class InvenioDraftsResources(object):
     """Invenio-Drafts-Resources extension."""
@@ -21,7 +23,7 @@ class InvenioDraftsResources(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-        app.extensions["Invenio-Drafts-Resources"] = self
+        app.extensions["invenio-drafts-resources"] = self
 
     def init_config(self, app):
         """Initialize configuration."""
