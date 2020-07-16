@@ -10,12 +10,16 @@
 
 """Draft Service."""
 
+from invenio_db import db
+from invenio_records.api import Record
 from invenio_records_resources.resource_units import IdentifiedRecord
-from invenio_records_resources.services import RecordService, \
-    RecordServiceConfig
+from invenio_records_resources.services import MarshmallowDataValidator, \
+    RecordService, RecordServiceConfig
 
+from ..drafts.api import Draft
 from ..resource_units import IdentifiedDraft
 from .permissions import DraftPermissionPolicy
+from .schemas import DraftMetadataSchemaJSONV1
 
 
 class DraftServiceConfig(RecordServiceConfig):
@@ -31,6 +35,11 @@ class DraftServiceConfig(RecordServiceConfig):
     # DraftService configuration
     # TODO: FILL ME!
     draft_of_resource_unit_cls = IdentifiedRecord
+    draft_of_cls = Record
+    draft_cls = Draft  # As `service_object_cls`
+    data_validator = MarshmallowDataValidator(
+        schema=DraftMetadataSchemaJSONV1
+    )
 
 
 class DraftService(RecordService):
@@ -56,7 +65,32 @@ class DraftService(RecordService):
     def create(self, data, identity):
         """Create a draft."""
         # TODO: IMPLEMENT ME!
-        return self.resource_unit_cls()
+        # # Check permissions: Can create draft of said record/resource
+        self.require_permission(identity, "create")
+        # Create record if new
+        # TODO: The `draft_of` class is set in the Draft API
+        # Creating the record class is business logic, but it is
+        # being set in the data access layer
+
+        # Get UUID, and version_id of forked record
+        # Create draft based on that
+
+        # # Validate draft data
+        self.data_validator().validate(data)
+
+        draft = self.config.draft_cls.create(data)  # Create draft in DB
+
+        # TODO: Do we need to mint here? Tending for No
+        pid = self.minter()(record_uuid=draft.id, data=draft)   # Mint PID
+        # Create draft state
+        draft_state = self.resource_unit(pid=pid, record=draft)
+        db.session.commit()  # Persist DB
+        # Index the draft
+        indexer = self.indexer()
+        if indexer:
+            indexer.index(draft)
+
+        return draft_state
 
     def delete(self, id_, identity):
         """Delete a draft from database and search indexes."""

@@ -13,8 +13,9 @@
 class IdentifiedDraft:
     """Resource unit representing pid + Draft data clump."""
 
-    def __init__(self, pid=None, draft=None):
+    # TODO: IMPLEMENT ME!
+    def __init__(self, pid=None, record=None):
         """Initialize the draft state."""
         self.id = pid.pid_value
         self.pids = [pid]
-        self.draft = draft
+        self.record = record

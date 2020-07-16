@@ -16,10 +16,8 @@ from flask_resources.resources import ResourceConfig
 from invenio_records_resources.responses import RecordResponse
 from invenio_records_resources.serializers import RecordJSONSerializer
 
-from ..service import DraftService
-from ..service.schemas import DraftSchemaJSONV1
-
 from ..services import DraftService, DraftVersionService
+from ..services.schemas import DraftSchemaJSONV1
 
 
 class DraftResourceConfig(ResourceConfig):

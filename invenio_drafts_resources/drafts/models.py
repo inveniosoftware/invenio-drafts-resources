@@ -7,9 +7,12 @@
 # details.
 
 """Draft Models API."""
+from datetime import datetime
 
 from invenio_db import db
 from invenio_records.models import Timestamp
+from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy_utils.types import JSONType, UUIDType
 
 
 class DraftMetadataBase(Timestamp):

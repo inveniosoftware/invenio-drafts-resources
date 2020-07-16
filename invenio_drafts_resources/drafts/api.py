@@ -8,7 +8,7 @@
 
 """Draft API."""
 
-from .models import DraftMetadata
+from invenio_records.api import Record
 
 
 class Draft(Record):
@@ -16,6 +16,6 @@ class Draft(Record):
 
     # WHY: We want to force the model_cls to be specified by the user
     # No default one is given, only the base.
-    def __init__(self, model_cls, *args, **kwargs):
-        """Constructor."""
-        super(Draft, self).__init__(model_cls=model_cls, *args, **kwargs)
+    # def __init__(self, model_cls, *args, **kwargs):
+    #     """Constructor."""
+    #     super(Draft, self).__init__(model_cls=model_cls, *args, **kwargs)

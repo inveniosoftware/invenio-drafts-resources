@@ -14,12 +14,13 @@ fixtures are available.
 
 import pytest
 from invenio_app.factory import create_api
+from invenio_db import db
 from invenio_records_permissions.generators import AnyUser
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
 from invenio_drafts_resources.drafts import DraftMetadataBase
 from invenio_drafts_resources.resources import DraftResource
-from invenio_drafts_resources.service import DraftService, DraftServiceConfig
+from invenio_drafts_resources.services import DraftService, DraftServiceConfig
 
 
 class CustomDraftMetadata(db.Model, DraftMetadataBase):
@@ -52,7 +53,7 @@ def app(app):
     DraftServiceConfig.permission_policy_cls = AnyUserPermissionPolicy
     DraftService.config = DraftServiceConfig
     custom_bp = DraftResource(
-        service_cls=DraftService).as_blueprint("base_resource")
+        service=DraftService()).as_blueprint("base_resource")
     app.register_blueprint(custom_bp)
     with app.app_context():
         yield app
