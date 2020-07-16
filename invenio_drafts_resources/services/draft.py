@@ -11,12 +11,9 @@
 """Draft Service."""
 
 from invenio_db import db
-from invenio_records.api import Record
-from invenio_records_resources.resource_units import IdentifiedRecord
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
 
-from ..drafts.api import Draft
 from ..resource_units import IdentifiedDraft
 from .permissions import DraftPermissionPolicy
 from .schemas import DraftMetadataSchemaJSONV1
@@ -30,16 +27,13 @@ class DraftServiceConfig(RecordServiceConfig):
     resource_unit_cls = IdentifiedDraft
 
     # RecordService configuration
-    # TODO: FILL ME!
-
-    # DraftService configuration
-    # TODO: FILL ME!
-    draft_of_resource_unit_cls = IdentifiedRecord
-    draft_of_cls = Record
-    draft_cls = Draft  # As `service_object_cls`
     data_validator = MarshmallowDataValidator(
         schema=DraftMetadataSchemaJSONV1
     )
+
+    # DraftService configuration.
+    # WHY: We want to force user input choice here.
+    draft_cls = None
 
 
 class DraftService(RecordService):
@@ -53,7 +47,7 @@ class DraftService(RecordService):
         # TODO: IMPLEMENT ME!
         # High likelihood that we can just rely on RecordService here
         # and simply configure DraftServiceConfig appropriately
-        return self.resource_unit_cls()
+        return self.config.resource_unit_cls()
 
     def search(self, querystring, identity, pagination=None, *args, **kwargs):
         """Search for drafts matching the querystring."""
@@ -62,51 +56,52 @@ class DraftService(RecordService):
         # and simply configure DraftServiceConfig appropriately
         return self.resource_list_cls()
 
-    def create(self, data, identity):
-        """Create a draft."""
-        # TODO: IMPLEMENT ME!
-        # # Check permissions: Can create draft of said record/resource
-        self.require_permission(identity, "create")
-        # Create record if new
-        # TODO: The `draft_of` class is set in the Draft API
-        # Creating the record class is business logic, but it is
-        # being set in the data access layer
-
-        # Get UUID, and version_id of forked record
-        # Create draft based on that
-
-        # # Validate draft data
-        self.data_validator().validate(data)
-
-        draft = self.config.draft_cls.create(data)  # Create draft in DB
-
-        # TODO: Do we need to mint here? Tending for No
-        pid = self.minter()(record_uuid=draft.id, data=draft)   # Mint PID
-        # Create draft state
-        draft_state = self.resource_unit(pid=pid, record=draft)
-        db.session.commit()  # Persist DB
-        # Index the draft
+    def _index_draft(self, draft):
         indexer = self.indexer()
         if indexer:
             indexer.index(draft)
 
-        return draft_state
+    def create(self, data, identity):
+        """Create a draft and the associated record (new)."""
+        self.require_permission(identity, "create")
+        record = self.config.record_cls.create(data=data)
+        pid = self.minter()(record_uuid=record.id, data=record)  # Mint PID
+        marsh_data = self.data_validator().validate(data)
+        draft = self.config.draft_cls.create(record, marsh_data)
+        db.session.commit()  # Persist DB
+        self._index_draft(draft)
+
+        return self.config.resource_unit_cls(pid=pid, draft=draft)
+
+    def edit(self, data, identity, id_):
+        """Create a draft for an existing record.
+
+        :param id_: record PID value.
+        """
+        self.require_permission(identity, "create")
+        pid, record = self.resolve(id_)
+        marsh_data = self.data_validator().validate(data)
+        draft = self.config.draft_cls.create(record, marsh_data)
+        db.session.commit()  # Persist DB
+        self._index_draft(draft)
+
+        return self.config.resource_unit_cls(pid=pid, draft=draft)
 
     def delete(self, id_, identity):
         """Delete a draft from database and search indexes."""
         # TODO: IMPLEMENT ME!
         # High likelihood that we can just rely on RecordService here
         # and simply configure DraftServiceConfig appropriately
-        return self.resource_unit_cls()
+        return self.config.resource_unit_cls()
 
     def update(self, id_, data, identity):
         """Replace a draft."""
         # TODO: IMPLEMENT ME!
         # High likelihood that we can just rely on RecordService here
         # and simply configure DraftServiceConfig appropriately
-        return self.resource_unit_cls()
+        return self.config.resource_unit_cls()
 
     def publish(self, id_, identity):
         """Publish a draft."""
         # TODO: IMPLEMENT ME!
-        return self.draft_of_resource_unit_cls()
+        return self.config.draft_of_resource_unit_cls()

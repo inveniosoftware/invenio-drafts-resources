@@ -14,8 +14,8 @@ from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 from flask_resources.resources import ResourceConfig
 from invenio_records_resources.responses import RecordResponse
-from invenio_records_resources.serializers import RecordJSONSerializer
 
+from ..serializers import DraftJSONSerializer
 from ..services import DraftService, DraftVersionService
 from ..services.schemas import DraftSchemaJSONV1
 
@@ -26,7 +26,7 @@ class DraftResourceConfig(ResourceConfig):
     list_route = "/records/<pid_value>/draft"
     response_handlers = {
         "application/json": RecordResponse(
-            RecordJSONSerializer(schema=DraftSchemaJSONV1)
+            DraftJSONSerializer(schema=DraftSchemaJSONV1)
         )
     }
 

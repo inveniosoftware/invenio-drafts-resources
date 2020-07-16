@@ -8,3 +8,9 @@
 # details.
 
 """Invenio-Drafts-Resources Configuration."""
+
+DRAFTS_RESOURCES_LINK_URLS = {
+    'record': '{base}/records/{pid}',
+    'records': '{base}/records/',
+    'draft': '{base}/records/{pid}/draft/',
+}

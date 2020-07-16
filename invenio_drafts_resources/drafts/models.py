@@ -7,6 +7,7 @@
 # details.
 
 """Draft Models API."""
+
 from datetime import datetime
 
 from invenio_db import db
@@ -31,7 +32,7 @@ class DraftMetadataBase(Timestamp):
     fork_version_id = db.Column(db.Integer, primary_key=True)
     """Version id of the record it is draft of."""
 
-    version_id = db.Column(db.Integer, primary_key=False)
+    version_id = db.Column(db.Integer, primary_key=True)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
     status = db.Column(db.String(255), default="draft", nullable=False)

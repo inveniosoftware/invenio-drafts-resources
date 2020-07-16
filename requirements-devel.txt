@@ -13,4 +13,8 @@
 #     -e git+git://github.com/mitsuhiko/jinja2.git#egg=Jinja2
 
 -e git+https://github.com/inveniosoftware/flask-resources.git#egg=flask-resources
+<<<<<<< HEAD
 -e git+https://github.com/inveniosoftware/invenio-records-resources.git#egg=invenio-records-resources
+=======
+-e git+https://github.com/inveniosoftware/invenio-records-resources.git@refs/pull/32/head#egg=invenio-records-resources
+>>>>>>> global: allow draft creation from config records and draft cls

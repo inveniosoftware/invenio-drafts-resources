@@ -8,14 +8,44 @@
 
 """Draft API."""
 
+from invenio_db import db
 from invenio_records.api import Record
 
 
-class Draft(Record):
-    """Draft API for metadata creation and manipulation."""
+class DraftBase(Record):
+    """Draft base API for metadata creation and manipulation."""
 
     # WHY: We want to force the model_cls to be specified by the user
     # No default one is given, only the base.
-    # def __init__(self, model_cls, *args, **kwargs):
-    #     """Constructor."""
-    #     super(Draft, self).__init__(model_cls=model_cls, *args, **kwargs)
+    model_cls = None
+    default_status = 'draft'
+
+    @property
+    def expiry_date(self):
+        """Get model identifier."""
+        return self.model.expiry_date if self.model else None
+
+    @property
+    def status(self):
+        """Get revision identifier."""
+        return self.model.status if self.model else self.default_status
+
+    @classmethod
+    def create(cls, record, data, **kwargs):
+        """Create a new draft instance and store it in the database."""
+        with db.session.begin_nested():
+            draft = cls(data)
+
+            draft.validate(**kwargs)
+
+            draft.model = cls.model_cls(
+                id=record.id,
+                fork_version_id=record.revision_id,
+                expiry_date=draft.expiry_date,
+                status=draft.status,
+                json=record,
+            )
+
+            db.session.add(draft.model)
+
+        return draft

@@ -34,3 +34,5 @@ class DraftSchemaJSONV1(Schema):
     links = fields.Raw()
     created = fields.Str()
     updated = fields.Str()
+    status = fields.Str()
+    expirty_date = fields.Str()

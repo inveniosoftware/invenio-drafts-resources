@@ -8,7 +8,7 @@
 
 """Drafts data access layer API."""
 
-from .api import Draft
+from .api import DraftBase
 from .models import DraftMetadataBase
 
-__all__ = ("Draft", "DraftMetadataBase")
+__all__ = ("DraftBase", "DraftMetadataBase")
