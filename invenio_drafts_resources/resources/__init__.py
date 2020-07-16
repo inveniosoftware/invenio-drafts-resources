@@ -13,8 +13,9 @@ from .deposit import DepositResource, DepositResourceConfig
 from .draft import DraftActionResource, DraftActionResourceConfig, \
     DraftResource, DraftResourceConfig, DraftVersionResource, \
     DraftVersionResourceConfig
-from .file import DraftFileActionResource, DraftFileActionResourceConfig, \
-    DraftFileResource, DraftFileResourceConfig
+from .draft_file import DraftFileActionResource, \
+    DraftFileActionResourceConfig, DraftFileResource, \
+    DraftFileResourceConfig
 
 __all__ = (
     "DepositResource",
