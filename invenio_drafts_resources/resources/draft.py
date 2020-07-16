@@ -21,10 +21,6 @@ from ..service.schemas import DraftSchemaJSONV1
 
 from ..services import DraftService, DraftVersionService
 
-# TODO: Get rid of them when implementation is done
-STUB_ITEM_RESULT = ({"TODO": "IMPLEMENT ME"}, 200)
-STUB_LIST_RESULT = ([{"TODO": "IMPLEMENT ME"}], 200)
-
 
 class DraftResourceConfig(ResourceConfig):
     """Draft resource config."""

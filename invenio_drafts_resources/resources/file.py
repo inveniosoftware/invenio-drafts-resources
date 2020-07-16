@@ -16,10 +16,6 @@ from flask_resources.resources import ResourceConfig
 
 from ..services import DraftFileMetadataService, DraftFileService
 
-# TODO: Get rid of them when implementation is done
-STUB_ITEM_RESULT = ({"TODO": "IMPLEMENT ME"}, 200)
-STUB_LIST_RESULT = ([{"TODO": "IMPLEMENT ME"}], 200)
-
 
 class DraftFileResourceConfig(ResourceConfig):
     """Draft file resource config."""

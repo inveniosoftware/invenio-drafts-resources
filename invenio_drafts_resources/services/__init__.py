@@ -9,12 +9,11 @@
 
 """Draft Services."""
 
-from .draft_file_metadata_service import DraftFileMetadataService, \
+from .draft import DraftService, DraftServiceConfig
+from .draft_file import DraftFileService, DraftFileServiceConfig
+from .draft_file_metadata import DraftFileMetadataService, \
     DraftFileMetadataServiceConfig
-from .draft_file_service import DraftFileService, DraftFileServiceConfig
-from .draft_service import DraftService, DraftServiceConfig
-from .draft_version_service import DraftVersionService, \
-    DraftVersionServiceConfig
+from .draft_version import DraftVersionService, DraftVersionServiceConfig
 
 __all__ = (
     "DraftFileMetadataService",

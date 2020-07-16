@@ -10,11 +10,11 @@
 
 """Draft Service."""
 
-from invenio_records_resources.resource_unit import IdentifiedRecord
+from invenio_records_resources.resource_units import IdentifiedRecord
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
 
-from ..resource_unit import IdentifiedDraft
+from ..resource_units import IdentifiedDraft
 from .permissions import DraftPermissionPolicy
 
 

@@ -10,7 +10,7 @@
 
 """Draft Service."""
 
-from .draft_service import DraftService, DraftServiceConfig
+from .draft import DraftService, DraftServiceConfig
 
 
 class DraftVersionServiceConfig(DraftServiceConfig):
