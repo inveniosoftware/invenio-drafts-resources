@@ -17,6 +17,8 @@ from flask_principal import Identity
 from invenio_access import any_user
 from invenio_app.factory import create_api
 
+from invenio_drafts_resources.resources import DraftResource, RecordResource
+
 
 @pytest.fixture(scope="module")
 def create_app(instance_path):
@@ -28,6 +30,11 @@ def create_app(instance_path):
 def app(app):
     """Application factory fixture."""
     with app.app_context():
+        record_bp = RecordResource().as_blueprint("record_resource")
+        draft_bp = DraftResource().as_blueprint("draft_resource")
+
+        app.register_blueprint(record_bp)
+        app.register_blueprint(draft_bp)
         yield app
 
 

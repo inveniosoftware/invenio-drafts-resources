@@ -50,7 +50,9 @@ class DraftResource(SingletonResource):
         """Create an item."""
         data = resource_requestctx.request_content
         identity = g.identity
-        return self.service.create(data, identity), 200
+        id_ = resource_requestctx.route["pid_value"]
+
+        return self.service.create_from(id_, data, identity), 200
 
     def update(self, *args, **kwargs):
         """Update an item."""
