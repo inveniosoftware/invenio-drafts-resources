@@ -16,7 +16,7 @@ from flask_resources.resources import ResourceConfig
 from invenio_records_resources.responses import RecordResponse
 
 from ..serializers import DraftJSONSerializer
-from ..services import DraftService, DraftVersionService
+from ..services import DraftVersionService, RecordDraftService
 from ..services.schemas import DraftSchemaJSONV1
 
 
@@ -39,7 +39,7 @@ class DraftResource(SingletonResource):
     def __init__(self, service=None, *args, **kwargs):
         """Constructor."""
         super(DraftResource, self).__init__(*args, **kwargs)
-        self.service = service or DraftService()
+        self.service = service or RecordDraftService()
 
     def read(self, *args, **kwargs):
         """Read an item."""
@@ -52,7 +52,7 @@ class DraftResource(SingletonResource):
         identity = g.identity
         id_ = resource_requestctx.route["pid_value"]
 
-        return self.service.create_from(id_, data, identity), 200
+        return self.service.edit(id_, data, identity), 200
 
     def update(self, *args, **kwargs):
         """Update an item."""
@@ -106,7 +106,7 @@ class DraftActionResource(SingletonResource):
     def __init__(self, service=None, *args, **kwargs):
         """Constructor."""
         super(DraftActionResource, self).__init__(*args, **kwargs)
-        self.service = service or DraftService()
+        self.service = service or RecordDraftService()
 
     def create(self, *args, **kwargs):
         """Any POST business logic."""

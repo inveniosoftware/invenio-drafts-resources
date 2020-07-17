@@ -13,7 +13,7 @@ def test_create_draft_of_new_record(app, draft_service, input_draft,
                                     fake_identity):
     """Test draft creation of a non-existing record."""
     # Needs `app` context because of invenio_access/permissions.py#166
-    identified_draft = draft_service.create_new(
+    identified_draft = draft_service.create(
         data=input_draft, identity=fake_identity
     )
 
@@ -40,7 +40,7 @@ def test_create_draft_of_existing_record(app, draft_service, record_service,
 
     # Create new draft of said record
     input_record['title'] = "Edited title"
-    identified_draft = draft_service.create_from(
+    identified_draft = draft_service.edit(
         data=input_record,
         identity=fake_identity,
         id_=recid

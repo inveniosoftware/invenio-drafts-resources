@@ -21,12 +21,14 @@ from invenio_records.api import Record
 from invenio_records.models import RecordMetadataBase
 from invenio_records_permissions.generators import AnyUser
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
+from invenio_records_resources.resources import RecordResource
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
 
 from invenio_drafts_resources.drafts import DraftBase, DraftMetadataBase
-from invenio_drafts_resources.resources import DraftResource, RecordResource
-from invenio_drafts_resources.services import DraftService, DraftServiceConfig
+from invenio_drafts_resources.resources import DraftResource
+from invenio_drafts_resources.services import RecordDraftService, \
+    RecordDraftServiceConfig
 
 
 class AnyUserPermissionPolicy(RecordPermissionPolicy):
@@ -72,7 +74,7 @@ class CustomRecordServiceConfig(RecordServiceConfig):
     permission_policy_cls = AnyUserPermissionPolicy
 
 
-class CustomDraftServiceConfig(DraftServiceConfig):
+class CustomRecordDraftServiceConfig(RecordDraftServiceConfig):
     """Custom draft service config."""
 
     draft_cls = CustomDraft
@@ -90,8 +92,12 @@ def create_app(instance_path):
 def app(app):
     """Application factory fixture."""
     with app.app_context():
-        record_bp = RecordResource().as_blueprint("record_resource")
-        draft_bp = DraftResource().as_blueprint("draft_resource")
+        record_bp = RecordResource(
+            service=RecordService(config=CustomRecordServiceConfig)
+        ).as_blueprint("record_resource")
+        draft_bp = DraftResource(
+            service=RecordDraftService(config=CustomRecordDraftServiceConfig)
+        ).as_blueprint("draft_resource")
 
         app.register_blueprint(record_bp)
         app.register_blueprint(draft_bp)
@@ -101,7 +107,7 @@ def app(app):
 @pytest.fixture(scope="module")
 def draft_service():
     """Application factory fixture."""
-    draft_service = DraftService(config=CustomDraftServiceConfig)
+    draft_service = RecordDraftService(config=CustomRecordDraftServiceConfig)
 
     return draft_service
 

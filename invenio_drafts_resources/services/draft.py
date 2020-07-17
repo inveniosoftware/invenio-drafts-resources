@@ -19,7 +19,7 @@ from .permissions import DraftPermissionPolicy
 from .schemas import DraftMetadataSchemaJSONV1
 
 
-class DraftServiceConfig(RecordServiceConfig):
+class RecordDraftServiceConfig(RecordServiceConfig):
     """Draft Service configuration."""
 
     # Service configuration
@@ -36,10 +36,10 @@ class DraftServiceConfig(RecordServiceConfig):
     draft_cls = None
 
 
-class DraftService(RecordService):
+class RecordDraftService(RecordService):
     """Draft Service interface."""
 
-    default_config = DraftServiceConfig
+    default_config = RecordDraftServiceConfig
 
     # High-level API
     # Inherits record read, search, create, delete and update
@@ -49,8 +49,9 @@ class DraftService(RecordService):
         if indexer:
             indexer.index(draft)
 
-    def create_new(self, data, identity):
+    def create(self, data, identity):
         """Create a draft and the associated record (new)."""
+        #FIXME: Make record creation not eager
         self.require_permission(identity, "create")
         record = self.config.record_cls.create(data=data)
         pid = self.minter()(record_uuid=record.id, data=record)
@@ -61,7 +62,7 @@ class DraftService(RecordService):
 
         return self.config.resource_unit_cls(pid=pid, draft=draft)
 
-    def create_from(self, id_, data, identity):
+    def edit(self, id_, data, identity):
         """Create a draft for an existing record.
 
         :param id_: record PID value.

@@ -16,7 +16,6 @@ from .draft import DraftActionResource, DraftActionResourceConfig, \
 from .draft_file import DraftFileActionResource, \
     DraftFileActionResourceConfig, DraftFileResource, \
     DraftFileResourceConfig
-from .record import RecordResource
 
 __all__ = (
     "DepositResource",
@@ -31,5 +30,4 @@ __all__ = (
     "DraftFileActionResource",
     "DraftFileResourceConfig",
     "DraftFileResource",
-    "RecordResource"
 )

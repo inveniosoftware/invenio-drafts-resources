@@ -9,7 +9,7 @@
 
 """Draft Services."""
 
-from .draft import DraftService, DraftServiceConfig
+from .draft import RecordDraftService, RecordDraftServiceConfig
 from .draft_file import DraftFileService, DraftFileServiceConfig
 from .draft_file_metadata import DraftFileMetadataService, \
     DraftFileMetadataServiceConfig
@@ -20,8 +20,8 @@ __all__ = (
     "DraftFileMetadataServiceConfig",
     "DraftFileService",
     "DraftFileServiceConfig",
-    "DraftService",
-    "DraftServiceConfig",
+    "RecordDraftService",
+    "RecordDraftServiceConfig",
     "DraftVersionService",
     "DraftVersionServiceConfig"
 )

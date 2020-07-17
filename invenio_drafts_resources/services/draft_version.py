@@ -10,10 +10,10 @@
 
 """Draft Service."""
 
-from .draft import DraftService, DraftServiceConfig
+from .draft import RecordDraftService, RecordDraftServiceConfig
 
 
-class DraftVersionServiceConfig(DraftServiceConfig):
+class DraftVersionServiceConfig(RecordDraftServiceConfig):
     """Draft Version Service configuration."""
 
     # Service configuration
@@ -26,7 +26,7 @@ class DraftVersionServiceConfig(DraftServiceConfig):
     # TODO: FILL ME!
 
 
-class DraftVersionService(DraftService):
+class DraftVersionService(RecordDraftService):
     """Draft Service interface."""
 
     default_config = DraftVersionServiceConfig
