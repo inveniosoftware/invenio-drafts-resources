@@ -42,30 +42,18 @@ class DraftService(RecordService):
     default_config = DraftServiceConfig
 
     # High-level API
-    def read(self, id_, identity):
-        """Retrieve a draft."""
-        # TODO: IMPLEMENT ME!
-        # High likelihood that we can just rely on RecordService here
-        # and simply configure DraftServiceConfig appropriately
-        return self.config.resource_unit_cls()
-
-    def search(self, querystring, identity, pagination=None, *args, **kwargs):
-        """Search for drafts matching the querystring."""
-        # TODO: IMPLEMENT ME!
-        # High likelihood that we can just rely on RecordService here
-        # and simply configure DraftServiceConfig appropriately
-        return self.resource_list_cls()
+    # Inherits record read, search, create, delete and update
 
     def _index_draft(self, draft):
         indexer = self.indexer()
         if indexer:
             indexer.index(draft)
 
-    def create(self, data, identity):
+    def create_new(self, data, identity):
         """Create a draft and the associated record (new)."""
         self.require_permission(identity, "create")
         record = self.config.record_cls.create(data=data)
-        pid = self.minter()(record_uuid=record.id, data=record)  # Mint PID
+        pid = self.minter()(record_uuid=record.id, data=record)
         marsh_data = self.data_validator().validate(data)
         draft = self.config.draft_cls.create(record, marsh_data)
         db.session.commit()  # Persist DB
@@ -73,7 +61,7 @@ class DraftService(RecordService):
 
         return self.config.resource_unit_cls(pid=pid, draft=draft)
 
-    def edit(self, data, identity, id_):
+    def create_from(self, id_, data, identity):
         """Create a draft for an existing record.
 
         :param id_: record PID value.
@@ -86,20 +74,6 @@ class DraftService(RecordService):
         self._index_draft(draft)
 
         return self.config.resource_unit_cls(pid=pid, draft=draft)
-
-    def delete(self, id_, identity):
-        """Delete a draft from database and search indexes."""
-        # TODO: IMPLEMENT ME!
-        # High likelihood that we can just rely on RecordService here
-        # and simply configure DraftServiceConfig appropriately
-        return self.config.resource_unit_cls()
-
-    def update(self, id_, data, identity):
-        """Replace a draft."""
-        # TODO: IMPLEMENT ME!
-        # High likelihood that we can just rely on RecordService here
-        # and simply configure DraftServiceConfig appropriately
-        return self.config.resource_unit_cls()
 
     def publish(self, id_, identity):
         """Publish a draft."""

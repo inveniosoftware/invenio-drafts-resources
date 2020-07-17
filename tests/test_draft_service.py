@@ -73,49 +73,44 @@ class CustomDraftServiceConfig(DraftServiceConfig):
 
 def test_create_draft_of_new_record(app, input_draft, fake_identity):
     """Test draft creation of a non-existing record."""
+    # Needs `app` context because of invenio_access/permissions.py#166
+    draft_service = DraftService(config=CustomDraftServiceConfig)
 
-    # Needs app context because of
-    # invenio_access/permissions.py#166 --> current_access
-    with app.app_context():
-        draft_service = DraftService(config=CustomDraftServiceConfig)
+    identified_draft = draft_service.create_new(
+        data=input_draft, identity=fake_identity
+    )
 
-        identified_draft = draft_service.create(
-            data=input_draft, identity=fake_identity
-        )
+    assert identified_draft.id
 
-        assert identified_draft.id
-
-        for key, value in input_draft.items():
-            assert identified_draft.draft[key] == value
+    for key, value in input_draft.items():
+        assert identified_draft.draft[key] == value
 
 
 def test_create_draft_of_existing_record(app, input_record, fake_identity):
     """Test draft creation of an existing record."""
-    # Needs app context because of
-    # invenio_access/permissions.py#166 --> current_access
-    with app.app_context():
-        # Create new record
-        record_service = RecordService(config=CustomRecordServiceConfig)
-        identified_record = record_service.create(
-            data=input_record, identity=fake_identity
-        )
+    # Needs `app` context because of invenio_access/permissions.py#166
+    # Create new record
+    record_service = RecordService(config=CustomRecordServiceConfig)
+    identified_record = record_service.create(
+        data=input_record, identity=fake_identity
+    )
 
-        recid = identified_record.id
-        assert recid
+    recid = identified_record.id
+    assert recid
 
-        for key, value in input_record.items():
-            assert identified_record.record[key] == value
+    for key, value in input_record.items():
+        assert identified_record.record[key] == value
 
-        # Create new draft of said record
-        input_record['title'] = "Edited title"
-        draft_service = DraftService(config=CustomDraftServiceConfig)
-        identified_draft = draft_service.edit(
-            data=input_record,
-            identity=fake_identity,
-            id_=recid
-        )
+    # Create new draft of said record
+    input_record['title'] = "Edited title"
+    draft_service = DraftService(config=CustomDraftServiceConfig)
+    identified_draft = draft_service.create_from(
+        data=input_record,
+        identity=fake_identity,
+        id_=recid
+    )
 
-        assert identified_draft.id == recid
+    assert identified_draft.id == recid
 
-        for key, value in input_record.items():
-            assert identified_draft.draft[key] == value
+    for key, value in input_record.items():
+        assert identified_draft.draft[key] == value
