@@ -25,7 +25,7 @@ class DraftJSONSerializer(RecordJSONSerializer):
 
     def _process_draft(self, draft_unit, *args, **kwargs):
         pid = draft_unit.id
-        draft = draft_unit.draft
+        draft = draft_unit.record  # FIXME: refactor to unit
         draft_dict = dict(
             pid=pid,
             metadata=draft.dumps(),

@@ -20,7 +20,7 @@ def test_create_draft_of_new_record(app, draft_service, input_draft,
     assert identified_draft.id
 
     for key, value in input_draft.items():
-        assert identified_draft.draft[key] == value
+        assert identified_draft.record[key] == value
 
 
 def test_create_draft_of_existing_record(app, draft_service, record_service,
@@ -49,4 +49,4 @@ def test_create_draft_of_existing_record(app, draft_service, record_service,
     assert identified_draft.id == recid
 
     for key, value in input_record.items():
-        assert identified_draft.draft[key] == value
+        assert identified_draft.record[key] == value

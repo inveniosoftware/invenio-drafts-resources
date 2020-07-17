@@ -14,7 +14,6 @@ from invenio_db import db
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
 
-from ..resource_units import IdentifiedDraft
 from .permissions import DraftPermissionPolicy
 from .schemas import DraftMetadataSchemaJSONV1
 
@@ -24,7 +23,6 @@ class RecordDraftServiceConfig(RecordServiceConfig):
 
     # Service configuration
     permission_policy_cls = DraftPermissionPolicy
-    resource_unit_cls = IdentifiedDraft
 
     # RecordService configuration
     data_validator = MarshmallowDataValidator(
@@ -51,7 +49,8 @@ class RecordDraftService(RecordService):
 
     def create(self, data, identity):
         """Create a draft and the associated record (new)."""
-        #FIXME: Make record creation not eager
+        # FIXME: Make record creation not eager
+        # FIXME: Data validation should happen before base record creation
         self.require_permission(identity, "create")
         record = self.config.record_cls.create(data=data)
         pid = self.minter()(record_uuid=record.id, data=record)
@@ -60,13 +59,16 @@ class RecordDraftService(RecordService):
         db.session.commit()  # Persist DB
         self._index_draft(draft)
 
-        return self.config.resource_unit_cls(pid=pid, draft=draft)
+        # FIXME: refactor to unit
+        return self.config.resource_unit_cls(pid=pid, record=draft)
 
     def edit(self, id_, data, identity):
         """Create a draft for an existing record.
 
         :param id_: record PID value.
         """
+        # TODO: pass record to the permission check
+        # when creating a new from existing needs to check
         self.require_permission(identity, "create")
         pid, record = self.resolve(id_)
         validated_data = self.data_validator().validate(data)
@@ -74,7 +76,8 @@ class RecordDraftService(RecordService):
         db.session.commit()  # Persist DB
         self._index_draft(draft)
 
-        return self.config.resource_unit_cls(pid=pid, draft=draft)
+        # FIXME: refactor to unit
+        return self.config.resource_unit_cls(pid=pid, record=draft)
 
     def publish(self, id_, identity):
         """Publish a draft."""
