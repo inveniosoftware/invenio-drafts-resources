@@ -104,15 +104,25 @@ def create_app(instance_path):
     return create_api
 
 
+def _draft_service():
+    """Create a draft service."""
+    return RecordDraftService(config=CustomRecordDraftServiceConfig)
+
+
+def _record_service():
+    """Create a record service."""
+    return RecordService(config=CustomRecordServiceConfig)
+
+
 @pytest.fixture(scope="module")
 def app(app):
     """Application factory fixture."""
     with app.app_context():
         record_bp = RecordResource(
-            service=RecordService(config=CustomRecordServiceConfig)
+            service=_draft_service()
         ).as_blueprint("record_resource")
         draft_bp = DraftResource(
-            service=RecordDraftService(config=CustomRecordDraftServiceConfig)
+            service=_draft_service()
         ).as_blueprint("draft_resource")
 
         app.register_blueprint(record_bp)
@@ -122,18 +132,14 @@ def app(app):
 
 @pytest.fixture(scope="module")
 def draft_service():
-    """Application factory fixture."""
-    draft_service = RecordDraftService(config=CustomRecordDraftServiceConfig)
-
-    return draft_service
+    """Draft service factory fixture."""
+    return _draft_service()
 
 
 @pytest.fixture(scope="module")
 def record_service():
-    """Application factory fixture."""
-    record_service = RecordService(config=CustomRecordServiceConfig)
-
-    return record_service
+    """Record service factory fixture."""
+    return _record_service()
 
 
 @pytest.fixture(scope="function")

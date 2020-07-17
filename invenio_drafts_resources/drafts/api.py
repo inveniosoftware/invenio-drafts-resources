@@ -30,8 +30,13 @@ class DraftBase(Record):
         """Get revision identifier."""
         return self.model.status if self.model else self.default_status
 
+    @property
+    def fork_id(self):
+        """Get revision identifier."""
+        return self.model.fork_id if self.model else None
+
     @classmethod
-    def create(cls, record, data, **kwargs):
+    def create(cls, data, record=None, **kwargs):
         """Create a new draft instance and store it in the database."""
         with db.session.begin_nested():
             draft = cls(data)
@@ -39,11 +44,11 @@ class DraftBase(Record):
             draft.validate(**kwargs)
 
             draft.model = cls.model_cls(
-                id=record.id,
-                fork_version_id=record.revision_id,
+                fork_id=record.id if record else None,
+                fork_version_id=record.revision_id if record else None,
                 expiry_date=draft.expiry_date,
                 status=draft.status,
-                json=record,
+                json=draft,
             )
 
             db.session.add(draft.model)

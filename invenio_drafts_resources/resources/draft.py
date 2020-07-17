@@ -52,7 +52,7 @@ class DraftResource(SingletonResource):
         identity = g.identity
         id_ = resource_requestctx.route["pid_value"]
 
-        return self.service.edit(id_, data, identity), 200
+        return self.service.edit(id_, data, identity), 201
 
     def update(self, *args, **kwargs):
         """Update an item."""

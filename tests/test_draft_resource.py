@@ -21,10 +21,10 @@ def test_create_draft_of_new_record(client, draft_service, input_draft,
                                     fake_identity):
     """Test draft creation of a non-existing record."""
     response = client.post(
-        "/records", headers=HEADERS, data=json.dumps(input_draft)
+        "/records", data=json.dumps(input_draft), headers=HEADERS
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     response_fields = response.json.keys()
     fields_to_check = ['pid', 'metadata', 'revision',
                        'created', 'updated', 'links']
@@ -34,23 +34,10 @@ def test_create_draft_of_new_record(client, draft_service, input_draft,
 
     recid = response.json['pid']
 
-    # Test the associated record is created
-    response = client.get(
-        "/records/{}".format(recid),
-        headers=HEADERS,
-        data=json.dumps(input_draft)
-    )
-
-    assert response.status_code == 200
-    response_fields = response.json.keys()
-    fields_to_check = ['pid', 'metadata', 'revision',
-                       'created', 'updated', 'links']
-
 
 def test_create_draft_of_existing_record(app, client, record_service,
                                          input_record, fake_identity):
     """Test draft creation of an existing record."""
-
     # Create new record manually since the endpoint it overwritten
     identified_record = record_service.create(
         data=input_record, identity=fake_identity
@@ -65,14 +52,13 @@ def test_create_draft_of_existing_record(app, client, record_service,
     # Create new draft of said record
     orig_title = input_record['title']
     input_record['title'] = "Edited title"
-
     response = client.post(
         "/records/{}/draft".format(recid),
-        headers=HEADERS,
-        data=json.dumps(input_record)
+        data=json.dumps(input_record),
+        headers=HEADERS
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     response_fields = response.json.keys()
     fields_to_check = ['pid', 'metadata', 'revision',
                        'created', 'updated', 'links']
@@ -85,8 +71,8 @@ def test_create_draft_of_existing_record(app, client, record_service,
     # Check the actual record was not modified
     response = client.get(
         "/records/{}".format(recid),
-        headers=HEADERS,
-        data=json.dumps(input_record)
+        data=json.dumps(input_record),
+        headers=HEADERS
     )
 
     assert response.status_code == 200

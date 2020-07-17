@@ -17,7 +17,7 @@ def test_create_draft_of_new_record(app, draft_service, input_draft,
         data=input_draft, identity=fake_identity
     )
 
-    assert identified_draft.id
+    assert identified_draft.id is None
 
     for key, value in input_draft.items():
         assert identified_draft.record[key] == value
@@ -39,6 +39,7 @@ def test_create_draft_of_existing_record(app, draft_service, record_service,
         assert identified_record.record[key] == value
 
     # Create new draft of said record
+    orig_title = input_record['title']
     input_record['title'] = "Edited title"
     identified_draft = draft_service.edit(
         data=input_record,
@@ -50,3 +51,8 @@ def test_create_draft_of_existing_record(app, draft_service, record_service,
 
     for key, value in input_record.items():
         assert identified_draft.record[key] == value
+
+    # Check the actual record was not modified
+    identified_record = record_service.read(id_=recid, identity=fake_identity)
+
+    assert identified_record.record['title'] == orig_title

@@ -14,6 +14,7 @@ from invenio_db import db
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
 
+from ..resource_units import IdentifiedRecordDraft
 from .permissions import DraftPermissionPolicy
 from .schemas import DraftMetadataSchemaJSONV1
 
@@ -25,6 +26,7 @@ class RecordDraftServiceConfig(RecordServiceConfig):
     permission_policy_cls = DraftPermissionPolicy
 
     # RecordService configuration
+    resource_unit_cls = IdentifiedRecordDraft
     data_validator = MarshmallowDataValidator(
         schema=DraftMetadataSchemaJSONV1
     )
@@ -48,35 +50,31 @@ class RecordDraftService(RecordService):
             indexer.index(draft)
 
     def create(self, data, identity):
-        """Create a draft and the associated record (new)."""
-        # FIXME: Make record creation not eager
-        # FIXME: Data validation should happen before base record creation
+        """Create a draft for a new record.
+
+        It does not eagerly create the associated record.
+        """
         self.require_permission(identity, "create")
-        record = self.config.record_cls.create(data=data)
-        pid = self.minter()(record_uuid=record.id, data=record)
         validated_data = self.data_validator().validate(data)
-        draft = self.config.draft_cls.create(record, validated_data)
+        draft = self.config.draft_cls.create(validated_data)
         db.session.commit()  # Persist DB
         self._index_draft(draft)
 
-        # FIXME: refactor to unit
-        return self.config.resource_unit_cls(pid=pid, record=draft)
+        return self.config.resource_unit_cls(pid=None, record=draft)
 
     def edit(self, id_, data, identity):
         """Create a draft for an existing record.
 
         :param id_: record PID value.
         """
-        # TODO: pass record to the permission check
-        # when creating a new from existing needs to check
-        self.require_permission(identity, "create")
         pid, record = self.resolve(id_)
+        # FIXME: How to check permission on the record?
+        self.require_permission(identity, "create")
         validated_data = self.data_validator().validate(data)
-        draft = self.config.draft_cls.create(record, validated_data)
+        draft = self.config.draft_cls.create(validated_data, record)
         db.session.commit()  # Persist DB
         self._index_draft(draft)
 
-        # FIXME: refactor to unit
         return self.config.resource_unit_cls(pid=pid, record=draft)
 
     def publish(self, id_, identity):

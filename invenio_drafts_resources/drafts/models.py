@@ -8,6 +8,7 @@
 
 """Draft Models API."""
 
+import uuid
 from datetime import datetime
 
 from invenio_db import db
@@ -26,13 +27,20 @@ class DraftMetadataBase(Timestamp):
     # Enables SQLAlchemy-Continuum versioning
     __versioned__ = {}
 
-    id = db.Column(UUIDType, primary_key=True)
+    id = db.Column(
+        UUIDType,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    """Draft identifier."""
+
+    fork_id = db.Column(UUIDType)
     """Draft identifier, it is the same than the record it is draft of"""
 
-    fork_version_id = db.Column(db.Integer, primary_key=True)
+    fork_version_id = db.Column(db.Integer)
     """Version id of the record it is draft of."""
 
-    version_id = db.Column(db.Integer, primary_key=True)
+    version_id = db.Column(db.Integer, nullable=False)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
     status = db.Column(db.String(255), default="draft", nullable=False)
