@@ -35,4 +35,4 @@ class DraftSchemaJSONV1(Schema):
     created = fields.Str()
     updated = fields.Str()
     status = fields.Str()
-    expirty_date = fields.Str()
+    expiry_date = fields.Str()

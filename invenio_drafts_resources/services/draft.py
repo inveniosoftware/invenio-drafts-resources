@@ -54,8 +54,8 @@ class DraftService(RecordService):
         self.require_permission(identity, "create")
         record = self.config.record_cls.create(data=data)
         pid = self.minter()(record_uuid=record.id, data=record)
-        marsh_data = self.data_validator().validate(data)
-        draft = self.config.draft_cls.create(record, marsh_data)
+        validated_data = self.data_validator().validate(data)
+        draft = self.config.draft_cls.create(record, validated_data)
         db.session.commit()  # Persist DB
         self._index_draft(draft)
 
@@ -68,8 +68,8 @@ class DraftService(RecordService):
         """
         self.require_permission(identity, "create")
         pid, record = self.resolve(id_)
-        marsh_data = self.data_validator().validate(data)
-        draft = self.config.draft_cls.create(record, marsh_data)
+        validated_data = self.data_validator().validate(data)
+        draft = self.config.draft_cls.create(record, validated_data)
         db.session.commit()  # Persist DB
         self._index_draft(draft)
 

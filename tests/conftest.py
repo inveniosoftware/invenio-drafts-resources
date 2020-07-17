@@ -16,8 +16,68 @@ import pytest
 from flask_principal import Identity
 from invenio_access import any_user
 from invenio_app.factory import create_api
+from invenio_db import db
+from invenio_records.api import Record
+from invenio_records.models import RecordMetadataBase
+from invenio_records_permissions.generators import AnyUser
+from invenio_records_permissions.policies.records import RecordPermissionPolicy
+from invenio_records_resources.services import RecordService, \
+    RecordServiceConfig
 
+from invenio_drafts_resources.drafts import DraftBase, DraftMetadataBase
 from invenio_drafts_resources.resources import DraftResource, RecordResource
+from invenio_drafts_resources.services import DraftService, DraftServiceConfig
+
+
+class AnyUserPermissionPolicy(RecordPermissionPolicy):
+    """Custom permission policy."""
+
+    can_list = [AnyUser()]
+    can_create = [AnyUser()]
+    can_read = [AnyUser()]
+    can_update = [AnyUser()]
+    can_delete = [AnyUser()]
+    can_read_files = [AnyUser()]
+    can_update_files = [AnyUser()]
+
+
+class CustomDraftMetadata(db.Model, DraftMetadataBase):
+    """Represent a custom draft metadata."""
+
+    __tablename__ = 'custom_drafts_metadata'
+
+
+class CustomDraft(DraftBase):
+    """Custom draft API."""
+
+    model_cls = CustomDraftMetadata
+
+
+class CustomRecordMetadata(db.Model, RecordMetadataBase):
+    """Represent a custom draft metadata."""
+
+    __tablename__ = 'custom_record_metadata'
+
+
+class CustomRecord(Record):
+    """Custom draft API."""
+
+    model_cls = CustomRecordMetadata
+
+
+class CustomRecordServiceConfig(RecordServiceConfig):
+    """Custom draft service config."""
+
+    record_cls = CustomRecord
+    permission_policy_cls = AnyUserPermissionPolicy
+
+
+class CustomDraftServiceConfig(DraftServiceConfig):
+    """Custom draft service config."""
+
+    draft_cls = CustomDraft
+    record_cls = CustomRecord
+    permission_policy_cls = AnyUserPermissionPolicy
 
 
 @pytest.fixture(scope="module")
@@ -36,6 +96,22 @@ def app(app):
         app.register_blueprint(record_bp)
         app.register_blueprint(draft_bp)
         yield app
+
+
+@pytest.fixture(scope="module")
+def draft_service():
+    """Application factory fixture."""
+    draft_service = DraftService(config=CustomDraftServiceConfig)
+
+    return draft_service
+
+
+@pytest.fixture(scope="module")
+def record_service():
+    """Application factory fixture."""
+    record_service = RecordService(config=CustomRecordServiceConfig)
+
+    return record_service
 
 
 @pytest.fixture(scope="function")
