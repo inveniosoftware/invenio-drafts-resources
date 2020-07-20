@@ -22,5 +22,5 @@ class IdentifiedRecordDraft(IdentifiedRecord):
     def __init__(self, pid=None, record=None):
         """Initialize the record state."""
         self.id = pid.pid_value if pid else None
-        self.pids = [pid]
+        self.pids = [pid] if pid else []
         self.record = record
