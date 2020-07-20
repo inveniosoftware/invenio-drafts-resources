@@ -71,7 +71,6 @@ def test_create_draft_of_existing_record(app, client, record_service,
     # Check the actual record was not modified
     response = client.get(
         "/records/{}".format(recid),
-        data=json.dumps(input_record),
         headers=HEADERS
     )
 
