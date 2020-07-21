@@ -103,5 +103,4 @@ class RecordDraftService(RecordService):
     def publish(self, id_, identity):
         """Publish a draft."""
         # TODO: IMPLEMENT ME!
-        # pid, record = self.resolve(id_, obj_getter=Drafts.get_record)
         return self.config.draft_of_resource_unit_cls()
