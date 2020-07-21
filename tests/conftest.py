@@ -41,6 +41,7 @@ class AnyUserPermissionPolicy(RecordPermissionPolicy):
     can_delete = [AnyUser()]
     can_read_files = [AnyUser()]
     can_update_files = [AnyUser()]
+    can_publish = [AnyUser()]
 
 
 class CustomDraftMetadata(db.Model, DraftMetadataBase):

@@ -11,6 +11,8 @@
 """Draft Service."""
 
 from invenio_db import db
+from invenio_pidstore.models import PIDStatus
+from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
 from werkzeug.utils import cached_property
@@ -40,8 +42,20 @@ class RecordDraftServiceConfig(RecordServiceConfig):
 class RecordDraftService(RecordService):
     """Draft Service interface."""
 
+    RecordIdProviderV2.default_status_with_obj = PIDStatus.NEW
     default_config = RecordDraftServiceConfig
 
+    # Over write resolver because default status is a class attr
+    @cached_property
+    def resolver(self):
+        """Factory for creating a draft resolver instance."""
+        return self.config.resolver_cls(
+            pid_type=self.config.resolver_pid_type,
+            getter=self.record_cls.get_record,
+            registered_only=False
+        )
+
+    # Draft attrs
     @cached_property
     def draft_cls(self):
         """Factory for creating a record class."""
@@ -82,19 +96,15 @@ class RecordDraftService(RecordService):
         """
         self.require_permission(identity, "create")
         validated_data = self.draft_data_validator.validate(data)
-        draft = self.config.draft_cls.create(validated_data)
+        draft = self.draft_cls.create(validated_data)
         # Create PID (New) associated to the draft UUID
-        pid = self.minter(
-            record_uuid=draft.id,
-            data=draft,
-            with_obj_type=None
-        )
+        pid = self.minter(record_uuid=draft.id, data=draft)
 
         db.session.commit()  # Persist DB
         if self.indexer:
             self.indexer.index(draft)
 
-        return self.config.resource_unit_cls(pid=None, record=draft)
+        return self.config.resource_unit_cls(pid=pid, record=draft)
 
     def edit(self, id_, data, identity):
         """Create a draft for an existing record.
@@ -102,10 +112,9 @@ class RecordDraftService(RecordService):
         :param id_: record PID value.
         """
         pid, record = self.resolve(id_)
-        # FIXME: How to check permission on the record?
         self.require_permission(identity, "create")
         validated_data = self.draft_data_validator.validate(data)
-        draft = self.config.draft_cls.create(validated_data, record)
+        draft = self.draft_cls.create(validated_data, record)
         db.session.commit()  # Persist DB
         if self.indexer:
             self.indexer.index(draft)
@@ -114,5 +123,21 @@ class RecordDraftService(RecordService):
 
     def publish(self, id_, identity):
         """Publish a draft."""
-        # TODO: IMPLEMENT ME!
-        return self.config.draft_of_resource_unit_cls()
+        self.require_permission(identity, "publish")
+        # Get draft
+        pid, draft = self.resolve_draft(id_=id_)
+        # Validate and create record, register PID
+        _data = draft.dumps()
+        self.data_validator.validate(_data)  # Validate against record schema
+        record = self.record_cls.create(_data, id_=draft.id)  # Use same UUID
+        pid.register()
+        # Remove draft
+        draft.delete()
+        db.session.commit()  # Persist DB
+        # Index the record
+        if self.indexer:
+            self.indexer.index(record)
+            self.indexer.delete(draft)
+
+        record_state = self.resource_unit(pid=pid, record=record)
+        return record_state
