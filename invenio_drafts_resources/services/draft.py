@@ -68,6 +68,13 @@ class RecordDraftService(RecordService):
     # High-level API
     # Inherits record read, search, create, delete and update
 
+    def read_draft(self, id_, identity):
+        """Retrieve a record."""
+        pid, record = self.resolve_draft(id_)
+        self.require_permission(identity, "read", record=record)
+        # Todo: how do we deal with tombstone pages
+        return self.resource_unit(pid=pid, record=record)
+
     def create(self, data, identity):
         """Create a draft for a new record.
 
