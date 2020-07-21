@@ -43,6 +43,11 @@ class RecordDraftService(RecordService):
     default_config = RecordDraftServiceConfig
 
     @cached_property
+    def draft_cls(self):
+        """Factory for creating a record class."""
+        return self.config.draft_cls
+
+    @cached_property
     def draft_data_validator(self):
         """Returns an instance of the draft data validator."""
         return self.config.draft_data_validator
@@ -52,7 +57,7 @@ class RecordDraftService(RecordService):
         """Factory for creating a draft resolver instance."""
         return self.config.resolver_cls(
             pid_type=self.config.resolver_pid_type,
-            getter=self.config.draft_cls.get_record,
+            getter=self.draft_cls.get_record,
             registered_only=False
         )
 
