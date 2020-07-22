@@ -10,6 +10,9 @@
 
 import json
 
+import pytest
+from sqlalchemy.orm.exc import NoResultFound
+
 from invenio_drafts_resources.resources import DraftActionResource, \
     DraftActionResourceConfig, DraftResource, DraftResourceConfig, \
     DraftVersionResource, DraftVersionResourceConfig
@@ -31,8 +34,6 @@ def test_create_draft_of_new_record(client, draft_service, input_draft,
 
     for field in fields_to_check:
         assert field in response_fields
-
-    recid = response.json['pid']
 
 
 def test_create_draft_of_existing_record(app, client, record_service,
@@ -79,4 +80,57 @@ def test_create_draft_of_existing_record(app, client, record_service,
     fields_to_check = ['pid', 'metadata', 'revision',
                        'created', 'updated', 'links']
 
+    for field in fields_to_check:
+        assert field in response_fields
+
     assert response.json['metadata']['title'] == orig_title
+
+
+def test_publish_draft_of_new_record(app, client, draft_service, input_record,
+                                     fake_identity):
+    """Test draft publication of a non-existing record.
+
+    It has to first create said draft.
+    """
+    # Needs `app` context because of invenio_access/permissions.py#166
+    # Crate the draft
+    response = client.post(
+        "/records", data=json.dumps(input_record), headers=HEADERS
+    )
+
+    assert response.status_code == 201
+    recid = response.json['pid']
+
+    # Publish it
+    response = client.post(
+        "/records/{}/draft/actions/publish".format(recid), headers=HEADERS
+    )
+
+    assert response.status_code == 200
+    response_fields = response.json.keys()
+    fields_to_check = ['pid', 'metadata', 'revision',
+                       'created', 'updated', 'links']
+
+    for field in fields_to_check:
+        assert field in response_fields
+
+    # Check draft deletion
+    # TODO: Remove import when exception is properly handled
+    with pytest.raises(NoResultFound):
+        response = client.get(
+            "/records/{}/draft".format(recid),
+            headers=HEADERS
+        )
+    # assert response.status_code == 404
+
+    # Test record exists
+    response = client.get("/records/{}".format(recid), headers=HEADERS)
+
+    assert response.status_code == 200
+
+    response_fields = response.json.keys()
+    fields_to_check = ['pid', 'metadata', 'revision',
+                       'created', 'updated', 'links']
+
+    for field in fields_to_check:
+        assert field in response_fields

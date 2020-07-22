@@ -66,7 +66,8 @@ def test_publish_draft_of_new_record(app, draft_service, input_record,
                                      fake_identity):
     """Test draft publication of a non-existing record.
 
-    It has to first create said draft."""
+    It has to first create said draft.
+    """
     # Needs `app` context because of invenio_access/permissions.py#166
     # Crate the draft
     identified_draft = draft_service.create(

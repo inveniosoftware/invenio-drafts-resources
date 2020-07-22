@@ -14,6 +14,8 @@ from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 from flask_resources.resources import ResourceConfig
 from invenio_records_resources.responses import RecordResponse
+from invenio_records_resources.schemas import RecordSchemaJSONV1
+from invenio_records_resources.serializers import RecordJSONSerializer
 
 from ..serializers import DraftJSONSerializer
 from ..services import DraftVersionService, RecordDraftService
@@ -43,8 +45,10 @@ class DraftResource(SingletonResource):
 
     def read(self, *args, **kwargs):
         """Read an item."""
-        # TODO: IMPLEMENT ME!
-        return self.service.read(), 200
+        identity = g.identity
+        id_ = resource_requestctx.route["pid_value"]
+
+        return self.service.read_draft(id_, identity), 200
 
     def create(self, *args, **kwargs):
         """Create an item."""
@@ -96,6 +100,11 @@ class DraftActionResourceConfig(ResourceConfig):
     """Draft action resource config."""
 
     list_route = "/records/<pid_value>/draft/actions/<action>"
+    response_handlers = {
+        "application/json": RecordResponse(
+            RecordJSONSerializer(schema=RecordSchemaJSONV1)
+        )
+    }
 
 
 class DraftActionResource(SingletonResource):
@@ -111,5 +120,7 @@ class DraftActionResource(SingletonResource):
     def create(self, *args, **kwargs):
         """Any POST business logic."""
         if resource_requestctx.route["action"] == "publish":
-            return self.service.publish()
+            identity = g.identity
+            id_ = resource_requestctx.route["pid_value"]
+            return self.service.publish(id_, identity), 200
         return {}, 200
