@@ -93,6 +93,7 @@ def test_publish_draft_of_new_record(app, draft_service, input_record,
         assert identified_record.record[key] == value
 
     # Check draft deletion
+    # TODO: Remove import when exception is properly handled
     with pytest.raises(NoResultFound):
         identified_draft = draft_service.read_draft(
             identified_draft.id, identity=fake_identity

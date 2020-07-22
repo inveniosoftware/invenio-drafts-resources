@@ -15,7 +15,6 @@ from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
-from werkzeug.utils import cached_property
 
 from ..resource_units import IdentifiedRecordDraft
 from .permissions import DraftPermissionPolicy
@@ -46,7 +45,7 @@ class RecordDraftService(RecordService):
     default_config = RecordDraftServiceConfig
 
     # Over write resolver because default status is a class attr
-    @cached_property
+    @property
     def resolver(self):
         """Factory for creating a draft resolver instance."""
         return self.config.resolver_cls(
@@ -56,17 +55,17 @@ class RecordDraftService(RecordService):
         )
 
     # Draft attrs
-    @cached_property
+    @property
     def draft_cls(self):
         """Factory for creating a record class."""
         return self.config.draft_cls
 
-    @cached_property
+    @property
     def draft_data_validator(self):
         """Returns an instance of the draft data validator."""
         return self.config.draft_data_validator
 
-    @cached_property
+    @property
     def draft_resolver(self):
         """Factory for creating a draft resolver instance."""
         return self.config.resolver_cls(
