@@ -126,9 +126,9 @@ class RecordDraftService(RecordService):
         # Get draft
         pid, draft = self.resolve_draft(id_=id_)
         # Validate and create record, register PID
-        _data = draft.dumps()
-        self.data_validator.validate(_data)  # Validate against record schema
-        record = self.record_cls.create(_data, id_=draft.id)  # Use same UUID
+        data = draft.dumps()
+        self.data_validator.validate(data)  # Validate against record schema
+        record = self.record_cls.create(data, id_=draft.id)  # Use same UUID
         pid.register()
         # Remove draft
         draft.delete()
@@ -138,5 +138,4 @@ class RecordDraftService(RecordService):
             self.indexer.index(record)
             self.indexer.delete(draft)
 
-        record_state = self.resource_unit(pid=pid, record=record)
-        return record_state
+        return self.resource_unit(pid=pid, record=record)

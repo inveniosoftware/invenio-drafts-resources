@@ -36,7 +36,7 @@ def test_create_draft_of_new_record(client, draft_service, input_draft,
         assert field in response_fields
 
 
-def test_create_draft_of_existing_record(app, client, record_service,
+def test_create_draft_of_existing_record(client, record_service,
                                          input_record, fake_identity):
     """Test draft creation of an existing record."""
     # Create new record manually since the endpoint it overwritten
@@ -86,14 +86,13 @@ def test_create_draft_of_existing_record(app, client, record_service,
     assert response.json['metadata']['title'] == orig_title
 
 
-def test_publish_draft_of_new_record(app, client, draft_service, input_record,
+def test_publish_draft_of_new_record(client, draft_service, input_record,
                                      fake_identity):
     """Test draft publication of a non-existing record.
 
     It has to first create said draft.
     """
-    # Needs `app` context because of invenio_access/permissions.py#166
-    # Crate the draft
+    # Create the draft
     response = client.post(
         "/records", data=json.dumps(input_record), headers=HEADERS
     )
