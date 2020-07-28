@@ -20,8 +20,7 @@ from invenio_drafts_resources.resources import DraftActionResource, \
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
 
-def test_create_draft_of_new_record(client, draft_service, input_draft,
-                                    fake_identity):
+def test_create_draft_of_new_record(client, input_draft):
     """Test draft creation of a non-existing record."""
     response = client.post(
         "/records", data=json.dumps(input_draft), headers=HEADERS
@@ -86,8 +85,7 @@ def test_create_draft_of_existing_record(client, record_service,
     assert response.json['metadata']['title'] == orig_title
 
 
-def test_publish_draft_of_new_record(client, draft_service, input_record,
-                                     fake_identity):
+def test_publish_draft_of_new_record(client, input_record):
     """Test draft publication of a non-existing record.
 
     It has to first create said draft.
