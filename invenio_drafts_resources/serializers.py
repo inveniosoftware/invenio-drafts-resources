@@ -12,7 +12,6 @@ import json
 
 import pytz
 from flask_resources.serializers import SerializerMixin
-from invenio_records_resources.links import link_for
 from invenio_records_resources.serializers import RecordJSONSerializer
 
 
@@ -46,10 +45,7 @@ class DraftJSONSerializer(RecordJSONSerializer):
                 if draft.expiry_date and not draft.expiry_date.tzinfo
                 else None
             ),
-            links=dict(
-                self=link_for(api=True, tpl_key='draft', pid=pid),
-                self_html=link_for(api=False, tpl_key='draft', pid=pid),
-            )
+            links=dict()  # TODO: Implement me. See issue #19
         )
 
         # TODO: Shall we includ fork_version_id and record_pid in

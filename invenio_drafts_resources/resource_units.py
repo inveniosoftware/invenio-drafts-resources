@@ -19,8 +19,9 @@ class IdentifiedRecordDraft(IdentifiedRecord):
     it might not have a PID.
     """
 
-    def __init__(self, pid=None, record=None):
+    def __init__(self, pid=None, record=None, links=None):
         """Initialize the record state."""
         self.id = pid.pid_value if pid else None
         self.pids = [pid] if pid else []
         self.record = record
+        self.links = links

@@ -18,6 +18,7 @@ history = open("CHANGES.rst").read()
 tests_require = [
     "pytest-invenio>=1.3.2",
     "invenio-app>=1.3.0",
+    "pytest>=4.6.1,<6.0.0"
 ]
 
 # Should follow inveniosoftware/invenio versions
@@ -46,9 +47,12 @@ extras_require = {
     "tests": tests_require,
 }
 
-extras_require["all"] = []
-for reqs in extras_require.values():
-    extras_require["all"].extend(reqs)
+all_requires = []
+for key, reqs in extras_require.items():
+    if key in {"elasticsearch6", "elasticsearch7"}:
+        continue
+    all_requires.extend(reqs)
+extras_require["all"] = all_requires
 
 setup_requires = [
     "Babel>=1.3",
