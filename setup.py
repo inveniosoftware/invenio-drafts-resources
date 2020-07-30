@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
@@ -56,13 +57,13 @@ setup_requires = [
 
 install_requires = [
     "Flask-BabelEx>=0.9.4",
+    "flask-resources>=0.2.1,<1.0.0",
     "invenio-base>=1.2.3",
     "invenio-pidstore>=1.2.0",
     "invenio-indexer>=1.1.1",
     "invenio-records>=1.3.2",
     "invenio-rest>=1.2.1",
-    # "flask-resources", # FIXME: Currently in dev
-    # Service
+    "invenio-records-resources>=0.3.2,<0.4.0",
     "invenio-accounts>=1.3.0",
     "invenio-files-rest>=1.2.0",
     "invenio-records-permissions>=0.8.0",
