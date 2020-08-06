@@ -11,4 +11,4 @@
 
 from .json import RecordDraftSchemaJSONV1
 
-__all__ = ("RecordDraftSchemaJSONV1")
+__all__ = ("RecordDraftSchemaJSONV1",)

@@ -7,4 +7,8 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Invenio-Drafts-Resources Configuration."""
+"""Serializers package."""
+
+from .json import RecordDraftJSONSerializer
+
+__all__ = ("RecordDraftJSONSerializer",)

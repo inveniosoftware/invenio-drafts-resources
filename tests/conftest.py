@@ -118,6 +118,11 @@ def app_config(app_config):
     https://github.com/inveniosoftware/invenio-records-permissions/issues/51
     """
     app_config["RECORDS_REST_ENDPOINTS"] = {}
+    app_config["RECORDS_UI_ENDPOINTS"] = {
+        "recid": {
+            "route": "/records/<pid_value>"
+        }
+    }
     app_config["INDEXER_DEFAULT_DOC_TYPE"] = "testrecord"
     app_config["INDEXER_DEFAULT_INDEX"] = TestSearch.Meta.index
     app_config["SEARCH_MAPPINGS"] = ['drafts', 'records']
@@ -174,14 +179,22 @@ def app(app):
 
 
 @pytest.fixture(scope="module")
-def draft_service():
-    """Draft service factory fixture."""
+def draft_service(app):
+    """Draft service factory fixture.
+
+    Depends on app fixture, because you need an app context
+    to use a service.
+    """
     return _draft_service()
 
 
 @pytest.fixture(scope="module")
-def record_service():
-    """Record service factory fixture."""
+def record_service(app):
+    """Record service factory fixture.
+
+    Depends on app fixture, because you need an app context
+    to use a service.
+    """
     return _record_service()
 
 
@@ -191,7 +204,8 @@ def input_draft():
     return {
         "_access": {"metadata_restricted": False, "files_restricted": False},
         "_owners": [1],
-        "_created_by": 1
+        "_created_by": 1,
+        "title": "A Romans story",
     }
 
 

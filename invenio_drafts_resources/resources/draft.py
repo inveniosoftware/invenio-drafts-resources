@@ -12,20 +12,10 @@
 from flask import g
 from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
-from flask_resources.resources import ResourceConfig
-from invenio_records_resources.responses import RecordResponse
 
-from ..serializers import RecordDraftJSONSerializer
 from ..services import DraftVersionService, RecordDraftService
-
-
-class DraftResourceConfig(ResourceConfig):
-    """Draft resource config."""
-
-    list_route = "/records/<pid_value>/draft"
-    response_handlers = {
-        "application/json": RecordResponse(RecordDraftJSONSerializer())
-    }
+from .draft_config import DraftActionResourceConfig, DraftResourceConfig, \
+    DraftVersionResourceConfig
 
 
 class DraftResource(SingletonResource):
@@ -64,15 +54,6 @@ class DraftResource(SingletonResource):
         return self.service.delete(), 200
 
 
-class DraftVersionResourceConfig(ResourceConfig):
-    """Draft resource config."""
-
-    list_route = "/records/<pid_value>/versions"
-    response_handlers = {
-        "application/json": RecordResponse(RecordDraftJSONSerializer())
-    }
-
-
 class DraftVersionResource(CollectionResource):
     """Draft version resource."""
 
@@ -94,15 +75,6 @@ class DraftVersionResource(CollectionResource):
         id_ = resource_requestctx.route["pid_value"]
 
         return self.service.new_version(id_, identity), 201
-
-
-class DraftActionResourceConfig(ResourceConfig):
-    """Draft action resource config."""
-
-    list_route = "/records/<pid_value>/draft/actions/<action>"
-    response_handlers = {
-        "application/json": RecordResponse(RecordDraftJSONSerializer())
-    }
 
 
 class DraftActionResource(SingletonResource):

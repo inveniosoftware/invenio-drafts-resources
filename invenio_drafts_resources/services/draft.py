@@ -16,6 +16,10 @@ from invenio_db import db
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
 
+from ..links import DraftPublishLinkBuilder, DraftSelfHtmlLinkBuilder, \
+    DraftSelfLinkBuilder, RecordEditLinkBuilder
+from ..resources.draft_config import DraftActionResourceConfig, \
+    DraftResourceConfig
 from .permissions import DraftPermissionPolicy
 from .pid_manager import PIDManager
 from .search import draft_record_to_index
@@ -29,20 +33,45 @@ class RecordDraftServiceConfig(RecordServiceConfig):
 
     # RecordService configuration
     pid_manager = PIDManager()
+    record_link_builders = RecordServiceConfig.record_link_builders + [
+        RecordEditLinkBuilder
+    ]
 
     # DraftService configuration.
     record_to_index = draft_record_to_index
     # WHY: We want to force user input choice here.
     draft_cls = None
+    draft_route = DraftResourceConfig.list_route
+    draft_action_route = DraftActionResourceConfig.list_route
+    draft_link_builders = [
+        DraftSelfLinkBuilder,
+        DraftSelfHtmlLinkBuilder,
+        DraftPublishLinkBuilder
+    ]
 
 
 class RecordDraftService(RecordService):
     """Draft Service interface.
 
+    This service provides an interface to business logic for
+    published AND draft records. When creating a custom service
+    for a specialized record (e.g. Authors), consider if you need
+    draft functionality or not. If you do, inherit from this service;
+    otherwise, inherit from the RecordService directly.
+
     This service includes versioning.
     """
 
     default_config = RecordDraftServiceConfig
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(RecordDraftService, self).__init__(*args, **kwargs)
+        self.linker.register_link_builders({
+            "draft": [
+                lb(self.config) for lb in self.config.draft_link_builders
+            ]
+        })
 
     @property
     def pid_manager(self):
@@ -66,14 +95,23 @@ class RecordDraftService(RecordService):
     # Inherits record read, search, create, delete and update
 
     def read_draft(self, id_, identity):
-        """Retrieve a record."""
+        """Retrieve a draft."""
         pid, draft = self.pid_manager.resolve(id_, draft=True)
+        # TODO: "read" is used here AND in inherited read() method
+        #       but have different meanings: read a draft or read a record
+        #       Permission mechanism should be per resource unit OR per
+        #       service
         self.require_permission(identity, "read", record=draft)
+
+        links = self.linker.links(
+            "draft", identity, pid_value=pid.pid_value, record=draft
+        )
+
         # Todo: how do we deal with tombstone pages
-        return self.resource_unit(pid=pid, record=draft, links=None)
+        return self.resource_unit(pid=pid, record=draft, links=links)
 
     def update_draft(self, id_, data, identity):
-        """Replace a record."""
+        """Replace a draft."""
         # TODO: etag and versioning
         pid, draft = self.pid_manager.resolve(id_, draft=True)
         # Permissions
@@ -87,7 +125,11 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        return self.resource_unit(pid=pid, record=draft, links=None)
+        links = self.linker.links(
+            "draft", identity, pid_value=pid.pid_value, record=draft
+        )
+
+        return self.resource_unit(pid=pid, record=draft, links=links)
 
     def create(self, data, identity):
         """Create a draft for a new record.
@@ -104,7 +146,11 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        return self.resource_unit(pid=pid, record=draft, links=None)
+        links = self.linker.links(
+            "draft", identity, pid_value=pid.pid_value, record=draft
+        )
+
+        return self.resource_unit(pid=pid, record=draft, links=links)
 
     def _patch_data(self, record, data):
         """Temporarily here until the merge strategy is set."""
@@ -127,7 +173,11 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        return self.resource_unit(pid=pid, record=draft, links=None)
+        links = self.linker.links(
+            "draft", identity, pid_value=pid.pid_value, record=draft
+        )
+
+        return self.resource_unit(pid=pid, record=draft, links=links)
 
     def _publish_revision(self, validated_data, pid):
         """Publish draft of existing record (edition)."""
@@ -173,7 +223,11 @@ class RecordDraftService(RecordService):
             self.indexer.delete(draft)
             self.indexer.index(record)
 
-        return self.resource_unit(pid=pid, record=record, links=None)
+        links = self.linker.links(
+            "record", identity, pid_value=pid.pid_value, record=record
+        )
+
+        return self.resource_unit(pid=pid, record=record, links=links)
 
     def new_version(self, id_, identity):
         """Create a new version of a record."""
@@ -196,4 +250,8 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        return self.resource_unit(pid=pid, record=draft, links=None)
+        links = self.linker.links(
+            "draft", identity, pid_value=pid.pid_value, record=draft
+        )
+
+        return self.resource_unit(pid=pid, record=draft, links=links)
