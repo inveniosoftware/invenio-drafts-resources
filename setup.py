@@ -84,7 +84,7 @@ with open(os.path.join("invenio_drafts_resources", "version.py"), "rt") as fp:
     version = g["__version__"]
 
 setup(
-    name="Invenio-Drafts-Resources",
+    name="invenio-drafts-resources",
     version=version,
     description=__doc__,
     long_description=readme + "\n\n" + history,
