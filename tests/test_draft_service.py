@@ -73,12 +73,12 @@ def test_create_publish_new_record_draft(app, draft_service, input_record,
     with pytest.raises(NoResultFound):
         # NOTE: Draft and Record have the same `id`
         identified_draft = draft_service.read_draft(
-            identified_record.id, identity=fake_identity
+            fake_identity, identified_record.id
         )
 
     # Test record exists
     identified_record = draft_service.read(
-        identified_record.id, identity=fake_identity
+        fake_identity, identified_record.id
     )
 
     assert identified_record.id

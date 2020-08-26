@@ -34,7 +34,7 @@ class DraftResource(SingletonResource):
         identity = g.identity
         id_ = resource_requestctx.route["pid_value"]
 
-        return self.service.read_draft(id_, identity), 200
+        return self.service.read_draft(identity, id_), 200
 
     def create(self):
         """Create an item."""
@@ -42,7 +42,7 @@ class DraftResource(SingletonResource):
         identity = g.identity
         id_ = resource_requestctx.route["pid_value"]
 
-        return self.service.edit(id_, data, identity), 201
+        return self.service.edit(identity, id_, data), 201
 
     def update(self):
         """Update an item."""
@@ -75,7 +75,7 @@ class DraftVersionResource(CollectionResource):
         identity = g.identity
         id_ = resource_requestctx.route["pid_value"]
 
-        return self.service.new_version(id_, identity), 201
+        return self.service.new_version(identity, id_), 201
 
 
 class DraftActionResource(SingletonResource):
@@ -104,4 +104,4 @@ class DraftActionResource(SingletonResource):
         identity = g.identity
         id_ = resource_requestctx.route["pid_value"]
 
-        return cmd_func(id_, identity), 202
+        return cmd_func(identity, id_), 202

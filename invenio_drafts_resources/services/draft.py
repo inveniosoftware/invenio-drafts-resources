@@ -92,7 +92,7 @@ class RecordDraftService(RecordService):
     # High-level API
     # Inherits record read, search, create, delete and update
 
-    def read_draft(self, id_, identity):
+    def read_draft(self, identity, id_):
         """Retrieve a draft."""
         pid, draft = self.pid_manager.resolve(id_, draft=True)
         # TODO: "read" is used here AND in inherited read() method
@@ -108,7 +108,7 @@ class RecordDraftService(RecordService):
         # Todo: how do we deal with tombstone pages
         return self.resource_unit(pid=pid, record=draft, links=links)
 
-    def update_draft(self, id_, data, identity):
+    def update_draft(self, identity, id_, data):
         """Replace a draft."""
         # TODO: etag and versioning
         pid, draft = self.pid_manager.resolve(id_, draft=True)
@@ -129,7 +129,7 @@ class RecordDraftService(RecordService):
 
         return self.resource_unit(pid=pid, record=draft, links=links)
 
-    def create(self, data, identity):
+    def create(self, identity, data):
         """Create a draft for a new record.
 
         It does not eagerly create the associated record.
@@ -156,7 +156,7 @@ class RecordDraftService(RecordService):
         for key in data.keys():
             record[key] = data[key]
 
-    def edit(self, id_, data, identity):
+    def edit(self, identity, id_, data):
         """Create a new revision or a draft for an existing record.
 
         :param id_: record PID value.
@@ -201,7 +201,7 @@ class RecordDraftService(RecordService):
 
         return record
 
-    def publish(self, id_, identity):
+    def publish(self, identity, id_):
         """Publish a draft."""
         self.require_permission(identity, "publish")
         # Get draft
@@ -227,7 +227,7 @@ class RecordDraftService(RecordService):
 
         return self.resource_unit(pid=pid, record=record, links=links)
 
-    def new_version(self, id_, identity):
+    def new_version(self, identity, id_):
         """Create a new version of a record."""
         self.require_permission(identity, "create")
         # Get record

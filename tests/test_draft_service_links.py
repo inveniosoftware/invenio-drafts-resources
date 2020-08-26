@@ -48,7 +48,7 @@ def test_linker_links(draft_service, fake_identity, identified_draft):
 def test_read_draft_links(draft_service, fake_identity, identified_draft):
     pid_value = identified_draft.id
 
-    read_draft = draft_service.read_draft(pid_value, fake_identity)
+    read_draft = draft_service.read_draft(fake_identity, pid_value)
 
     assert_expected_links(pid_value, read_draft.links)
 
@@ -58,14 +58,13 @@ def test_update_draft_links(
     pid_value = identified_draft.id
 
     updated_draft = draft_service.update_draft(
-        pid_value, input_draft, fake_identity
+        fake_identity, pid_value, input_draft
     )
 
     assert_expected_links(pid_value, updated_draft.links)
 
 
-def test_publish_links(
-        draft_service, fake_identity, input_draft):
+def test_publish_links(draft_service, fake_identity, input_draft):
     # NOTE: We have to create a new draft since we don't want to destroy
     #       the fixture one.
     identified_draft = draft_service.create(
@@ -74,13 +73,14 @@ def test_publish_links(
     pid_value = identified_draft.id
 
     # Publish
-    published_record = draft_service.publish(pid_value, fake_identity)
+    published_record = draft_service.publish(fake_identity, pid_value)
 
     expected_links = {
         "self": f"https://localhost:5000/api/records/{pid_value}",
         "self_html": f"https://localhost:5000/records/{pid_value}",
         "delete": f"https://localhost:5000/api/records/{pid_value}",
         "edit": f"https://localhost:5000/api/records/{pid_value}/draft",
+        "files": f"https://localhost:5000/api/records/{pid_value}/files",
     }
 
     assert expected_links == published_record.links
@@ -98,10 +98,10 @@ def test_new_version_links(draft_service, fake_identity, input_draft):
         data=input_draft, identity=fake_identity
     )
     pid_value = identified_draft.id
-    published_record = draft_service.publish(pid_value, fake_identity)
+    published_record = draft_service.publish(fake_identity, pid_value)
     pid_value = published_record.id
 
-    versioned_draft = draft_service.new_version(pid_value, fake_identity)
+    versioned_draft = draft_service.new_version(fake_identity, pid_value)
 
     pid_value = versioned_draft.id
     assert_expected_links(pid_value, versioned_draft.links)
