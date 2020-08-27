@@ -40,3 +40,6 @@ class DraftActionResourceConfig(ResourceConfig):
     response_handlers = {
         "application/json": RecordResponse(RecordDraftJSONSerializer())
     }
+    action_commands = {
+        "publish": "publish",
+    }
