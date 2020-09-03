@@ -26,20 +26,6 @@ class DraftSelfLinkBuilder(RecordLinkBuilder):
         )
 
 
-class DraftSelfHtmlLinkBuilder(RecordLinkBuilder):
-    """Builds draft "self_html" link."""
-
-    def __init__(self, config):
-        """Constructor."""
-        super(DraftSelfHtmlLinkBuilder, self).__init__(
-            key="self_html",
-            # TODO: Invenio-App-RDM needs to set deposit page in config
-            route="/deposits/<pid_value>/edit",
-            action="read",
-            permission_policy=config.permission_policy_cls
-        )
-
-
 class DraftPublishLinkBuilder(RecordLinkBuilder):
     """Builds draft "publish" link."""
 

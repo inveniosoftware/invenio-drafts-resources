@@ -16,8 +16,8 @@ from invenio_db import db
 from invenio_records_resources.services import MarshmallowDataValidator, \
     RecordService, RecordServiceConfig
 
-from ..links import DraftPublishLinkBuilder, DraftSelfHtmlLinkBuilder, \
-    DraftSelfLinkBuilder, RecordEditLinkBuilder
+from ..links import DraftPublishLinkBuilder, DraftSelfLinkBuilder, \
+    RecordEditLinkBuilder
 from .permissions import DraftPermissionPolicy
 from .pid_manager import PIDManager
 from .search import draft_record_to_index
@@ -43,7 +43,6 @@ class RecordDraftServiceConfig(RecordServiceConfig):
     draft_action_route = None
     draft_link_builders = [
         DraftSelfLinkBuilder,
-        DraftSelfHtmlLinkBuilder,
         DraftPublishLinkBuilder
     ]
 

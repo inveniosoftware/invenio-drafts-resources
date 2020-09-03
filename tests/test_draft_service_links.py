@@ -24,7 +24,6 @@ def identified_draft(draft_service, es, fake_identity, input_draft):
 def assert_expected_links(pid_value, links):
     expected_links = {
         "self": f"https://localhost:5000/api/records/{pid_value}/draft",
-        "self_html": f"https://localhost:5000/deposits/{pid_value}/edit",
         "publish": f"https://localhost:5000/api/records/{pid_value}/draft/actions/publish",  # noqa
     }
 
@@ -77,7 +76,6 @@ def test_publish_links(draft_service, fake_identity, input_draft):
 
     expected_links = {
         "self": f"https://localhost:5000/api/records/{pid_value}",
-        "self_html": f"https://localhost:5000/records/{pid_value}",
         "delete": f"https://localhost:5000/api/records/{pid_value}",
         "edit": f"https://localhost:5000/api/records/{pid_value}/draft",
         "files": f"https://localhost:5000/api/records/{pid_value}/files",
