@@ -15,10 +15,13 @@ import uuid
 from invenio_db import db
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
+from invenio_records_resources.services.components import AccessComponent, \
+    FilesComponent, MetadataComponent, PIDSComponent
 from marshmallow import ValidationError
 
 from ..links import DraftPublishLinkBuilder, DraftSelfLinkBuilder, \
     RecordEditLinkBuilder
+from .components import RelationsComponent
 from .permissions import DraftPermissionPolicy
 from .pid_manager import PIDManager
 from .search import draft_record_to_index
@@ -45,6 +48,14 @@ class RecordDraftServiceConfig(RecordServiceConfig):
     draft_link_builders = [
         DraftSelfLinkBuilder,
         DraftPublishLinkBuilder
+    ]
+
+    components = [
+        MetadataComponent,
+        PIDSComponent,
+        RelationsComponent,
+        AccessComponent,
+        FilesComponent,
     ]
 
 
@@ -100,6 +111,12 @@ class RecordDraftService(RecordService):
         #       Permission mechanism should be per resource unit OR per
         #       service
         self.require_permission(identity, "read", record=draft)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'read_draft'):
+                component.read_draft(draft, identity)
+
         draft_projection = self.data_schema(identity=identity, record=draft).dump(draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
@@ -120,6 +137,12 @@ class RecordDraftService(RecordService):
         except ValidationError as e:
             validated_data = e.valid_data
             errors = e.messages
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'update_draft'):
+                component.update_draft(draft, identity, validated_data)
+
         # FIXME: extract somewhere else
         self._patch_data(draft, validated_data)
         draft.update(draft.dumps())
@@ -151,9 +174,17 @@ class RecordDraftService(RecordService):
             errors = e.messages
 
         rec_uuid = uuid.uuid4()
-        pid = self.pid_manager.mint(record_uuid=rec_uuid, data=validated_data)
-        draft = self.draft_cls.create(validated_data, id_=rec_uuid)
+        draft_data = {}
+        # TODO (Alex): Replace with `draft.pid = pid`
+        pid = self.pid_manager.mint(record_uuid=rec_uuid, data=draft_data)
+        draft = self.draft_cls.create(id_=rec_uuid, data=draft_data)
 
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'create'):
+                component.create(draft, identity, validated_data)
+
+        draft.commit()
         db.session.commit()  # Persist DB
         if self.indexer:
             self.indexer.index(draft)
@@ -190,6 +221,12 @@ class RecordDraftService(RecordService):
         # TODO (Alex): Check actually if the draft is already there before proceeding?
         draft = self.draft_cls.create(record.dumps(), id_=record.id,
                                       fork_version_id=record.revision_id)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'edit'):
+                component.edit(record, draft, identity, validated_data)
+
         db.session.commit()  # Persist DB
         if self.indexer:
             self.indexer.index(draft)
@@ -216,9 +253,7 @@ class RecordDraftService(RecordService):
         conceptrecid = record['conceptrecid']
 
         # FIXME: This implies two db queries for the same in pid_manager
-        if self.pid_manager.is_first_version(
-            pid_value=conceptrecid
-        ):
+        if self.pid_manager.is_first_version(pid_value=conceptrecid):
             self.pid_manager.register_pid(record['conceptrecid'])
 
         self.pid_manager.register_pid(record['recid'])
@@ -237,6 +272,12 @@ class RecordDraftService(RecordService):
             record = self._publish_revision(validated_data, pid)
         else:
             record = self._publish_new_version(validated_data, draft)
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'publish'):
+                component.publish(draft, identity, validated_data)
+
         # Remove draft
         draft.delete(force=True)
         db.session.commit()  # Persist DB
@@ -267,6 +308,12 @@ class RecordDraftService(RecordService):
             data=data,
             id_=rec_uuid
         )
+
+        # Run components
+        for component in self.components:
+            if hasattr(component, 'new_version'):
+                component.new_version(draft, identity)
+
         db.session.commit()  # Persist DB
         # Index the record
         if self.indexer:
