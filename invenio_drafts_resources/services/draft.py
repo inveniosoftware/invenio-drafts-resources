@@ -17,7 +17,6 @@ from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
 from invenio_records_resources.services.components import AccessComponent, \
     FilesComponent, MetadataComponent, PIDSComponent
-from marshmallow import ValidationError
 
 from ..links import DraftPublishLinkBuilder, DraftSelfLinkBuilder, \
     RecordEditLinkBuilder
@@ -117,13 +116,14 @@ class RecordDraftService(RecordService):
             if hasattr(component, 'read_draft'):
                 component.read_draft(draft, identity)
 
-        draft_projection = self.data_schema(identity=identity, record=draft).dump(draft)
+        draft_projection = self.data_schema.dump(identity, draft, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
 
         # Todo: how do we deal with tombstone pages
-        return self.resource_unit(pid=pid, record=draft_projection, links=links)
+        return self.resource_unit(
+            pid=pid, record=draft_projection, links=links)
 
     def update_draft(self, identity, id_, data):
         """Replace a draft."""
@@ -131,12 +131,8 @@ class RecordDraftService(RecordService):
         pid, draft = self.pid_manager.resolve(id_, draft=True)
         # Permissions
         self.require_permission(identity, "update", record=draft)
-        try:
-            validated_data = self.data_schema(identity=identity).load(data)
-            errors = None
-        except ValidationError as e:
-            validated_data = e.valid_data
-            errors = e.messages
+        validated_data, errors = self.data_schema.load(
+            data, identity, raise_errors=False)
 
         # Run components
         for component in self.components:
@@ -151,12 +147,13 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        draft_projection = self.data_schema(identity=identity, record=draft).dump(draft)
+        draft_projection = self.data_schema.dump(draft, identity, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
 
-        return self.resource_unit(pid=pid, record=draft_projection, links=links, errors=errors)
+        return self.resource_unit(
+            pid=pid, record=draft_projection, links=links, errors=errors)
 
     def create(self, identity, data):
         """Create a draft for a new record.
@@ -165,13 +162,8 @@ class RecordDraftService(RecordService):
         """
         self.require_permission(identity, "create")
 
-        # TODO (Alex): extract somewhere else?
-        try:
-            validated_data = self.data_schema(identity=identity).load(data)
-            errors = None
-        except ValidationError as e:
-            validated_data = e.valid_data
-            errors = e.messages
+        validated_data, errors = self.data_schema.load(
+            data, identity, raise_errors=False)
 
         rec_uuid = uuid.uuid4()
         draft_data = {}
@@ -189,12 +181,13 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        draft_projection = self.data_schema(identity=identity, record=draft).dump(draft)
+        draft_projection = self.data_schema.dump(data, identity, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
 
-        return self.resource_unit(pid=pid, record=draft_projection, links=links, errors=errors)
+        return self.resource_unit(
+            pid=pid, record=draft_projection, links=links, errors=errors)
 
     def _patch_data(self, record, data):
         """Temporarily here until the merge strategy is set."""
@@ -209,12 +202,8 @@ class RecordDraftService(RecordService):
         """
         pid, record = self.pid_manager.resolve(id_)
         self.require_permission(identity, "create")
-        try:
-            validated_data = self.data_schema(identity=identity).load(data)
-            errors = None
-        except ValidationError as e:
-            validated_data = e.valid_data
-            errors = e.messages
+        validated_data, errors = self.data_schema.load(
+            data, identity, raise_errors=False)
 
         # TODO (Alex): patch or keep existing data?
         self._patch_data(record, validated_data)
@@ -231,7 +220,8 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
-        draft_projection = self.data_schema(identity=identity, pid=pid, record=draft).dump(draft)
+        draft_projection = self.data_schema.dump(
+            draft, identity, pid=pid, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft
         )
@@ -266,7 +256,8 @@ class RecordDraftService(RecordService):
         # Get draft
         pid, draft = self.pid_manager.resolve(id_, draft=True)
         # Fully validate draft now
-        validated_data = self.data_schema(identity=identity, pid=pid, record=draft).load(draft.dumps())
+        validated_data, _ = self.data_schema.load(
+            draft.dumps(), identity, pid=pid, record=draft)
         # Publish it
         if self.pid_manager.is_published(pid):  # Then we publish a revision
             record = self._publish_revision(validated_data, pid)
@@ -286,11 +277,15 @@ class RecordDraftService(RecordService):
             self.indexer.delete(draft)
             self.indexer.index(record)
 
+        record_projection = self.data_schema.dump(
+            record, identity, pid=pid, record=record)
         links = self.linker.links(
-            "record", identity, pid_value=pid.pid_value, record=record
+            "record", identity, pid_value=pid.pid_value,
+            record=record_projection,
         )
 
-        return self.resource_unit(pid=pid, record=record, links=links)
+        return self.resource_unit(
+            pid=pid, record=record_projection, links=links)
 
     def new_version(self, identity, id_):
         """Create a new version of a record."""
@@ -319,8 +314,11 @@ class RecordDraftService(RecordService):
         if self.indexer:
             self.indexer.index(draft)
 
+        draft_projection = self.data_schema.dump(
+            draft, identity, pid=pid, record=draft)
         links = self.linker.links(
-            "draft", identity, pid_value=pid.pid_value, record=draft
+            "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
 
-        return self.resource_unit(pid=pid, record=draft, links=links)
+        return self.resource_unit(
+            pid=pid, record=draft_projection, links=links)
