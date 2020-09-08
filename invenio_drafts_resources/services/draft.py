@@ -114,7 +114,7 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'read_draft'):
-                component.read_draft(draft, identity)
+                component.read_draft(identity, draft=draft)
 
         draft_projection = self.data_schema.dump(identity, draft, record=draft)
         links = self.linker.links(
@@ -137,7 +137,8 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'update_draft'):
-                component.update_draft(draft, identity, validated_data)
+                component.update_draft(
+                    identity, draft=draft, data=validated_data)
 
         # FIXME: extract somewhere else
         self._patch_data(draft, validated_data)
@@ -174,7 +175,7 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'create'):
-                component.create(draft, identity, validated_data)
+                component.create(identity, draft=draft, data=validated_data)
 
         draft.commit()
         db.session.commit()  # Persist DB
@@ -214,7 +215,8 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'edit'):
-                component.edit(record, draft, identity, validated_data)
+                component.edit(
+                    identity, draft=draft, record=record, data=validated_data)
 
         db.session.commit()  # Persist DB
         if self.indexer:
@@ -267,7 +269,7 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'publish'):
-                component.publish(draft, identity, validated_data)
+                component.publish(identity, draft=draft, data=validated_data)
 
         # Remove draft
         draft.delete(force=True)
@@ -307,7 +309,7 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'new_version'):
-                component.new_version(draft, identity)
+                component.new_version(identity, draft=draft)
 
         db.session.commit()  # Persist DB
         # Index the record
