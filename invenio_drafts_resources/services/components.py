@@ -8,8 +8,15 @@
 
 """Records service copmonent base classes."""
 
-from invenio_records_resources.services.components import ServiceComponent
+from invenio_records_resources.services.components import ServiceComponent, MetadataComponent
 
 
 class RelationsComponent(ServiceComponent):
     """Service component for PID relations integration."""
+
+
+class DraftMetadataComponent(MetadataComponent):
+    """Service component for draft metadata integration."""
+
+    def update_draft(self, *args, **kwargs):
+        self.update(*args, **kwargs)

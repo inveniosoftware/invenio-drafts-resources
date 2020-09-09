@@ -115,7 +115,6 @@ class RecordDraftService(RecordService):
         for component in self.components:
             if hasattr(component, 'read_draft'):
                 component.read_draft(identity, draft=draft)
-
         draft_projection = self.data_schema.dump(identity, draft, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
@@ -132,23 +131,21 @@ class RecordDraftService(RecordService):
         # Permissions
         self.require_permission(identity, "update", record=draft)
         validated_data, errors = self.data_schema.load(
-            data, identity, raise_errors=False)
+            identity, data, raise_errors=False)
 
         # Run components
         for component in self.components:
             if hasattr(component, 'update_draft'):
                 component.update_draft(
-                    identity, draft=draft, data=validated_data)
+                    identity, record=draft, data=validated_data)
 
-        # FIXME: extract somewhere else
-        self._patch_data(draft, validated_data)
-        draft.update(draft.dumps())
         draft.commit()
+        db.session.commit()
 
         if self.indexer:
             self.indexer.index(draft)
 
-        draft_projection = self.data_schema.dump(draft, identity, record=draft)
+        draft_projection = self.data_schema.dump(identity, draft, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
@@ -162,27 +159,30 @@ class RecordDraftService(RecordService):
         It does not eagerly create the associated record.
         """
         self.require_permission(identity, "create")
-
         validated_data, errors = self.data_schema.load(
-            data, identity, raise_errors=False)
+            identity, data, raise_errors=False)
 
+        # TODO (Alex): Replace with:
+        #   draft = self.draft_cls.create(id_=rec_uuid, data={}, pid=pid)
+        #
+        # ...or even (and have the UUID, PID automatically created):
+        #   draft = self.draft_cls.create()
         rec_uuid = uuid.uuid4()
         draft_data = {}
-        # TODO (Alex): Replace with `draft.pid = pid`
         pid = self.pid_manager.mint(record_uuid=rec_uuid, data=draft_data)
         draft = self.draft_cls.create(id_=rec_uuid, data=draft_data)
 
         # Run components
         for component in self.components:
             if hasattr(component, 'create'):
-                component.create(identity, draft=draft, data=validated_data)
+                component.create(identity, record=draft, data=validated_data)
 
         draft.commit()
         db.session.commit()  # Persist DB
         if self.indexer:
             self.indexer.index(draft)
 
-        draft_projection = self.data_schema.dump(data, identity, record=draft)
+        draft_projection = self.data_schema.dump(identity, draft, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
@@ -204,7 +204,7 @@ class RecordDraftService(RecordService):
         pid, record = self.pid_manager.resolve(id_)
         self.require_permission(identity, "create")
         validated_data, errors = self.data_schema.load(
-            data, identity, raise_errors=False)
+            identity, data, raise_errors=False)
 
         # TODO (Alex): patch or keep existing data?
         self._patch_data(record, validated_data)
@@ -223,7 +223,7 @@ class RecordDraftService(RecordService):
             self.indexer.index(draft)
 
         draft_projection = self.data_schema.dump(
-            draft, identity, pid=pid, record=draft)
+            identity, draft, pid=pid, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft
         )
@@ -241,6 +241,10 @@ class RecordDraftService(RecordService):
 
     def _publish_new_version(self, validated_data, draft):
         """Publish draft of a new record."""
+        # TODO (Alex): Remove when we figure out how to copy system fields
+        # from draft to record.
+        validated_data['conceptrecid'] = draft['conceptrecid']
+        validated_data['recid'] = draft['recid']
         record = self.record_cls.create(validated_data, id_=draft.id)
         conceptrecid = record['conceptrecid']
 
@@ -258,8 +262,9 @@ class RecordDraftService(RecordService):
         # Get draft
         pid, draft = self.pid_manager.resolve(id_, draft=True)
         # Fully validate draft now
+        # TODO: Add error_map for `ValidationError` in the resource config
         validated_data, _ = self.data_schema.load(
-            draft.dumps(), identity, pid=pid, record=draft)
+            identity, draft.dumps(), pid=pid, record=draft)
         # Publish it
         if self.pid_manager.is_published(pid):  # Then we publish a revision
             record = self._publish_revision(validated_data, pid)
@@ -269,7 +274,7 @@ class RecordDraftService(RecordService):
         # Run components
         for component in self.components:
             if hasattr(component, 'publish'):
-                component.publish(identity, draft=draft, data=validated_data)
+                component.publish(identity, draft=draft, record=record)
 
         # Remove draft
         draft.delete(force=True)
@@ -280,7 +285,7 @@ class RecordDraftService(RecordService):
             self.indexer.index(record)
 
         record_projection = self.data_schema.dump(
-            record, identity, pid=pid, record=record)
+            identity, record, pid=pid, record=record)
         links = self.linker.links(
             "record", identity, pid_value=pid.pid_value,
             record=record_projection,
@@ -317,7 +322,7 @@ class RecordDraftService(RecordService):
             self.indexer.index(draft)
 
         draft_projection = self.data_schema.dump(
-            draft, identity, pid=pid, record=draft)
+            identity, draft, pid=pid, record=draft)
         links = self.linker.links(
             "draft", identity, pid_value=pid.pid_value, record=draft_projection
         )
