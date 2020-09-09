@@ -46,13 +46,15 @@ class DraftResource(SingletonResource):
 
     def update(self):
         """Update an item."""
-        # TODO: IMPLEMENT ME!
-        return self.service.update(), 200
+        identity = g.identity
+        id_ = resource_requestctx.route["pid_value"]
+        data = resource_requestctx.request_content
+        return self.service.update_draft(identity, id_, data), 200
 
     def delete(self):
         """Delete an item."""
         # TODO: IMPLEMENT ME!
-        return self.service.delete(), 200
+        return self.service.delete_draft(), 200
 
 
 class DraftVersionResource(CollectionResource):

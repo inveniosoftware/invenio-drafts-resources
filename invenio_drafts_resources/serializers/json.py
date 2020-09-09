@@ -12,15 +12,9 @@
 import pytz
 from invenio_records_resources.serializers import RecordJSONSerializer
 
-from .schemas import RecordDraftSchemaJSONV1
-
 
 class RecordDraftJSONSerializer(RecordJSONSerializer):
     """Drafts JSON serializer implementation."""
-
-    def __init__(self, schema=RecordDraftSchemaJSONV1):
-        """Constructor."""
-        self.schema = schema
 
     def _process_record(self, record_unit, *args, **kwargs):
         record_draft_dict = \
