@@ -8,7 +8,8 @@
 
 """Records service copmonent base classes."""
 
-from invenio_records_resources.services.components import ServiceComponent, MetadataComponent
+from invenio_records_resources.services.records.components import \
+    MetadataComponent, ServiceComponent
 
 
 class RelationsComponent(ServiceComponent):

@@ -10,47 +10,28 @@
 """Link Builders."""
 
 
-from invenio_records_resources.links import RecordLinkBuilder, api_route
+from invenio_records_resources.linker.builders import LinkBuilder
 
 
-class DraftSelfLinkBuilder(RecordLinkBuilder):
+class DraftSelfLinkBuilder(LinkBuilder):
     """Builds draft self link."""
 
-    def __init__(self, config):
-        """Constructor."""
-        super(DraftSelfLinkBuilder, self).__init__(
-            key="self",
-            route=api_route(config.draft_route),
-            action="read",
-            permission_policy=config.permission_policy_cls
-        )
+    key = "self"
+    action = "read"
+    route_attr = "draft_route"
 
 
-class DraftPublishLinkBuilder(RecordLinkBuilder):
+class DraftPublishLinkBuilder(LinkBuilder):
     """Builds draft "publish" link."""
 
-    def __init__(self, config):
-        """Constructor."""
-        super(DraftPublishLinkBuilder, self).__init__(
-            key="publish",
-            route=api_route(
-                config.draft_action_route.replace(
-                    "<action>", "publish"
-                )
-            ),
-            action="publish",
-            permission_policy=config.permission_policy_cls
-        )
+    key = "publish"
+    action = "publish"
+    route_attr = "draft_action_route"
 
 
-class RecordEditLinkBuilder(RecordLinkBuilder):
+class RecordEditLinkBuilder(LinkBuilder):
     """Builds record "edit" link."""
 
-    def __init__(self, config):
-        """Constructor."""
-        super(RecordEditLinkBuilder, self).__init__(
-            key="edit",
-            route=api_route(config.draft_route),
-            action="create",
-            permission_policy=config.permission_policy_cls
-        )
+    key = "edit"
+    action = "create"
+    route_attr = "draft_route"
