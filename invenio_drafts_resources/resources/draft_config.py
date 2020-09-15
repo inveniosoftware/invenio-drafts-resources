@@ -9,10 +9,8 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-from flask_resources.resources import ResourceConfig
-from invenio_records_resources.responses import RecordResponse
-
-from ..serializers import RecordDraftJSONSerializer
+from flask_resources.resources import ResourceConfig, Response
+from flask_resources.serializers import JSONSerializer
 
 
 class DraftResourceConfig(ResourceConfig):
@@ -20,7 +18,7 @@ class DraftResourceConfig(ResourceConfig):
 
     list_route = "/records/<pid_value>/draft"
     response_handlers = {
-        "application/json": RecordResponse(RecordDraftJSONSerializer())
+        "application/json": Response(JSONSerializer())
     }
 
 
@@ -29,7 +27,7 @@ class DraftVersionResourceConfig(ResourceConfig):
 
     list_route = "/records/<pid_value>/versions"
     response_handlers = {
-        "application/json": RecordResponse(RecordDraftJSONSerializer())
+        "application/json": Response(JSONSerializer())
     }
 
 
@@ -38,7 +36,7 @@ class DraftActionResourceConfig(ResourceConfig):
 
     list_route = "/records/<pid_value>/draft/actions/<action>"
     response_handlers = {
-        "application/json": RecordResponse(RecordDraftJSONSerializer())
+        "application/json": Response(JSONSerializer())
     }
     action_commands = {
         "publish": "publish",
