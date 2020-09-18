@@ -17,27 +17,20 @@ class DraftResourceConfig(ResourceConfig):
     """Draft resource config."""
 
     list_route = "/records/<pid_value>/draft"
-    response_handlers = {
-        "application/json": Response(JSONSerializer())
-    }
 
 
-class DraftVersionResourceConfig(ResourceConfig):
-    """Draft resource config."""
-
-    list_route = "/records/<pid_value>/versions"
-    response_handlers = {
-        "application/json": Response(JSONSerializer())
-    }
-
-
-class DraftActionResourceConfig(ResourceConfig):
+class DraftActionsResourceConfig(ResourceConfig):
     """Draft action resource config."""
 
     list_route = "/records/<pid_value>/draft/actions/<action>"
-    response_handlers = {
-        "application/json": Response(JSONSerializer())
-    }
     action_commands = {
         "publish": "publish",
     }
+
+
+class RecordVersionsResourceConfig(ResourceConfig):
+    """Draft resource config."""
+
+    list_route = "/records/<pid_value>/versions"
+
+
