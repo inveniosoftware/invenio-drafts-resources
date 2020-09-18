@@ -16,7 +16,7 @@ readme = open("README.rst").read()
 history = open("CHANGES.rst").read()
 
 tests_require = [
-    "pytest-invenio>=1.3.2",
+    "pytest-invenio>=1.3.4",
     "invenio-app>=1.3.0",
     "pytest>=4.6.1,<6.0.0"
 ]
@@ -66,7 +66,7 @@ install_requires = [
     "invenio_pidrelations>=v1.0.0a7,<2.0.0",
     "invenio-pidstore>=1.2.1",
     "invenio-indexer>=1.1.1",
-    "invenio-records>=1.3.2",
+    "invenio-records>=1.4.0a1",
     "invenio-records-resources>=0.5.0,<0.6.0",
     "invenio-accounts>=1.3.0",
     "invenio-files-rest>=1.2.0",
@@ -108,7 +108,7 @@ setup(
         ],
         "invenio_i18n.translations": ["messages = invenio_drafts_resources",],
         'invenio_db.models': [
-            'invenio_drafts_resources = invenio_drafts_resources.drafts.models',
+            'invenio_drafts_resources = invenio_drafts_resources.records.models',
         ],
     },
     extras_require=extras_require,

@@ -13,15 +13,15 @@
 import uuid
 
 from invenio_db import db
-from invenio_records_resources.linker.base import LinkStore
+#from invenio_records_resources.linker.base import LinkStore
 from invenio_records_resources.services import RecordService, \
     RecordServiceConfig
 from invenio_records_resources.services.records.components import \
     AccessComponent, FilesComponent, MetadataComponent, PIDSComponent
 
-from ..links import DraftPublishLinkBuilder, DraftSelfLinkBuilder, \
-    RecordEditLinkBuilder
-from .components import RelationsComponent
+#from ..links import DraftPublishLinkBuilder, DraftSelfLinkBuilder, \
+#    RecordEditLinkBuilder
+#from .components import RelationsComponent
 from .permissions import DraftPermissionPolicy
 from .pid_manager import PIDManager
 from .search import draft_record_to_index
