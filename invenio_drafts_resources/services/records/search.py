@@ -12,7 +12,7 @@
 
 from invenio_records_resources.records import Record
 
-from ..records import RecordDraft
+from ...records import Draft
 
 
 def draft_record_to_index(record):
@@ -22,7 +22,7 @@ def draft_record_to_index(record):
           unsupported.
     TODO: Use $schema to fill index per issue #27
     """
-    if isinstance(record, RecordDraft):
+    if isinstance(record, Draft):
         return 'drafts', "_doc"
     if isinstance(record, Record):
         return 'records', "_doc"

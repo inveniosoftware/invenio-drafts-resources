@@ -23,6 +23,15 @@ class Record(RecordBase):
 
     pid = PIDField('id', provider=RecordIdProviderV2)
 
+    def is_published(self):
+        """Confirms the record is published."""
+        return self.pid.status == PIDStatus.REGISTERED
+
+    def register_pid(self):
+        """Register the conceptrecid."""
+        self.pid.register()
+
+
 
 class Draft(Record):
     """Draft base API for metadata creation and manipulation."""
@@ -36,3 +45,12 @@ class Draft(Record):
     fork_version_id = ModelField()
 
     conceptpid = PIDField('conceptpid', provider=RecordIdProviderV2)
+
+
+    def register_pid(self):
+        """Register the conceptrecid."""
+        # FIXME is publish and register should call
+        # fucntions of PIDField to avoid smelly if
+        if self.conceptpid.status != == PIDStatus.REGISTERED:
+            self.conceptpid.register()
+        self.pid.register()

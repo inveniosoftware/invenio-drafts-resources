@@ -13,9 +13,10 @@ from invenio_records_permissions.generators import AnyUser
 from invenio_records_permissions.policies.records import RecordPermissionPolicy
 
 
-class DraftPermissionPolicy(RecordPermissionPolicy):
+class RecordDraftPermissionPolicy(RecordPermissionPolicy):
     """Custom permission policy."""
 
     # FIXME: Revist this along the development
     # Default create should be "authenticated"?
+    # TODO: Subclass records-resources policy and add *_draft actions
     can_create = [AnyUser()]

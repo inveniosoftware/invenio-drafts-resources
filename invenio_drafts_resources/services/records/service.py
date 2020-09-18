@@ -7,57 +7,14 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-
-"""Draft Service."""
+"""RecordDraft Service API."""
 
 import uuid
 
 from invenio_db import db
-#from invenio_records_resources.linker.base import LinkStore
-from invenio_records_resources.services import RecordService, \
-    RecordServiceConfig
-from invenio_records_resources.services.records.components import \
-    AccessComponent, FilesComponent, MetadataComponent, PIDSComponent
+from invenio_records_resources.services import RecordService
 
-#from ..links import DraftPublishLinkBuilder, DraftSelfLinkBuilder, \
-#    RecordEditLinkBuilder
-#from .components import RelationsComponent
-from .permissions import DraftPermissionPolicy
-from .pid_manager import PIDManager
-from .search import draft_record_to_index
-
-
-class RecordDraftServiceConfig(RecordServiceConfig):
-    """Draft Service configuration."""
-
-    # Service configuration
-    permission_policy_cls = DraftPermissionPolicy
-
-    # RecordService configuration
-    pid_manager = PIDManager()
-    record_link_builders = RecordServiceConfig.record_link_builders + [
-        RecordEditLinkBuilder
-    ]
-
-    # DraftService configuration.
-    record_to_index = draft_record_to_index
-    # WHY: We want to force user input choice here.
-    draft_cls = None
-    draft_route = None
-    draft_action_route = None
-    draft_link_builders = [
-        DraftSelfLinkBuilder,
-        DraftPublishLinkBuilder
-    ]
-
-    components = [
-        MetadataComponent,
-        PIDSComponent,
-        RelationsComponent,
-        AccessComponent,
-        FilesComponent,
-    ]
-
+from .config import RecordDraftServiceConfig
 
 class RecordDraftService(RecordService):
     """Draft Service interface.
@@ -74,14 +31,10 @@ class RecordDraftService(RecordService):
     default_config = RecordDraftServiceConfig
 
     @property
-    def pid_manager(self):
-        """Factory for the pid manager."""
-        return self.config.pid_manager
-
-    @property
     def indexer(self):
         """Factory for creating an indexer instance."""
         return self.config.indexer_cls(
+            record_cls=self.config.record_cls,
             record_to_index=self.config.record_to_index
         )
 
@@ -94,26 +47,25 @@ class RecordDraftService(RecordService):
     # High-level API
     # Inherits record read, search, create, delete and update
 
-    def read_draft(self, identity, id_):
+    def read_draft(self, id_, identity, links_config=None):
         """Retrieve a draft."""
-        pid, draft = self.pid_manager.resolve(id_, draft=True)
-        # TODO: "read" is used here AND in inherited read() method
-        #       but have different meanings: read a draft or read a record
-        #       Permission mechanism should be per resource unit OR per
-        #       service
-        self.require_permission(identity, "read", record=draft)
+        # Resolve and require permission
+        # TODO must handle delete records and tombstone pages
+        # TODO: Can we make in a similar fashion than "create"?
+        draft = self.draft_cls.pid.resolve(id_)
+        self.require_permission(identity, "read_draft", record=draft)
 
         # Run components
         for component in self.components:
             if hasattr(component, 'read_draft'):
                 component.read_draft(identity, draft=draft)
-        links = LinkStore()
-        draft_projection = self.schema.dump(
-            identity, draft, record=draft, links_store=links)
 
-        # Todo: how do we deal with tombstone pages
         return self.result_item(
-            pid=pid, record=draft_projection, links=links)
+            self,
+            identity,
+            draft,
+            links_config=links_config
+        )
 
     def update_draft(self, identity, id_, data):
         """Replace a draft."""
@@ -143,41 +95,14 @@ class RecordDraftService(RecordService):
         return self.result_item(
             pid=pid, record=draft_projection, links=links, errors=errors)
 
-    def create(self, identity, data):
+    def create(self, identity, data, links_config=None):
         """Create a draft for a new record.
 
         It does not eagerly create the associated record.
         """
-        self.require_permission(identity, "create")
-        validated_data, errors = self.schema.load(
-            identity, data, raise_errors=False)
-
-        # TODO (Alex): Replace with:
-        #   draft = self.draft_cls.create(id_=rec_uuid, data={}, pid=pid)
-        #
-        # ...or even (and have the UUID, PID automatically created):
-        #   draft = self.draft_cls.create()
-        rec_uuid = uuid.uuid4()
-        draft_data = {}
-        pid = self.pid_manager.mint(record_uuid=rec_uuid, data=draft_data)
-        draft = self.draft_cls.create(id_=rec_uuid, data=draft_data)
-
-        # Run components
-        for component in self.components:
-            if hasattr(component, 'create'):
-                component.create(identity, record=draft, data=validated_data)
-
-        draft.commit()
-        db.session.commit()  # Persist DB
-        if self.indexer:
-            self.indexer.index(draft)
-
-        links = LinkStore()
-        draft_projection = self.schema.dump(
-            identity, draft, record=draft, links_store=links)
-
-        return self.result_item(
-            pid=pid, record=draft_projection, links=links, errors=errors)
+        return self._create(
+           self.draft_cls, identity, data, links_config=links_config
+        )
 
     def _patch_data(self, record, data):
         """Temporarily here until the merge strategy is set."""
@@ -185,7 +110,7 @@ class RecordDraftService(RecordService):
         for key in data.keys():
             record[key] = data[key]
 
-    def edit(self, identity, id_, data):
+    def edit(self, id_, identity, data):
         """Create a new revision or a draft for an existing record.
 
         :param id_: record PID value.
@@ -248,13 +173,15 @@ class RecordDraftService(RecordService):
         """Publish a draft."""
         self.require_permission(identity, "publish")
         # Get draft
-        pid, draft = self.pid_manager.resolve(id_, draft=True)
+        draft = self.draft_cls.pid.resolve(id_)
         # Fully validate draft now
         # TODO: Add error_map for `ValidationError` in the resource config
         validated_data, _ = self.schema.load(
             identity, draft.dumps(), pid=pid, record=draft)
+
         # Publish it
-        if self.pid_manager.is_published(pid):  # Then we publish a revision
+        # FIXME: Requires PR in records-resources
+        if draft.pi.is_published():
             record = self._publish_revision(validated_data, pid)
         else:
             record = self._publish_new_version(validated_data, draft)
@@ -272,12 +199,12 @@ class RecordDraftService(RecordService):
             self.indexer.delete(draft)
             self.indexer.index(record)
 
-        links = LinkStore()
-        record_projection = self.schema.dump(
-            identity, record, pid=pid, record=record, links_store=links)
-
         return self.result_item(
-            pid=pid, record=record_projection, links=links)
+            self,
+            identity,
+            record,
+            links_config=links_config
+        )
 
     def new_version(self, identity, id_):
         """Create a new version of a record."""
