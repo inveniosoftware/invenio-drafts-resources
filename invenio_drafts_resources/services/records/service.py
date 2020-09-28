@@ -93,24 +93,6 @@ class RecordDraftService(RecordService):
            self.draft_cls, identity, data, links_config=links_config
         )
 
-    def _edit_or_create(self, id_):
-        """Edit or create a draft based on the pid."""
-        try:
-            # Draft exists
-            return self.draft_cls.pid.resolve(id_, registered_only=False)
-        except NoResultFound:
-            # Draft does not exists - create a new one
-            record = self.record_cls.pid.resolve(id_)  # Needs Record as getter
-            draft = self.draft_cls.create(
-                {}, id_=record.id, fork_version_id=record.revision_id,
-                pid=record.pid, conceptpid=record.conceptpid
-            )
-
-            # FIXME: Is this enough to copy over the data?
-            draft.update(**record)
-
-        return draft
-
     def edit(self, id_, identity, links_config=None):
         """Create a new revision or a draft for an existing record.
 
@@ -119,25 +101,35 @@ class RecordDraftService(RecordService):
         """
         self.require_permission(identity, "create")
 
-        # Get draft
-        # TODO: Workflow does not seem correct:
-        # 1 if it exists, do nothing and redirect (components) shouldn't run)
-        # 2 if it doesn't exist return
+        try:  # Draft exists
+            draft = self.draft_cls.pid.resolve(id_, registered_only=False)
 
-        draft = self._edit_or_create(id_)
+            return self.result_item(
+                self, identity, draft, links_config=links_config)
 
-        # Run components
-        for component in self.components:
-            if hasattr(component, 'edit'):
-                component.edit(identity, draft=draft)
+        except NoResultFound:  # Draft does not exists - create a new one
+            # Needs Record as getter
+            record = self.record_cls.pid.resolve(id_)
 
-        draft.commit()
-        db.session.commit()
+            draft = self.draft_cls.create(
+                {}, id_=record.id, fork_version_id=record.revision_id,
+                pid=record.pid, conceptpid=record.conceptpid
+            )
 
-        self.indexer.index(draft)
+            # FIXME: Is this enough to copy over the data?
+            draft.update(**record)
 
-        return self.result_item(
-            self, identity, draft, links_config=links_config)
+            # Run components
+            for component in self.components:
+                if hasattr(component, 'edit'):
+                    component.edit(identity, draft=draft)
+
+            draft.commit()
+            db.session.commit()
+            self.indexer.index(draft)
+
+            return self.result_item(
+                self, identity, draft, links_config=links_config)
 
     def publish(self, id_, identity, links_config=None):
         """Publish a draft."""
@@ -165,9 +157,7 @@ class RecordDraftService(RecordService):
         record.commit()
         db.session.commit()
 
-        # Remove draft. Hard delete to remove the uuid (pk) from the table.
-        # TODO: Question is this what we wanted?
-        draft.delete(force=True)
+        draft.delete()
         db.session.commit()  # Persist DB
         self.indexer.delete(draft)
         self.indexer.index(record)
@@ -215,7 +205,13 @@ class RecordDraftService(RecordService):
             if hasattr(component, 'delete_draft'):
                 component.delete(identity, record=draft)
 
-        draft.delete()
+        try:
+            record = self.record_cls.pid.resolve(id_, registered_only=False)
+        except NoResultFound:  # FIXME: Should be at resolver level?
+            record = None
+        # If it is tight to a record soft remove, else wipe fully
+        force = True if record else False
+        draft.delete(force=force)
         db.session.commit()
         self.indexer.delete(draft)
 

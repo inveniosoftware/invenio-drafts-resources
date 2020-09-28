@@ -12,8 +12,8 @@ from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ModelField
 from invenio_records_resources.records import Record as RecordBase
-from invenio_records_resources.records.systemfields import PIDField, \
-    PIDStatusCheckField
+from invenio_records_resources.records.systemfields import IndexField, \
+    PIDField, PIDStatusCheckField
 from sqlalchemy.orm.exc import NoResultFound
 
 RecordIdProviderV2.default_status_with_obj = PIDStatus.NEW
@@ -27,6 +27,8 @@ class Record(RecordBase):
 
     # Configuration
     model_cls = None
+
+    index = IndexField('records-record-v1.0.0', search_alias='records')
 
     pid = PIDField('id', provider=RecordIdProviderV2)
 
@@ -70,6 +72,8 @@ class Draft(Record):
     # WHY: We want to force the model_cls to be specified by the user
     # No default one is given, only the base.
     model_cls = None
+
+    index = IndexField('records-draft-v1.0.0', search_alias='drafts')
 
     pid = PIDField('id', provider=RecordIdProviderV2, delete=False)
 
