@@ -8,7 +8,6 @@
 
 """Draft API."""
 
-from invenio_db import db
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ModelField
@@ -38,31 +37,31 @@ class Record(RecordBase):
     @classmethod
     def create_or_update_from(cls, draft):
         """Create of update the record based on the draft content."""
-        try:  # New version
+        try:
+            # New version
             record = cls.get_record(draft.id)
-        except NoResultFound:  # New revision
+        except NoResultFound:
+            # New revision
             record = cls.create(
                 {}, id_=draft.id, pid=draft.pid, conceptpid=draft.conceptpid)
 
-        # NOTE: Make session consistent. See PIDField docs for more info.
+        # NOTE: Merge pid/conceptpid into the current db session if not already
+        # in the session.
         cls.pid.session_merge(record)
         cls.conceptpid.session_merge(record)
+
         # Overwrite data
         # FIXME: Data validation should be done one step up self.schema access
+        # TODO: Does this overwrite the pids/conceptpids?
         record.update(**draft)
 
         return record
 
     def register(self):
-        """Register the conceptrecid."""
-        # FIXME: Why does dump not call str on this?
-        register_str = str(PIDStatus.REGISTERED)
+        """Register the persistent identifiers associated with teh record."""
         if not self.conceptpid.is_registered():
-            if self.conceptpid.register():
-                self["conceptpid"]["status"] = register_str
-
-        if self.pid.register():
-            self["conceptpid"]["status"] = register_str
+            self.conceptpid.register()
+        self.pid.register()
 
 
 class Draft(Record):
