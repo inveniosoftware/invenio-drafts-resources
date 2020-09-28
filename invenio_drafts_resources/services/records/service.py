@@ -93,24 +93,6 @@ class RecordDraftService(RecordService):
            self.draft_cls, identity, data, links_config=links_config
         )
 
-    def _edit_or_create(self, id_):
-        """Edit or create a draft based on the pid."""
-        try:
-            # Draft exists
-            return self.draft_cls.pid.resolve(id_, registered_only=False)
-        except NoResultFound:
-            # Draft does not exists - create a new one
-            record = self.record_cls.pid.resolve(id_)  # Needs Record as getter
-            draft = self.draft_cls.create(
-                {}, id_=record.id, fork_version_id=record.revision_id,
-                pid=record.pid, conceptpid=record.conceptpid
-            )
-
-            # FIXME: Is this enough to copy over the data?
-            draft.update(**record)
-
-        return draft
-
     def edit(self, id_, identity, links_config=None):
         """Create a new revision or a draft for an existing record.
 
@@ -118,13 +100,37 @@ class RecordDraftService(RecordService):
         :param id_: record PID value.
         """
         self.require_permission(identity, "create")
+        # Draft exists - return it
+        try:
+            draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+            return self.result_item(
+                self, identity, draft, links_config=links_config)
+        except NoResultFound:
+            pass
 
-        # Get draft
-        # TODO: Workflow does not seem correct:
-        # 1 if it exists, do nothing and redirect (components) shouldn't run)
-        # 2 if it doesn't exist return
-
-        draft = self._edit_or_create(id_)
+        # Draft does not exists - create a new draft or get a soft deleted
+        # draft.
+        record = self.record_cls.pid.resolve(id_)
+        try:
+            # We soft-delete a draft once it has been published, in order to
+            # keep the version_id counter around for optimistic concurrency
+            # control (both for ES indexing and for REST API clients)
+            draft = self.draft_cls.get_record(record.id, with_deleted=True)
+            if draft.is_deleted:
+                draft.undelete()
+                draft.update(**record)
+                draft.pid = record.pid
+                draft.conceptpid = record.conceptpid
+                draft.fork_version_id = record.revision_id
+        except NoResultFound:
+            # If a draft was ever force deleted, then we will create the draft.
+            # This is a very exceptional case as normally, when we edit a
+            # record then the soft-deleted draft exists and we are in above
+            # case.
+            draft = self.draft_cls.create(
+                record, id_=record.id, fork_version_id=record.revision_id,
+                pid=record.pid, conceptpid=record.conceptpid
+            )
 
         # Run components
         for component in self.components:
@@ -133,7 +139,6 @@ class RecordDraftService(RecordService):
 
         draft.commit()
         db.session.commit()
-
         self.indexer.index(draft)
 
         return self.result_item(
@@ -165,9 +170,7 @@ class RecordDraftService(RecordService):
         record.commit()
         db.session.commit()
 
-        # Remove draft. Hard delete to remove the uuid (pk) from the table.
-        # TODO: Question is this what we wanted?
-        draft.delete(force=True)
+        draft.delete()
         db.session.commit()  # Persist DB
         self.indexer.delete(draft)
         self.indexer.index(record)
@@ -215,7 +218,13 @@ class RecordDraftService(RecordService):
             if hasattr(component, 'delete_draft'):
                 component.delete(identity, record=draft)
 
-        draft.delete()
+        try:
+            record = self.record_cls.pid.resolve(id_, registered_only=False)
+        except NoResultFound:  # FIXME: Should be at resolver level?
+            record = None
+        # If it is tight to a record soft remove, else wipe fully
+        force = True if record else False
+        draft.delete(force=force)
         db.session.commit()
         self.indexer.delete(draft)
 

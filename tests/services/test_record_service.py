@@ -161,6 +161,8 @@ def test_create_publish_new_revision(app, service, identity_simple,
     draft = service.edit(recid, identity_simple)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
+    # create, soft-delete, undelete, update
+    assert draft._record.revision_id == 4
 
     # Update the content
     orig_title = input_data['metadata']['title']
@@ -183,6 +185,35 @@ def test_create_publish_new_revision(app, service, identity_simple,
     # Check it was actually edited
     record = service.read(recid, identity_simple)
     assert record["metadata"]['title'] == edited_title
+
+
+def test_mutiple_edit(app, service, identity_simple, input_data):
+    """Test the revision_id when editing record multiple times..
+
+    This tests the `edit` service method.
+    """
+    # Needs `app` context because of invenio_access/permissions.py#166
+    record = _create_and_publish(service, input_data, identity_simple)
+    recid = record.id
+
+    # Create new draft of said record
+    draft = service.edit(recid, identity_simple)
+    assert draft.id == recid
+    assert draft._record.fork_version_id == record._record.revision_id
+    assert draft._record.revision_id == 4
+
+    draft = service.edit(recid, identity_simple)
+    assert draft.id == recid
+    assert draft._record.fork_version_id == record._record.revision_id
+    assert draft._record.revision_id == 4
+
+    # Publish it to check the increment in version_id
+    record = service.publish(recid, identity_simple)
+
+    draft = service.edit(recid, identity_simple)
+    assert draft.id == recid
+    assert draft._record.fork_version_id == record._record.revision_id
+    assert draft._record.revision_id == 7  # soft-delete, undelete, update
 
 
 def test_create_publish_new_version(app, service, identity_simple,

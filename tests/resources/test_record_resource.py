@@ -197,10 +197,6 @@ def test_create_publish_new_revision(client, input_data,
     """Test draft creation of an existing record and publish it."""
     recid = _create_and_publish(client, input_data)
 
-    # # FIXME: Allow ES to clean deleted documents.
-    # # Flush is not the same. Default collection time is 1 minute.
-    # time.sleep(70)
-
     # Create new draft of said record
     orig_title = input_data["metadata"]["title"]
     input_data["metadata"]["title"] = "Edited title"
@@ -210,7 +206,7 @@ def test_create_publish_new_revision(client, input_data,
     )
 
     assert response.status_code == 201
-    assert response.json['revision_id'] == 1
+    assert response.json['revision_id'] == 4
     _assert_single_item_response(response)
 
     # Update that new draft
@@ -248,6 +244,42 @@ def test_create_publish_new_revision(client, input_data,
 
     assert response.json['metadata']['title'] == \
         input_data["metadata"]["title"]
+
+
+def test_mutiple_edit(client, identity_simple, input_data):
+    """Test the revision_id when editing record multiple times.
+
+    This tests the `edit` service method.
+    """
+    # Needs `app` context because of invenio_access/permissions.py#166
+    recid = _create_and_publish(client, input_data)
+
+    # Create new draft of said record
+    response = client.post(
+        "/mocks/{}/draft".format(recid), headers=HEADERS)
+
+    assert response.status_code == 201
+    assert response.json['revision_id'] == 4
+
+    # Request a second edit. Get the same draft (revision_id)
+    response = client.post(
+        "/mocks/{}/draft".format(recid), headers=HEADERS)
+
+    assert response.status_code == 201
+    assert response.json['revision_id'] == 4
+
+    # Publish it to check the increment in version_id
+    response = client.post(
+        "/mocks/{}/draft/actions/publish".format(recid), headers=HEADERS)
+
+    assert response.status_code == 202
+
+    # Edit again
+    response = client.post(
+        "/mocks/{}/draft".format(recid), headers=HEADERS)
+
+    assert response.status_code == 201
+    assert response.json['revision_id'] == 7
 
 
 def test_create_publish_new_version(client, input_data,
