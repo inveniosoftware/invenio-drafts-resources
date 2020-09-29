@@ -27,7 +27,7 @@ def extra_entry_points():
             'mock_module = mock_module.jsonschemas',
         ],
         'invenio_search.mappings': [
-            'records = mock_module.mappings',
+            'draftsresources = mock_module.mappings',
         ]
     }
 

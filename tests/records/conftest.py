@@ -37,4 +37,6 @@ def example_record(db, example_data):
 @pytest.fixture()
 def indexer():
     """Indexer instance with correct Record class."""
-    return RecordIndexer(record_cls=Draft)
+    return RecordIndexer(
+        record_cls=Draft, record_to_index=lambda r: (r.index._name, '_doc')
+    )

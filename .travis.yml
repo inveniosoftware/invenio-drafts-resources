@@ -29,9 +29,9 @@ env:
   global:
     - DOCKER_COMPOSE_VERSION=1.26.2
   matrix:
-    - REQUIREMENTS=release EXTRAS=all,postgresql,elasticsearch6 ES_VERSION=ES_6_LATEST
-    - REQUIREMENTS=release EXTRAS=all,postgresql,elasticsearch7 ES_VERSION=ES_7_LATEST
-    - REQUIREMENTS=devel EXTRAS=all,postgresql,elasticsearch7 ES_VERSION=ES_7_LATEST
+    - REQUIREMENTS=release EXTRAS=all,postgresql,elasticsearch6 ES_VERSION=ES_6_LATEST SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
+    - REQUIREMENTS=release EXTRAS=all,postgresql,elasticsearch7 ES_VERSION=ES_7_LATEST SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
+    - REQUIREMENTS=devel EXTRAS=all,postgresql,elasticsearch7 ES_VERSION=ES_7_LATEST SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
 
 python:
   - "3.6"
