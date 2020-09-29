@@ -11,17 +11,13 @@
 
 from invenio_records_resources.resources import RecordResourceConfig as \
     _RecordResourceConfig
-from uritemplate import URITemplate
+
+from ..drafts.schema import DraftLinksSchema
 
 
 class RecordResourceConfig(_RecordResourceConfig):
     """Draft aware Record resource config."""
 
     draft_links_config = {
-        "record": {  # TODO: Perhaps use "item" namespace across links config
-            "self": URITemplate("/api/records/{/pid_value}/draft"),
-            "publish": URITemplate(
-                "/api/records/{/pid_value}/draft/actions/publish"
-            ),
-        }
+        "record": DraftLinksSchema()
     }

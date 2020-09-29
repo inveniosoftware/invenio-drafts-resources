@@ -15,18 +15,18 @@ from invenio_drafts_resources.resources import \
     RecordResourceConfig as RecordResourceConfigBase
 
 
-class RecordLinksSchema(Schema):
+class DraftLinksSchema(Schema):
     """Schema for a record's links."""
 
     self = Link(
         template=URITemplate("/api/mocks/{pid_value}/draft"),
         permission="read",
-        params=lambda record: {'pid_value': record.pid.pid_value}
+        params=lambda draft: {'pid_value': draft.pid.pid_value}
     )
     publish = Link(
         template=URITemplate("/api/mocks/{pid_value}/draft/actions/publish"),
         permission="publish",
-        params=lambda record: {'pid_value': record.pid.pid_value}
+        params=lambda draft: {'pid_value': draft.pid.pid_value}
     )
 
 
@@ -38,7 +38,7 @@ class RecordResourceConfig(RecordResourceConfigBase):
 
     # NOTE: Developers using drafts-resources need to do this
     draft_links_config = {
-        "record": RecordLinksSchema()
+        "record": DraftLinksSchema()
     }
 
 
@@ -52,6 +52,11 @@ class DraftResourceConfig(DraftResourceConfigBase):
     """Mock service configuration."""
 
     list_route = "/mocks/<pid_value>/draft"
+
+    links_config = {
+        # TODO: Revisit naming for "record"?
+        "record": DraftLinksSchema()
+    }
 
 
 class DraftResource(DraftResourceBase):

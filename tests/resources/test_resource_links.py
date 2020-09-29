@@ -36,25 +36,18 @@ def test_create_draft(app, client, headers, input_data):
     response = client.post("/mocks", json=input_data, headers=headers)
 
     assert response.status_code == 201
-    print("response.json", response.json)
     pid_value = response.json["id"]
     assert_expected_links(pid_value, response.json["links"])
 
 
-@pytest.mark.skip()
 def test_read_draft(client, headers, input_data):
-    response = client.post(
-        "/mocks", data=json.dumps(input_data), headers=headers)
+    response = client.post("/mocks", json=input_data, headers=headers)
+    pid_value = response.json['id']
+    response = client.get(f"/mocks/{pid_value}/draft", headers=headers)
 
-    assert response.status_code == 201
-
-    recid = response.json['id']
-    response = client.get(
-        "/mocks/{}/draft".format(recid), headers=headers)
-
+    print("response.json", response.json)
     assert response.status_code == 200
-
-    _assert_single_item_response(response)
+    assert_expected_links(pid_value, response.json["links"])
 
 
 @pytest.mark.skip()
