@@ -11,6 +11,7 @@
 
 from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from invenio_records_resources.resources import RecordResourceConfig
+from uritemplate import URITemplate
 
 
 class DraftResourceConfig(RecordResourceConfig):
@@ -19,12 +20,27 @@ class DraftResourceConfig(RecordResourceConfig):
     list_route = "/records/<pid_value>/draft"
     item_route = None
 
+    links_config = {
+        "record": {
+            "self": URITemplate("/api/records/{/pid_value}/draft"),
+            "publish": URITemplate(
+                "/api/records/{/pid_value}/draft/actions/publish"
+            ),
+        }
+    }
+
 
 class DraftActionResourceConfig(RecordResourceConfig):
     """Draft action resource config."""
 
     list_route = "/records/<pid_value>/draft/actions/<action>"
     item_route = None  # To avoid issues, due to inheritance.
+
+    RecordResourceConfig.links_config.get("record", {}).update({
+        "publish": URITemplate(
+            "/api/records/{/pid_value}/draft/actions/publish"
+        )
+    })
 
     actions = {
         "publish": "publish",

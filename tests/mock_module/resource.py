@@ -1,22 +1,33 @@
 """Example resource."""
 
-from invenio_records_resources.resources import \
-    RecordResource as RecordResourceBase
-from invenio_records_resources.resources import \
-    RecordResourceConfig as RecordResourceConfigBase
+from uritemplate import URITemplate
+from marshmallow import Schema
+from marshmallow_utils.fields import Link
 
 from invenio_drafts_resources.resources import \
-    DraftActionResource as DraftActionResourceBase
-from invenio_drafts_resources.resources import \
-    DraftActionResourceConfig as DraftActionResourceConfigBase
-from invenio_drafts_resources.resources import \
-    DraftResource as DraftResourceBase
-from invenio_drafts_resources.resources import \
-    DraftResourceConfig as DraftResourceConfigBase
-from invenio_drafts_resources.resources import \
-    DraftVersionResource as DraftVersionResourceBase
-from invenio_drafts_resources.resources import \
-    DraftVersionResourceConfig as DraftVersionResourceConfigBase
+    DraftActionResource as DraftActionResourceBase, \
+    DraftActionResourceConfig as DraftActionResourceConfigBase, \
+    DraftResource as DraftResourceBase, \
+    DraftResourceConfig as DraftResourceConfigBase, \
+    DraftVersionResource as DraftVersionResourceBase, \
+    DraftVersionResourceConfig as DraftVersionResourceConfigBase, \
+    RecordResource as RecordResourceBase, \
+    RecordResourceConfig as RecordResourceConfigBase
+
+
+class RecordLinksSchema(Schema):
+    """Schema for a record's links."""
+
+    self = Link(
+        template=URITemplate("/api/mocks/{pid_value}/draft"),
+        permission="read",
+        params=lambda record: {'pid_value': record.pid.pid_value}
+    )
+    publish = Link(
+        template=URITemplate("/api/mocks/{pid_value}/draft/actions/publish"),
+        permission="publish",
+        params=lambda record: {'pid_value': record.pid.pid_value}
+    )
 
 
 class RecordResourceConfig(RecordResourceConfigBase):
@@ -24,6 +35,11 @@ class RecordResourceConfig(RecordResourceConfigBase):
 
     list_route = "/mocks"
     item_route = f"{list_route}/<pid_value>"
+
+    # NOTE: Developers using drafts-resources need to do this
+    draft_links_config = {
+        "record": RecordLinksSchema()
+    }
 
 
 class RecordResource(RecordResourceBase):

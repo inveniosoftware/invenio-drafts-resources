@@ -14,8 +14,8 @@ from flask_resources import CollectionResource, SingletonResource
 from flask_resources.context import resource_requestctx
 from invenio_records_resources.config import ConfigLoaderMixin
 
-from ..services import RecordDraftService
-from .draft_config import DraftActionResourceConfig, DraftResourceConfig, \
+from ...services import RecordDraftService
+from .config import DraftActionResourceConfig, DraftResourceConfig, \
     DraftVersionResourceConfig
 from .errors import ActionNotImplementedError
 
