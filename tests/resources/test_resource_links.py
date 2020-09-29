@@ -9,6 +9,8 @@
 
 """Test draft service links."""
 
+from copy import deepcopy
+
 import pytest
 
 
@@ -32,7 +34,7 @@ def assert_expected_links(pid_value, links):
         assert link == links[key]
 
 
-def test_create_draft(app, client, headers, input_data):
+def test_create_draft(client, headers, input_data):
     response = client.post("/mocks", json=input_data, headers=headers)
 
     assert response.status_code == 201
@@ -45,44 +47,22 @@ def test_read_draft(client, headers, input_data):
     pid_value = response.json['id']
     response = client.get(f"/mocks/{pid_value}/draft", headers=headers)
 
-    print("response.json", response.json)
     assert response.status_code == 200
     assert_expected_links(pid_value, response.json["links"])
 
 
-@pytest.mark.skip()
 def test_update_draft(client, headers, input_data):
-    response = client.post(
-        "/mocks", data=json.dumps(input_data), headers=headers)
+    response = client.post("/mocks", json=input_data, headers=headers)
+    pid_value = response.json["id"]
+    input_data = deepcopy(input_data)
+    input_data['metadata']['title'] = "Updated title"  # Shouldn't matter
 
-    assert response.status_code == 201
-    assert response.json['metadata']['title'] == \
-        input_data['metadata']['title']
-
-    recid = response.json['id']
-
-    orig_title = input_data['metadata']['title']
-    edited_title = "Edited title"
-    input_data['metadata']['title'] = edited_title
-
-    # Update draft content
-    update_response = client.put(
-        "/mocks/{}/draft".format(recid),
-        data=json.dumps(input_data),
-        headers=headers
+    response = client.put(
+        f"/mocks/{pid_value}/draft", json=input_data, headers=headers
     )
-
-    assert update_response.status_code == 200
-    assert update_response.json["metadata"]['title'] == edited_title
-    assert update_response.json["id"] == recid
-
-    # Check the updates where saved
-    update_response = client.get(
-        "/mocks/{}/draft".format(recid), headers=headers)
-
-    assert update_response.status_code == 200
-    assert update_response.json["metadata"]['title'] == edited_title
-    assert update_response.json["id"] == recid
+    assert response.status_code == 200
+    print("response.json", response.json)
+    assert_expected_links(pid_value, response.json["links"])
 
 
 @pytest.mark.skip()
