@@ -9,9 +9,10 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-from flask_resources.errors import HTTPJSONException, create_errormap_handler
 from invenio_records_resources.resources import RecordResourceConfig
-from uritemplate import URITemplate
+
+from ..records.schema import RecordLinksSchema
+from .schema import DraftLinksSchema
 
 
 class DraftResourceConfig(RecordResourceConfig):
@@ -21,12 +22,7 @@ class DraftResourceConfig(RecordResourceConfig):
     item_route = None
 
     links_config = {
-        "record": {
-            "self": URITemplate("/api/records/{/pid_value}/draft"),
-            "publish": URITemplate(
-                "/api/records/{/pid_value}/draft/actions/publish"
-            ),
-        }
+        "record": DraftLinksSchema()
     }
 
 
@@ -36,14 +32,13 @@ class DraftActionResourceConfig(RecordResourceConfig):
     list_route = "/records/<pid_value>/draft/actions/<action>"
     item_route = None  # To avoid issues, due to inheritance.
 
-    RecordResourceConfig.links_config.get("record", {}).update({
-        "publish": URITemplate(
-            "/api/records/{/pid_value}/draft/actions/publish"
-        )
-    })
-
     actions = {
         "publish": "publish",
+    }
+
+    # TODO: Point to RecordLinksSchema in records-resources
+    record_links_config = {
+        "record": RecordLinksSchema()
     }
 
 

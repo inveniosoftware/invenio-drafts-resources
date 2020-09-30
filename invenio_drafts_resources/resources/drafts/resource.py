@@ -138,10 +138,16 @@ class DraftActionResource(SingletonResource, ConfigLoaderMixin):
         except AttributeError:
             raise ActionNotImplementedError(cmd_name)
 
-        # NOTE: Due to the route we assume the commands only need
-        # id_ and identity
-        item = cmd_func(
-            resource_requestctx.route["pid_value"],
-            g.identity
-        )
+        if cmd_name == "publish":
+            item = cmd_func(
+                resource_requestctx.route["pid_value"],
+                g.identity,
+                links_config=self.config.record_links_config
+            )
+        else:
+            item = cmd_func(
+                resource_requestctx.route["pid_value"],
+                g.identity,
+            )
+
         return item.to_dict(), 202

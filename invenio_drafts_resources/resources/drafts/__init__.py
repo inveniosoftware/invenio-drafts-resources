@@ -9,9 +9,9 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-from .resource import DraftActionResource, DraftResource, DraftVersionResource
 from .config import DraftActionResourceConfig, DraftResourceConfig, \
     DraftVersionResourceConfig
+from .resource import DraftActionResource, DraftResource, DraftVersionResource
 
 __all__ = (
     "DraftActionResource",

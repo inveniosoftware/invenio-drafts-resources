@@ -11,8 +11,8 @@
 
 from flask import g
 from flask_resources.context import resource_requestctx
-from invenio_records_resources.resources import RecordResource as \
-    _RecordResource
+from invenio_records_resources.resources import \
+    RecordResource as _RecordResource
 
 from .config import RecordResourceConfig
 

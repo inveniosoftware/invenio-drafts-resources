@@ -60,57 +60,25 @@ def test_update_draft(client, headers, input_data):
     response = client.put(
         f"/mocks/{pid_value}/draft", json=input_data, headers=headers
     )
+
     assert response.status_code == 200
-    print("response.json", response.json)
     assert_expected_links(pid_value, response.json["links"])
 
 
-@pytest.mark.skip()
 def test_publish_draft(client, headers, input_data):
-    """Test draft publication of a non-existing record.
+    response = client.post("/mocks", json=input_data, headers=headers)
+    pid_value = response.json['id']
 
-    It has to first create said draft.
-    """
-    recid = _create_and_publish(client, input_data)
-
-    # Check draft does not exists anymore
-    # FIXME: Remove import when exception is properly handled
-    with pytest.raises(NoResultFound):
-        response = client.get(
-            "/mocks/{}/draft".format(recid), headers=headers)
-
-        assert response.status_code == 404
-
-    # Check record exists
-    response = client.get("/mocks/{}".format(recid), headers=headers)
-
-    assert response.status_code == 200
-
-    _assert_single_item_response(response)
-
-
-@pytest.mark.skip()
-def test_publish_links(draft_service, headers, identity_simple, input_draft):
-    # NOTE: We have to create a new draft since we don't want to destroy
-    #       the fixture one.
-    draft_result = draft_service.create(
-        data=input_draft, identity=identity_simple
+    # NOTE: This returns a record
+    response = client.post(
+        f"/mocks/{pid_value}/draft/actions/publish", headers=headers
     )
-    pid_value = draft_result.id
 
-    # Publish
-    published_record = draft_service.publish(identity_simple, pid_value)
-
+    assert response.status_code == 202
+    links = response.json["links"]
     expected_links = {
-        "self": f"https://localhost:5000/api/records/{pid_value}",
-        "delete": f"https://localhost:5000/api/records/{pid_value}",
-        "edit": f"https://localhost:5000/api/records/{pid_value}/draft",
-        "files": f"https://localhost:5000/api/records/{pid_value}/files",
+        "self": f"https://localhost:5000/api/mocks/{pid_value}",
+        # TODO: Add files, delete...
     }
-
-    assert expected_links == published_record.links
-
-    # TODO: Add edit links check here. We skip those because of the sleep
-    #       requirement drastically slowing down the tests. It's fine for now
-    #       since we know the linker is called there and the linker is tested
-    #       above.
+    for key, link in expected_links.items():
+        assert link == links[key]

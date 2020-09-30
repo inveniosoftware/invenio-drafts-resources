@@ -7,23 +7,18 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Links Schema."""
+"""TODO: Use invenio-records one. Links Schema."""
 
 from marshmallow import Schema
 from marshmallow_utils.fields import Link
 from uritemplate import URITemplate
 
 
-class DraftLinksSchema(Schema):
+class RecordLinksSchema(Schema):
     """Schema for a record's links."""
 
     self = Link(
-        template=URITemplate("/api/records/{pid_value}/draft"),
+        template=URITemplate("/api/records/{pid_value}"),
         permission="read",
-        params=lambda draft: {'pid_value': draft.pid.pid_value}
-    )
-    publish = Link(
-        template=URITemplate("/api/records/{pid_value}/draft/actions/publish"),
-        permission="publish",
-        params=lambda draft: {'pid_value': draft.pid.pid_value}
+        params=lambda record: {'pid_value': record.pid.pid_value}
     )

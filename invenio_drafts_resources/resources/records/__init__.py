@@ -9,8 +9,8 @@
 
 """Override of RecordResources."""
 
-from .resource import RecordResource
 from .config import RecordResourceConfig
+from .resource import RecordResource
 
 __all__ = (
     "RecordResource",
