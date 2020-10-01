@@ -67,12 +67,12 @@ class RecordResourceConfig(RecordResourceConfigBase):
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
-        "record": RecordLinksSchema()
+        "record": RecordLinksSchema
     }
 
     # NOTE: Developers using drafts-resources need to do this
     draft_links_config = {
-        "record": DraftLinksSchema()
+        "record": DraftLinksSchema
     }
 
 
@@ -89,7 +89,7 @@ class DraftResourceConfig(DraftResourceConfigBase):
 
     links_config = {
         # TODO: Revisit naming for "record"?
-        "record": DraftLinksSchema()
+        "record": DraftLinksSchema
     }
 
 
@@ -110,7 +110,7 @@ class DraftActionResourceConfig(DraftActionResourceConfigBase):
     }
 
     record_links_config = {
-        "record": RecordLinksSchema()
+        "record": RecordLinksSchema
     }
 
 

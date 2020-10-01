@@ -22,7 +22,7 @@ class DraftResourceConfig(RecordResourceConfig):
     item_route = None
 
     links_config = {
-        "record": DraftLinksSchema()
+        "record": DraftLinksSchema
     }
 
 
@@ -38,7 +38,7 @@ class DraftActionResourceConfig(RecordResourceConfig):
 
     # TODO: Point to RecordLinksSchema in records-resources
     record_links_config = {
-        "record": RecordLinksSchema()
+        "record": RecordLinksSchema
     }
 
 

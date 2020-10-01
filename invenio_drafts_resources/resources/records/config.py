@@ -19,5 +19,5 @@ class RecordResourceConfig(_RecordResourceConfig):
     """Draft aware Record resource config."""
 
     draft_links_config = {
-        "record": DraftLinksSchema()
+        "record": DraftLinksSchema
     }
