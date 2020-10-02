@@ -191,7 +191,7 @@ def test_command_not_implemented(client, identity_simple):
 # therefore these tests do not assert their output)
 #
 
-
+@pytest.mark.skip()  # WHY: Draft::is_deleted is not implemented
 def test_create_publish_new_revision(client, input_data,
                                      identity_simple):
     """Test draft creation of an existing record and publish it."""
@@ -246,6 +246,7 @@ def test_create_publish_new_revision(client, input_data,
         input_data["metadata"]["title"]
 
 
+@pytest.mark.skip()  # WHY: Draft::is_deleted is not implemented
 def test_mutiple_edit(client, identity_simple, input_data):
     """Test the revision_id when editing record multiple times.
 
