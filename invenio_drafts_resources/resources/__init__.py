@@ -10,8 +10,8 @@
 """Invenio Drafts Resources module to create REST APIs."""
 
 from .drafts import DraftActionResource, DraftActionResourceConfig, \
-    DraftResource, DraftResourceConfig, DraftVersionResource, \
-    DraftVersionResourceConfig
+    DraftLinksSchema, DraftResource, DraftResourceConfig, \
+    DraftVersionResource, DraftVersionResourceConfig
 from .records import RecordResource, RecordResourceConfig
 from .userrecords import UserRecordsResource
 from .userrecords_config import UserRecordsResourceConfig
@@ -19,6 +19,7 @@ from .userrecords_config import UserRecordsResourceConfig
 __all__ = (
     "DraftActionResource",
     "DraftActionResourceConfig",
+    "DraftLinksSchema",
     "DraftResource",
     "DraftResourceConfig",
     "DraftVersionResource",

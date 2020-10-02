@@ -15,7 +15,6 @@ from marshmallow import Schema
 from marshmallow_utils.fields import Link
 from uritemplate import URITemplate
 
-# TODO: Make isort NOT want imports formatted this way
 from invenio_drafts_resources.resources import \
     DraftActionResource as DraftActionResourceBase
 from invenio_drafts_resources.resources import \

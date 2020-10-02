@@ -7,7 +7,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""TODO: Use invenio-records one. Links Schema."""
+"""Draft aware Record Links Schema."""
 
 from marshmallow import Schema
 from marshmallow_utils.fields import Link

@@ -12,7 +12,7 @@
 from invenio_records_resources.resources import \
     RecordResourceConfig as _RecordResourceConfig
 
-from ..drafts.schema import DraftLinksSchema
+from ..drafts.schemas_links import DraftLinksSchema
 
 
 class RecordResourceConfig(_RecordResourceConfig):

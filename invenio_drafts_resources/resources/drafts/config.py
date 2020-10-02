@@ -11,8 +11,8 @@
 
 from invenio_records_resources.resources import RecordResourceConfig
 
-from ..records.schema import RecordLinksSchema
-from .schema import DraftLinksSchema
+from ..records import RecordLinksSchema
+from .schemas_links import DraftLinksSchema
 
 
 class DraftResourceConfig(RecordResourceConfig):
@@ -36,7 +36,6 @@ class DraftActionResourceConfig(RecordResourceConfig):
         "publish": "publish",
     }
 
-    # TODO: Point to RecordLinksSchema in records-resources
     record_links_config = {
         "record": RecordLinksSchema
     }
