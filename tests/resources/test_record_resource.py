@@ -168,6 +168,23 @@ def test_publish_draft(client, input_data):
     _assert_single_item_response(response)
 
 
+def test_search_draft(client, input_data):
+    response = client.post(
+        "/mocks", data=json.dumps(input_data), headers=HEADERS)
+    recid = response.json['id']
+
+    assert response.status_code == 201
+    _assert_single_item_response(response)
+
+    response = client.get("/mocks?q=", headers=HEADERS)
+
+    assert response.status_code == 200
+
+    hits = response.json['hits']
+    assert hits['total'] == 1
+    assert hits['hits'][0]['id'] == recid
+
+
 def test_action_not_configured(client, identity_simple):
     """Tests a non configured action call."""
     # NOTE: recid can be dummy since it won't reach pass the resource view

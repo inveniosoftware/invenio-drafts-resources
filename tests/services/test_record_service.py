@@ -15,12 +15,8 @@ Test to add:
 - Read with missing pid
 """
 
-import time
-
 import pytest
-from invenio_pidstore.errors import PIDDeletedError
 from invenio_pidstore.models import PIDStatus
-from invenio_search import current_search, current_search_client
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -188,7 +184,7 @@ def test_create_publish_new_revision(app, service, identity_simple,
 
 
 def test_mutiple_edit(app, service, identity_simple, input_data):
-    """Test the revision_id when editing record multiple times..
+    """Test the revision_id when editing record multiple times.
 
     This tests the `edit` service method.
     """
