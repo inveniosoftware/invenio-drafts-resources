@@ -19,7 +19,8 @@ class Record(RecordBase):
     schema = ConstantField(
         '$schema', 'http://localhost/schemas/records/record-v1.0.0.json')
 
-    index = IndexField('records-record-v1.0.0', search_alias='records')
+    index = IndexField(
+        'records-record-v1.0.0', search_alias='draftsresources-records')
 
 
 class Draft(DraftBase):
@@ -32,4 +33,5 @@ class Draft(DraftBase):
     schema = ConstantField(
         '$schema', 'http://localhost/schemas/records/record-v1.0.0.json')
 
-    index = IndexField('drafts-draft-v1.0.0', search_alias='drafts')
+    index = IndexField(
+        'drafts-draft-v1.0.0', search_alias='draftsresources-drafts')
