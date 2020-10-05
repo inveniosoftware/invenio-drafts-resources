@@ -34,6 +34,14 @@ class Record(RecordBase):
 
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
 
+    status = ModelField()
+
+    # @classmethod
+    # def create(cls, data, id_=None, **kwargs):
+
+    #     kwargs["status"] = "published"
+    #     return super(Record, cls).create(data, id_, **kwargs)
+
     @classmethod
     def create_or_update_from(cls, draft):
         """Create of update the record based on the draft content."""
@@ -78,4 +86,12 @@ class Draft(Record):
 
     expires_at = ModelField()
 
+    status = ModelField()
+
     fork_version_id = ModelField()
+
+    # @classmethod
+    # def create(cls, data, id_=None, **kwargs):
+
+    #     kwargs["status"] = "draft"
+    #     return super(Record, cls).create(data, id_, **kwargs)
