@@ -146,7 +146,6 @@ def test_publish_draft(app, service, identity_simple, input_data):
 # therefore these tests do not assert their output)
 #
 
-@pytest.mark.skip()  # WHY: Draft::is_deleted is not implemented
 def test_create_publish_new_revision(app, service, identity_simple,
                                      input_data):
     """Test creating a new revision of a record.
@@ -187,7 +186,6 @@ def test_create_publish_new_revision(app, service, identity_simple,
     assert record["metadata"]['title'] == edited_title
 
 
-@pytest.mark.skip()  # WHY: Draft::is_deleted is not implemented
 def test_mutiple_edit(app, service, identity_simple, input_data):
     """Test the revision_id when editing record multiple times..
 
