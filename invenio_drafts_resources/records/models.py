@@ -11,7 +11,7 @@
 from datetime import datetime
 
 from invenio_db import db
-from invenio_records.models import RecordMetadataBase
+from invenio_records_resources.records.models import RecordMetadataBase
 from sqlalchemy.dialects import mysql
 
 

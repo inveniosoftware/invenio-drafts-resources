@@ -13,7 +13,7 @@ from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ModelField
 from invenio_records_resources.records import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField, \
-    PIDStatusCheckField
+    PIDStatusCheckField, FilesField
 from sqlalchemy.orm.exc import NoResultFound
 
 RecordIdProviderV2.default_status_with_obj = PIDStatus.NEW
@@ -33,6 +33,10 @@ class Record(RecordBase):
     conceptpid = PIDField('conceptid', provider=RecordIdProviderV2)
 
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
+
+    bucket_id = ModelField()
+    bucket = ModelField(dump=False)
+    files = FilesField(store=True)
 
     @classmethod
     def create_or_update_from(cls, draft):
@@ -79,3 +83,7 @@ class Draft(Record):
     expires_at = ModelField()
 
     fork_version_id = ModelField()
+
+    bucket_id = ModelField()
+    bucket = ModelField(dump=False)
+    files = FilesField(store=False)
