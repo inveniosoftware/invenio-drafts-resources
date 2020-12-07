@@ -206,8 +206,15 @@ class RecordDraftService(RecordService):
 
         # Fully validate draft now
         # TODO: Add error_map for `ValidationError` in the resource config
-        # FIXME: Check partial vs absolute validation
-        # data, _ = self.schema.load(identity, data=draft.dumps())
+
+        data, _ = self.schema.load(
+            identity,
+            data=draft.dumps(),
+            pid=draft.pid,
+            record=draft,
+            raise_errors=True  # this is the default, but might as well be
+                               # explicit
+        )
 
         record = self.record_cls.create_or_update_from(draft)
 
