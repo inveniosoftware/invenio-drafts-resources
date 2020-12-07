@@ -63,7 +63,7 @@ def test_record_indexing(app, db, es, example_record, indexer):
     record.metadata == example_record['metadata']
 
 
-def test_record_delete_reindex(app, db, es, example_record, example_data,
+def test_record_delete_reindex(app, db, es, example_record, input_data,
                                indexer):
     """Test reindexing of a deleted record."""
     record = example_record

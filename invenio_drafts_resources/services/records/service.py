@@ -101,8 +101,16 @@ class RecordDraftService(RecordService):
 
         # Permissions
         self.require_permission(identity, "update_draft", record=draft)
-        data, _ = self.schema.load(
-            identity, data, pid=draft.pid, record=draft)
+
+        data, errors = self.schema.load(
+            identity,
+            data,
+            pid=draft.pid,
+            record=draft,
+            # Saving a draft only saves valid metadata and reports
+            # (doesn't raise) errors
+            raise_errors=False
+        )
 
         # Run components
         for component in self.components:
@@ -118,16 +126,24 @@ class RecordDraftService(RecordService):
         self.indexer.index(draft)
 
         return self.result_item(
-            self, identity, draft, links_config=links_config)
+            self,
+            identity,
+            draft,
+            links_config=links_config,
+            errors=errors
+        )
 
     def create(self, identity, data, links_config=None):
         """Create a draft for a new record.
 
         It does NOT eagerly create the associated record.
         """
-        # FIXME: This won't work with partial validation
         return self._create(
-           self.draft_cls, identity, data, links_config=links_config
+           self.draft_cls,
+           identity,
+           data,
+           links_config=links_config,
+           raise_errors=False
         )
 
     def edit(self, id_, identity, links_config=None):

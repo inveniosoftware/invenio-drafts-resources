@@ -23,16 +23,6 @@ from invenio_pidstore.models import PIDStatus
 from invenio_search import current_search, current_search_client
 from sqlalchemy.orm.exc import NoResultFound
 
-
-@pytest.fixture()
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test'
-        },
-    }
-
 #
 # Operations tests
 #
@@ -42,6 +32,7 @@ def test_create_draft(app, service, identity_simple, input_data):
     """Test draft creation of a non-existing record."""
     # Needs `app` context because of invenio_access/permissions.py#166
     draft = service.create(identity_simple, input_data)
+
     assert draft.id
     assert draft._record.revision_id == 1
 
@@ -54,6 +45,26 @@ def test_create_draft(app, service, identity_simple, input_data):
 
     assert draft._record.pid.status == PIDStatus.NEW
     assert draft._record.conceptpid.status == PIDStatus.NEW
+
+
+def test_create_empty_draft(app, service, identity_simple):
+    """Test an empty draft can be created.
+
+    Errors (missing required fields) are reported, but don't prevent creation.
+    """
+    # Needs `app` context because of invenio_access/permissions.py#166
+    input_data = {
+        "metadata": {}
+    }
+
+    draft = service.create(identity_simple, input_data)
+    draft_dict = draft.to_dict()
+
+    assert draft['id']
+    assert draft['conceptid']
+    assert draft._record.pid.status == PIDStatus.NEW
+    assert draft._record.conceptpid.status == PIDStatus.NEW
+    assert draft_dict['errors']['metadata']['title']
 
 
 def test_read_draft(app, service, identity_simple, input_data):
@@ -83,6 +94,22 @@ def test_update_draft(app, service, identity_simple, input_data):
     update_draft = service.read_draft(draft.id, identity_simple)
     assert draft.id == update_draft.id
     assert update_draft["metadata"]['title'] == edited_title
+
+
+def test_update_draft_invalid_field(app, service, identity_simple, input_data):
+    """Update with invalid field reports rather than raises errors."""
+    # Needs `app` context because of invenio_access/permissions.py#166
+    draft = service.create(identity_simple, input_data)
+    orig_title = input_data['metadata']['title']
+    edited_title = 100
+    input_data['metadata']['title'] = edited_title
+
+    updated_draft = service.update_draft(draft.id, identity_simple, input_data)
+    updated_draft_dict = updated_draft.to_dict()
+
+    assert draft.id == updated_draft.id
+    assert updated_draft["metadata"]['title'] == orig_title
+    assert updated_draft_dict["errors"]["metadata"]['title']
 
 
 def test_delete_draft(app, service, identity_simple, input_data):

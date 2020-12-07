@@ -36,3 +36,13 @@ def extra_entry_points():
 def create_app(instance_path, entry_points):
     """Application factory fixture."""
     return _create_api
+
+
+@pytest.fixture()
+def input_data():
+    """Input data (as coming from the view layer)."""
+    return {
+        'metadata': {
+            'title': 'Test'
+        },
+    }

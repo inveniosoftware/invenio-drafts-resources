@@ -23,16 +23,6 @@ from invenio_drafts_resources.resources import DraftActionResource, \
 HEADERS = {"content-type": "application/json", "accept": "application/json"}
 
 
-@pytest.fixture()
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test'
-        },
-    }
-
-
 def _assert_single_item_response(response):
     """Assert the fields present on a single item response."""
     response_fields = response.json.keys()
