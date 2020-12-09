@@ -33,6 +33,7 @@ def test_create_draft(app, service, identity_simple, input_data):
     """Test draft creation of a non-existing record."""
     # Needs `app` context because of invenio_access/permissions.py#166
     draft = service.create(identity_simple, input_data)
+    draft_dict = draft.to_dict()
 
     assert draft.id
     assert draft._record.revision_id == 1
@@ -43,9 +44,9 @@ def test_create_draft(app, service, identity_simple, input_data):
     # Check for pid and parent pid
     assert draft['id']
     assert draft['conceptid']
-
     assert draft._record.pid.status == PIDStatus.NEW
     assert draft._record.conceptpid.status == PIDStatus.NEW
+    assert 'errors' not in draft_dict
 
 
 def test_create_empty_draft(app, service, identity_simple):

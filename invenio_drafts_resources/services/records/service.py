@@ -204,9 +204,6 @@ class RecordDraftService(RecordService):
         # Get draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
 
-        # Fully validate draft now
-        # TODO: Add error_map for `ValidationError` in the resource config
-
         data, _ = self.schema.load(
             identity,
             data=draft.dumps(),
