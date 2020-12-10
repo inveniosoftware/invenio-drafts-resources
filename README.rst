@@ -11,7 +11,7 @@
 ==========================
 
 .. image:: https://img.shields.io/travis/inveniosoftware/Invenio-Drafts-Resources.svg
-        :target: https://travis-ci.org/inveniosoftware/Invenio-Drafts-Resources
+        :target: https://github.com/inveniosoftware//actions?query=workflow%3ACIInvenio-Drafts-Resources
 
 .. image:: https://img.shields.io/coveralls/inveniosoftware/Invenio-Drafts-Resources.svg
         :target: https://coveralls.io/r/inveniosoftware/Invenio-Drafts-Resources
