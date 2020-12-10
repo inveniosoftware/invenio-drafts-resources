@@ -16,7 +16,11 @@ from invenio_records_resources.records.systemfields import PIDField, \
     PIDStatusCheckField
 from sqlalchemy.orm.exc import NoResultFound
 
-RecordIdProviderV2.default_status_with_obj = PIDStatus.NEW
+
+class DraftRecordIdProviderV2(RecordIdProviderV2):
+    """Draft PID provider."""
+
+    default_status_with_obj = PIDStatus.NEW
 
 
 class Record(RecordBase):
@@ -28,9 +32,9 @@ class Record(RecordBase):
     # Configuration
     model_cls = None
 
-    pid = PIDField('id', provider=RecordIdProviderV2)
+    pid = PIDField('id', provider=DraftRecordIdProviderV2)
 
-    conceptpid = PIDField('conceptid', provider=RecordIdProviderV2)
+    conceptpid = PIDField('conceptid', provider=DraftRecordIdProviderV2)
 
     is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
 
@@ -71,10 +75,10 @@ class Draft(Record):
     # No default one is given, only the base.
     model_cls = None
 
-    pid = PIDField('id', provider=RecordIdProviderV2, delete=False)
+    pid = PIDField('id', provider=DraftRecordIdProviderV2, delete=False)
 
     conceptpid = PIDField(
-        'conceptid', provider=RecordIdProviderV2,  delete=False)
+        'conceptid', provider=DraftRecordIdProviderV2,  delete=False)
 
     expires_at = ModelField()
 
