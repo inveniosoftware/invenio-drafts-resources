@@ -178,21 +178,46 @@ class RecordDraftService(RecordService):
             self, identity, draft, links_config=links_config)
 
     def publish(self, id_, identity, links_config=None):
-        """Publish a draft."""
+        """Publish a draft.
+
+        Idea:
+            - Get the draft from the data layer (draft is not passed in)
+            - Validate it more strictly than when it was originally saved
+              (drafts can be incomplete but only complete drafts can be turned
+              into records)
+            - Create or update associated (published) record with data
+
+        NOTE: This process of taking data from the database and validating it
+              back is tricky because there are a number of
+              data representations and transformations. There can be mistakes
+              within it as of writing. Don't take this flow as gospel yet.
+        """
         self.require_permission(identity, "publish")
 
-        # Get draft
+        # Get data layer draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        # Convert to service layer draft result item
+        draft_item = self.result_item(
+            self, identity, draft, links_config=None  # no need for links
+        )
+        # Convert to data projection i.e. draft result item's dict form. Since
+        # there are no "errors" bc projection is taken directly from
+        # DB, we can use draft_item.data. This dict form is what is
+        # serialized out/deserialized in so it "should" be valid input to load.
+        draft_data = draft_item.data
 
+        # Purely used for validation purposes although we may actually want to
+        # use it...
         data, _ = self.schema.load(
             identity,
-            data=draft.dumps(),
+            data=draft_data,
             pid=draft.pid,
             record=draft,
             raise_errors=True  # this is the default, but might as well be
                                # explicit
         )
 
+        # Create or update published record
         record = self.record_cls.create_or_update_from(draft)
 
         # Run components
@@ -206,7 +231,6 @@ class RecordDraftService(RecordService):
 
         record.commit()
         db.session.commit()
-
         draft.delete()
         db.session.commit()  # Persist DB
         self.indexer.delete(draft)

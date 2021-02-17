@@ -10,7 +10,7 @@
 
 from invenio_records_resources.services.records.schema import \
     RecordSchema as RecordSchemaBase
-from marshmallow import fields, pre_load
+from marshmallow import fields
 
 
 class RecordSchema(RecordSchemaBase):
@@ -18,23 +18,3 @@ class RecordSchema(RecordSchemaBase):
 
     conceptid = fields.Str(dump_only=True)
     expires_at = fields.Str(dump_only=True)
-
-    @pre_load
-    def clean(self, data, **kwargs):
-        """Removes dump_only fields."""
-        keys = [
-            '$schema',
-            'conceptid',
-            'conceptpid',
-            'created',
-            'created',
-            'expires_at',
-            'fork_version_id',
-            'pid',
-            'updated',
-            'uuid',
-            'version_id',
-        ]
-        for k in keys:
-            data.pop(k, None)
-        return data
