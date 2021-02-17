@@ -135,42 +135,6 @@ def test_publish_draft(client, headers, input_data, es_clear):
     _assert_single_item_response(response)
 
 
-def test_search_records_and_drafts(client, headers, input_data, es_clear):
-    """Tests the search over the records index.
-
-    Note: The three use cases are set in the same test so there is the
-          possibility of failure. Meaning that if search is not done
-          correctly more than one record/draft will be returned.
-    """
-    # Create a draft
-    response = client.post("/mocks", json=input_data, headers=headers)
-    assert response.status_code == 201
-    recid = response.json['id']
-
-    Draft.index.refresh()
-
-    response = client.get("/mocks?status=draft", headers=headers)
-    assert response.status_code == 200
-    assert response.json['hits']['total'] == 1
-    assert response.json['hits']['hits'][0]['id'] == recid
-
-    # Create a record
-    recid = _create_and_publish(client, headers, input_data)
-    Record.index.refresh()
-
-    response = client.get("/mocks?status=published", headers=headers)
-    assert response.status_code == 200
-    assert response.json['hits']['total'] == 1
-    assert response.json['hits']['hits'][0]['id'] == recid
-
-    # Default to record search
-    response = client.get("/mocks", headers=headers)
-
-    assert response.status_code == 200
-    assert response.json['hits']['total'] == 1
-    assert response.json['hits']['hits'][0]['id'] == recid
-
-
 def test_action_not_configured(client, headers, es_clear):
     """Tests a non configured action call."""
     # NOTE: recid can be dummy since it won't reach pass the resource view

@@ -40,19 +40,31 @@ class RecordDraftService(RecordService):
     # Inherits record read, create, delete and update
     def search(self, identity, params=None, links_config=None,
                es_preference=None, **kwargs):
-        """Search for records matching the querystring."""
+        """Search for published records matching the querystring."""
         params = params or {}
         params.update(kwargs)
-
-        status = params.pop("status", "published")
-        record_cls = self.draft_cls if status == "draft" else self.record_cls
 
         return super().search(
             identity,
             params=params,
             links_config=links_config,
             es_preference=es_preference,
-            record_cls=record_cls,
+            record_cls=self.record_cls,
+            # we don't pass kwargs, because they have already been merged.
+        )
+
+    def search_drafts(self, identity, params=None, links_config=None,
+                      es_preference=None, **kwargs):
+        """Search for drafts records matching the querystring."""
+        params = params or {}
+        params.update(kwargs)
+
+        return super().search(
+            identity,
+            params=params,
+            links_config=links_config,
+            es_preference=es_preference,
+            record_cls=self.draft_cls,
             # we don't pass kwargs, because they have already been merged.
         )
 
@@ -174,6 +186,10 @@ class RecordDraftService(RecordService):
         db.session.commit()
         self.indexer.index(draft)
 
+        # Re index the record to trigger update of computed values in the
+        # available dumpers
+        self.indexer.index(record)
+
         return self.result_item(
             self, identity, draft, links_config=links_config)
 
@@ -288,5 +304,10 @@ class RecordDraftService(RecordService):
         draft.delete(force=force)
         db.session.commit()
         self.indexer.delete(draft)
+
+        # Re index the record to trigger update of computed values in the
+        # available dumpers
+        if record:
+            self.indexer.index(record)
 
         return True
