@@ -66,6 +66,9 @@ class RecordDraftService(RecordService):
             links_config=links_config,
             es_preference=es_preference,
             record_cls=self.draft_cls,
+            # `has_draft` systemfield is not defined here. This is not ideal
+            # but it helps avoid overriding the method. See how is used in
+            # https://github.com/inveniosoftware/invenio-rdm-records
             extra_filter=Q('term', has_draft=False)
             # we don't pass kwargs, because they have already been merged.
         )
