@@ -9,6 +9,7 @@
 
 """RecordDraft Service API."""
 
+from elasticsearch_dsl.query import Q
 from invenio_db import db
 from invenio_records_resources.services import RecordService
 from sqlalchemy.orm.exc import NoResultFound
@@ -65,6 +66,7 @@ class RecordDraftService(RecordService):
             links_config=links_config,
             es_preference=es_preference,
             record_cls=self.draft_cls,
+            extra_filter=Q('term', has_draft=False)
             # we don't pass kwargs, because they have already been merged.
         )
 
