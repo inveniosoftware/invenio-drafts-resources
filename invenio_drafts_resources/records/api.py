@@ -12,8 +12,8 @@ from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
 from invenio_records.systemfields import ModelField
 from invenio_records_resources.records import Record as RecordBase
-from invenio_records_resources.records.systemfields import PIDField, \
-    PIDStatusCheckField
+from invenio_records_resources.records.systemfields import IsPublishedField, \
+    PIDField
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -36,7 +36,7 @@ class Record(RecordBase):
 
     conceptpid = PIDField('conceptid', provider=DraftRecordIdProviderV2)
 
-    is_published = PIDStatusCheckField(status=PIDStatus.REGISTERED)
+    is_published = IsPublishedField(status=PIDStatus.REGISTERED)
 
     @classmethod
     def create_or_update_from(cls, draft):
