@@ -33,7 +33,7 @@ class RecordDraftService(RecordService):
         return self.config.draft_cls
 
     # High-level API
-    # Inherits record search, read, create, delete and update
+    # Inherits record search, search_versions, read, create, delete and update
     def search_drafts(self, identity, params=None, links_config=None,
                       es_preference=None, **kwargs):
         """Search for drafts records matching the querystring."""
@@ -244,6 +244,35 @@ class RecordDraftService(RecordService):
 
         return self.result_item(
             self, identity, next_draft, links_config=links_config)
+
+    def search_versions(self, id_, identity, params=None, links_config=None,
+                        es_preference=None, **kwargs):
+        """Search for record's versions."""
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
+        self.require_permission(identity, "read", record=record)
+
+        # Prepare and execute the search
+        params = params or {}
+
+        search_result = self._search(
+            'search_versions',
+            identity,
+            params,
+            es_preference,
+            record_cls=self.record_cls,
+            extra_filter=Q(
+                'match', **{'parent.id': str(record.parent.pid.pid_value)}),
+            permission_action='read',
+            **kwargs
+        ).execute()
+
+        return self.result_list(
+            self,
+            identity,
+            search_result,
+            params,
+            links_config=links_config
+        )
 
     def delete_draft(self, id_, identity, revision_id=None):
         """Delete a record from database and search indexes."""

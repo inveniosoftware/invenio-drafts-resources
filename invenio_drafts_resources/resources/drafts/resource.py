@@ -10,14 +10,13 @@
 """Invenio Drafts Resources module to create REST APIs."""
 
 from flask import abort, g
-from flask_resources import CollectionResource, SingletonResource
+from flask_resources import SingletonResource
 from flask_resources.context import resource_requestctx
 from invenio_records_resources.config import ConfigLoaderMixin
 from invenio_records_resources.resources.actions import ActionResource
 
 from ...services import RecordDraftService
-from .config import DraftActionResourceConfig, DraftResourceConfig, \
-    DraftVersionResourceConfig
+from .config import DraftActionResourceConfig, DraftResourceConfig
 from .errors import ActionNotImplementedError
 
 
@@ -81,37 +80,6 @@ class DraftResource(SingletonResource, ConfigLoaderMixin):
             revision_id=resource_requestctx.headers.get("if_match"),
         )
         return None, 204
-
-
-class DraftVersionResource(CollectionResource, ConfigLoaderMixin):
-    """Draft version resource."""
-
-    default_config = DraftVersionResourceConfig
-
-    def __init__(self, service=None, config=None):
-        """Constructor."""
-        super(DraftVersionResource, self).__init__(
-            config=self.load_config(config))
-        self.service = service or RecordDraftService()
-
-    def search(self):
-        """Perform a search over the items.
-
-        GET /records/:pid_value/versions
-        """
-        # TODO: IMPLEMENT ME!
-        return self.service.search(), 200
-
-    def create(self):
-        """Create a new version.
-
-        POST /records/:pid_value/versions
-        """
-        item = self.service.new_version(
-            resource_requestctx.route["pid_value"],
-            g.identity
-        )
-        return item.to_dict(), 201
 
 
 class DraftActionResource(ActionResource, ConfigLoaderMixin):

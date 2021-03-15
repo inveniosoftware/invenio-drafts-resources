@@ -15,14 +15,10 @@ fixtures are available.
 import pytest
 from flask_principal import Identity, Need, UserNeed
 from mock_module.resource import DraftActionResource, \
-    DraftActionResourceConfig, DraftFileActionResource, \
-    DraftFileActionResourceConfig, DraftFileResource, \
-    DraftFileResourceConfig, DraftResource, DraftResourceConfig, \
-    DraftVersionResource, DraftVersionResourceConfig, \
-    RecordFileActionResource, RecordFileActionResourceConfig, \
-    RecordFileResource, RecordFileResourceConfig, RecordResource, \
-    RecordResourceConfig
-from mock_module.service import Service, ServiceConfig
+    DraftFileActionResource, DraftFileResource, DraftResource, \
+    RecordFileActionResource, RecordFileResource, RecordResource, \
+    RecordVersionsResource
+from mock_module.service import Service
 
 
 @pytest.fixture(scope="module")
@@ -58,7 +54,7 @@ def draft_action_resource():
 @pytest.fixture(scope="module")
 def version_resource():
     """Draft version Resource."""
-    return DraftVersionResource(service=Service())
+    return RecordVersionsResource(service=Service())
 
 
 @pytest.fixture(scope="module")

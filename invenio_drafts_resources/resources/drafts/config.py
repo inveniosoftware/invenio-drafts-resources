@@ -42,10 +42,3 @@ class DraftActionResourceConfig(ActionResourceConfig):
     record_links_config = {
         "record": RecordLinksSchema
     }
-
-
-class DraftVersionResourceConfig(RecordResourceConfig):
-    """Draft resource config."""
-
-    list_route = "/records/<pid_value>/versions"
-    # TODO: REVISIT

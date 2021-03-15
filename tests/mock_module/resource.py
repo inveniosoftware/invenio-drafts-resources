@@ -32,10 +32,6 @@ from invenio_drafts_resources.resources import \
 from invenio_drafts_resources.resources import \
     DraftResourceConfig as DraftResourceConfigBase
 from invenio_drafts_resources.resources import \
-    DraftVersionResource as DraftVersionResourceBase
-from invenio_drafts_resources.resources import \
-    DraftVersionResourceConfig as DraftVersionResourceConfigBase
-from invenio_drafts_resources.resources import \
     RecordFileActionResource as RecordFileActionResourceBase
 from invenio_drafts_resources.resources import \
     RecordFileActionResourceConfig as RecordFileActionResourceConfigBase
@@ -47,6 +43,10 @@ from invenio_drafts_resources.resources import \
     RecordResource as RecordResourceBase
 from invenio_drafts_resources.resources import \
     RecordResourceConfig as RecordResourceConfigBase
+from invenio_drafts_resources.resources import \
+    RecordVersionsResource as RecordVersionsResource
+from invenio_drafts_resources.resources import \
+    RecordVersionsResourceConfig as RecordVersionsResourceConfigBase
 
 
 class RecordLinksSchema(Schema):
@@ -204,13 +204,13 @@ class DraftFileActionResource(DraftFileActionResourceBase):
 ##
 # VERSIONING
 ##
-class DraftVersionResourceConfig(DraftVersionResourceConfigBase):
+class RecordVersionsResourceConfig(RecordVersionsResourceConfigBase):
     """Mock draft version resource configuration."""
 
     list_route = "/mocks/<pid_value>/versions"
 
 
-class DraftVersionResource(DraftVersionResourceBase):
+class RecordVersionsResource(RecordVersionsResource):
     """Mock draft version resource."""
 
-    default_config = DraftVersionResourceConfig
+    default_config = RecordVersionsResourceConfig

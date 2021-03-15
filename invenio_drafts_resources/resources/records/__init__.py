@@ -9,12 +9,14 @@
 
 """Override of RecordResources."""
 
-from .config import RecordResourceConfig
-from .resource import RecordResource
+from .config import RecordResourceConfig, RecordVersionsResourceConfig
+from .resource import RecordResource, RecordVersionsResource
 from .schemas_links import RecordLinksSchema
 
 __all__ = (
     "RecordLinksSchema",
     "RecordResource",
     "RecordResourceConfig",
+    "RecordVersionsResource",
+    "RecordVersionsResourceConfig",
 )
