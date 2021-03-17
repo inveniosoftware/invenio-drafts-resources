@@ -325,6 +325,20 @@ class RecordDraftService(RecordService):
 
         return True
 
+    def rebuild_index(self, identity):
+        """Reindex all records and drafts.
+
+        Note: Skips (soft) deleted records and drafts.
+        """
+        ret_val = super().rebuild_index(identity)
+
+        for draft_meta in self.draft_cls.model_cls.query.all():
+            draft = self.draft_cls(draft_meta.data, model=draft_meta)
+            if not draft.is_deleted:
+                self.indexer.index(draft)
+
+        return ret_val
+
     def _validate_draft(self, identity, draft):
         """Validate a draft.
 
