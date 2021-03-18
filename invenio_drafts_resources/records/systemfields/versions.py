@@ -37,7 +37,7 @@ class VersionsManager:
 
     def copy_to(self, record):
         """Create a copy of the version manager and set on another record."""
-        record.model.parent_index = self.parent_index
+        record.model.index = self.index
         version_manager = self.__class__(record)
         version_manager._state = self._state
         return version_manager
@@ -56,9 +56,9 @@ class VersionsManager:
         return self._record.model.parent_id
 
     @property
-    def parent_index(self):
-        """Get the parent index."""
-        return self._record.model.parent_index
+    def index(self):
+        """Get the version index of the record/draft."""
+        return self._record.model.index
 
     #
     # Parent managed attributes
@@ -70,7 +70,7 @@ class VersionsManager:
 
     @property
     def latest_index(self):
-        """The index of the latest published record/draft."""
+        """The version index of the latest published record/draft."""
         return self.state().latest_index
 
     @property
@@ -117,17 +117,17 @@ class VersionsManager:
     def set_next(self):
         """Set this record as the next draft."""
         self.state().next_draft_id = self._record.id
-        self._record.model.parent_index = self.next_index
+        self._record.model.index = self.next_index
 
     def clear_next(self):
         """Unset this record as the next draft."""
         self.state().next_draft_id = None
-        self._record.model.parent_index = None
+        self._record.model.index = None
 
     def set_latest(self):
         """Set this record as the latest published record."""
         self.state().latest_id = self._record.id
-        self.state().latest_index = self.parent_index
+        self.state().latest_index = self.index
         self.state().next_draft_id = None
 
     #
@@ -141,7 +141,7 @@ class VersionsManager:
             next_draft_id=self.next_draft_id,
             is_latest=self.is_latest,
             is_latest_draft=self.is_latest_draft,
-            parent_index=self.parent_index,
+            index=self.index,
         )
 
     def load(self, dump):
@@ -152,20 +152,16 @@ class VersionsManager:
             latest_index=dump['latest_index'],
             next_draft_id=uuid_or_none(dump['next_draft_id']),
         )
-        if self.parent_index != dump['parent_index']:
-            self._record.model.parent_index = dump['parent_index']
+        if self.index != dump['index']:
+            self._record.model.index = dump['index']
 
     def __repr__(self):
         """Return repr(self)."""
         return (
-            "<{} (parent_id: {}, latest_id: {}, latest_index: {}, "
-            "next_draft_id: {})>"
-        ).format(
-            type(self).__name__,
-            self.parent_id,
-            self.latest_id,
-            self.latest_index,
-            self.next_draft_id,
+            f"<{type(self).__name__} (parent_id: {self.parent_id}, "
+            f"index: {self.index}, latest_id: {self.latest_id}, "
+            f"latest_index: {self.latest_index}, "
+            f"next_draft_id: {self.next_draft_id})>"
         )
 
 

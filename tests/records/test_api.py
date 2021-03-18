@@ -62,8 +62,8 @@ def test_draft_create_parent_state(app, db):
 
     def assert_state(d):
         # An initial draft is not published, so latest_id/index is None
-        assert d.model.parent_index == 1
-        assert d.versions.parent_index == 1
+        assert d.model.index == 1
+        assert d.versions.index == 1
         assert d.versions.latest_id is None
         assert d.versions.latest_index is None
         assert d.versions.next_draft_id == d.id
@@ -86,10 +86,10 @@ def test_record_create_parent_state(app, db):
         assert r.versions.latest_id == r.id
         assert r.versions.latest_index == 1
         assert r.versions.next_draft_id is None
-        assert r.versions.parent_index == 1
+        assert r.versions.index == 1
         assert r.versions.is_latest is True
         assert r.versions.is_latest_draft is True
-        assert r.model.parent_index == 1
+        assert r.model.index == 1
         assert r.model.parent_id == draft.model.parent_id
 
     assert_state(record)
@@ -260,7 +260,6 @@ def test_draft_indexing(app, db, es, example_draft, indexer):
     """Test indexing of a draft."""
     # Index document in ES
     assert indexer.index(example_draft)['result'] == 'created'
-
     # Retrieve document from ES
     data = current_search_client.get(
         'draftsresources-drafts-draft-v1.0.0',
@@ -270,6 +269,7 @@ def test_draft_indexing(app, db, es, example_draft, indexer):
 
     # Loads the ES data and compare
     draft = Draft.loads(data['_source'])
+
     assert draft == example_draft
     assert draft.id == example_draft.id
     assert draft.revision_id == example_draft.revision_id
@@ -279,9 +279,10 @@ def test_draft_indexing(app, db, es, example_draft, indexer):
     assert draft.parent == example_draft.parent
     assert draft.versions.is_latest_draft == \
         example_draft.versions.is_latest_draft
-
+    assert draft.versions.index == \
+        example_draft.versions.index
     # Check system fields
-    draft.metadata == example_draft['metadata']
+    assert draft.metadata == example_draft['metadata']
 
 
 def test_draft_delete_reindex(app, db, es, example_draft, indexer):

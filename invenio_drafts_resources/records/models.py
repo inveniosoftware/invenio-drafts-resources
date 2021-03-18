@@ -43,7 +43,7 @@ class ParentRecordMixin:
         """Relationship to parent record."""
         return db.relationship(cls.__parent_record_model__)
 
-    parent_index = db.Column(db.Integer, nullable=True)
+    index = db.Column(db.Integer, nullable=True)
     """The version index of the record."""
 
 

@@ -263,7 +263,7 @@ def test_mutiple_edit(app, service, identity_simple, input_data):
 
 def test_create_publish_new_version(app, service, identity_simple,
                                     input_data):
-    """Test creating a new revision of a record.
+    """Test creating a new version of a record.
 
     This tests the `new_version` service method.
     """
