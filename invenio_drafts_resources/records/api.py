@@ -85,6 +85,15 @@ class Record(RecordBase):
     versions = VersionsField(create=True, set_latest=True)
 
     @classmethod
+    def get_records_by_parent(cls, parent):
+        """Get all sibling records for the specified parent record."""
+        versions = cls.model_cls.query.filter_by(parent_id=parent.id).all()
+        return [
+            cls(rec_model.data, model=rec_model)
+            for rec_model in versions
+        ]
+
+    @classmethod
     def publish(cls, draft):
         """Publish a draft as a new record.
 
