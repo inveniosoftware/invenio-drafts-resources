@@ -11,9 +11,9 @@
 
 """Example resource."""
 
+from invenio_records_resources.resources.records.schemas_links import \
+    ItemLink, SearchLinksSchema
 from marshmallow import Schema
-from marshmallow_utils.fields import Link
-from uritemplate import URITemplate
 
 from invenio_drafts_resources.resources import \
     DraftActionResource as DraftActionResourceBase
@@ -52,26 +52,17 @@ from invenio_drafts_resources.resources import \
 class RecordLinksSchema(Schema):
     """Schema for a record's links."""
 
-    self = Link(
-        template=URITemplate("/api/mocks/{pid_value}"),
-        permission="read",
-        params=lambda record: {'pid_value': record.pid.pid_value}
-    )
+    self = ItemLink(template='/api/mocks/{pid_value}')
     # TODO: Add delete, files, ...
 
 
 class DraftLinksSchema(Schema):
     """Schema for a draft's links."""
 
-    self = Link(
-        template=URITemplate("/api/mocks/{pid_value}/draft"),
-        permission="read",
-        params=lambda draft: {'pid_value': draft.pid.pid_value}
-    )
-    publish = Link(
-        template=URITemplate("/api/mocks/{pid_value}/draft/actions/publish"),
-        permission="publish",
-        params=lambda draft: {'pid_value': draft.pid.pid_value}
+    self = ItemLink(template='/api/mocks/{pid_value}/draft')
+    publish = ItemLink(
+        template='/api/mocks/{pid_value}/draft/actions/publish',
+        permission="publish"
     )
 
 
@@ -82,6 +73,7 @@ class RecordResourceConfig(RecordResourceConfigBase):
     """Mock record resource configuration."""
 
     list_route = "/mocks"
+
     item_route = f"{list_route}/<pid_value>"
 
     links_config = {
@@ -208,6 +200,14 @@ class RecordVersionsResourceConfig(RecordVersionsResourceConfigBase):
     """Mock draft version resource configuration."""
 
     list_route = "/mocks/<pid_value>/versions"
+
+    item_route = "/mocks/<pid_value>/versions/latest"
+
+    links_config = {
+        "record": RecordLinksSchema,
+        "search": SearchLinksSchema.create(
+            template='/api/mocks/{pid_value}/versions{?params*}')
+    }
 
 
 class RecordVersionsResource(RecordVersionsResource):

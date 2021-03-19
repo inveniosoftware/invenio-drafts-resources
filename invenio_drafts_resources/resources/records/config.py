@@ -9,11 +9,12 @@
 
 """Draft aware Record Resource Config override."""
 
+from flask_resources.errors import create_errormap_handler
 from flask_resources.parsers import HeadersParser
 from invenio_records_resources.resources import \
     RecordResourceConfig as _RecordResourceConfig
 from invenio_records_resources.resources.records.schemas_links import \
-    SearchLinksSchema
+    ItemLinksSchema, SearchLinksSchema
 
 from ..drafts.schemas_links import DraftLinksSchema
 
@@ -34,8 +35,10 @@ class RecordVersionsResourceConfig(_RecordResourceConfig):
     item_route = "/records/<pid_value>/versions/latest"
 
     links_config = {
+        "record": ItemLinksSchema.create(template='/api/records/{pid_value}'),
+        # TODO: fix search links schema to pass the <pid_value>
         "search":  SearchLinksSchema.create(
-            template='/api/records/<pid_value>/versions{?params*}')
+            template='/api/records/{pid_value}/versions{?params*}')
     }
 
     request_headers_parser = {

@@ -78,6 +78,19 @@ class RecordDraftService(RecordService):
         return self.result_item(
             self, identity, draft, links_config=links_config)
 
+    def read_latest(self, id_, identity, links_config=None):
+        """Retrieve latest record."""
+        # Resolve and require permission
+        record = self.record_cls.pid.resolve(id_)
+        self.require_permission(identity, "read", record=record)
+
+        # Retrieve latest if record is not
+        if not record.versions.is_latest:
+            record = self.record_cls.get_record(record.versions.latest_id)
+
+        return self.result_item(
+            self, identity, record, links_config=links_config)
+
     def update_draft(self, id_, identity, data, links_config=None,
                      revision_id=None):
         """Replace a draft."""

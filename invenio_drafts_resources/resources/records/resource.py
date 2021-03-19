@@ -21,6 +21,7 @@ from invenio_records_resources.resources import \
 from invenio_drafts_resources.services.records import RecordDraftService
 
 from .config import RecordResourceConfig, RecordVersionsResourceConfig
+from .errors import api_redirect
 
 
 class RecordResource(_RecordResource):
@@ -80,3 +81,15 @@ class RecordVersionsResource(CollectionResource, ConfigLoaderMixin):
             g.identity
         )
         return item.to_dict(), 201
+
+    def read(self):
+        """Redirect to latest record.
+
+        GET /records/:pid_value/versions/latest
+        """
+        item = self.service.read_latest(
+            resource_requestctx.route["pid_value"],
+            g.identity,
+            links_config=self.config.links_config
+        )
+        api_redirect(location=item["links"]["self"])

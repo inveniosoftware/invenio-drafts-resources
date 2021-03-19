@@ -263,7 +263,7 @@ def test_mutiple_edit(app, service, identity_simple, input_data):
 
 def test_create_publish_new_version(app, service, identity_simple,
                                     input_data):
-    """Test creating a new revision of a record.
+    """Test creating a new version of a record.
 
     This tests the `new_version` service method.
     """
@@ -286,3 +286,25 @@ def test_create_publish_new_version(app, service, identity_simple,
     assert record_2._record.parent.pid.status == PIDStatus.REGISTERED
     assert record_2._record.revision_id == 1
     assert record_2['id'] != record['id']
+
+
+def test_read_latest_version(app, service, identity_simple,
+                             input_data):
+    """Test read the latest version of a record.
+
+    This tests the `read_latest` service method.
+    """
+    record = _create_and_publish(service, input_data, identity_simple)
+    recid = record.id
+
+    # Create new version
+    draft = service.new_version(recid, identity_simple)
+    # Publish it
+    record_2 = service.publish(draft.id, identity_simple)
+    recid_2 = record_2.id
+
+    latest = service.read_latest(recid, identity_simple)
+    assert latest['id'] == recid_2
+
+    latest = service.read_latest(recid_2, identity_simple)
+    assert latest['id'] == recid_2

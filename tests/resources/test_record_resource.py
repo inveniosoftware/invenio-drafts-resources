@@ -241,29 +241,25 @@ def test_mutiple_edit(client, headers, input_data, es_clear):
     assert response.json['revision_id'] == 8
 
 
-@pytest.mark.skip()  # Disable until properly implemented.
-def test_create_publish_new_version(client, headers, input_data):
+def test_redirect_to_latest_version(client, headers, input_data):
     """Creates a new version of a record.
 
     Publishes the draft to obtain 2 versions of a record.
     """
     recid = _create_and_publish(client, headers, input_data)
 
-    # Create new draft of said record
+    # Create new version of said record
     response = client.post(f"/mocks/{recid}/versions", headers=headers)
-
-    assert response.status_code == 201
-    _assert_single_item_response(response)
-    assert response.json['revision_id'] == 1
     recid_2 = response.json['id']
 
     # Publish it to check the increment in version
     response = client.post(
         f"/mocks/{recid_2}/draft/actions/publish", headers=headers
     )
+    latest_version_self_link = response.json["links"]["self"]
 
-    assert response.status_code == 202
-    _assert_single_item_response(response)
+    # Read a previous versions latest
+    response = client.get(f"/mocks/{recid}/versions/latest")
 
-    assert response.json['id'] == recid_2 != recid
-    assert response.json['revision_id'] == 1
+    assert response.status_code == 301
+    assert response.headers["location"] == latest_version_self_link

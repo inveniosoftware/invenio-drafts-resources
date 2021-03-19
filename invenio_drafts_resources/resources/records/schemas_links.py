@@ -9,16 +9,11 @@
 
 """Draft aware Record Links Schema."""
 
+from invenio_records_resources.resources.records.schemas_links import ItemLink
 from marshmallow import Schema
-from marshmallow_utils.fields import Link
-from uritemplate import URITemplate
 
 
 class RecordLinksSchema(Schema):
     """Schema for a record's links."""
 
-    self = Link(
-        template=URITemplate("/api/records/{pid_value}"),
-        permission="read",
-        params=lambda record: {'pid_value': record.pid.pid_value}
-    )
+    self = ItemLink(template="/api/records/{pid_value}")
