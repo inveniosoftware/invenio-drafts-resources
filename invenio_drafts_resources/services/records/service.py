@@ -12,6 +12,8 @@
 from elasticsearch_dsl.query import Q
 from invenio_db import db
 from invenio_records_resources.services import RecordService
+from invenio_records_resources.services.records.schema import \
+    MarshmallowServiceSchema
 from sqlalchemy.orm.exc import NoResultFound
 
 from .config import RecordDraftServiceConfig
@@ -25,6 +27,11 @@ class RecordDraftService(RecordService):
     """
 
     default_config = RecordDraftServiceConfig
+
+    @property
+    def schema_parent(self):
+        """Schema for parent records."""
+        return MarshmallowServiceSchema(self, schema=self.config.schema_parent)
 
     # Draft attrs
     @property
@@ -390,3 +397,32 @@ class RecordDraftService(RecordService):
             self.indexer.index(draft, arguments=arguments)
         except NoResultFound:
             pass
+
+    def _get_record_and_parent_by_id(self, id_):
+        """Resolve the record and its parent, by the given ID.
+
+        If the ID belongs to a parent record, no child record will be
+        resolved.
+        """
+        try:
+            record = self.record_cls.pid.resolve(id_, registered_only=False)
+            parent = record.parent
+        except Exception:  # TODO NoResultFoundException?
+            record = None
+            parent = self.record_cls.parent_record_cls.pid.resolve(
+                id_, registered_only=False
+            )
+
+        return record, parent
+
+    def _index_related_records(self, record, parent):
+        """Index all records that are related to the specified ones."""
+        siblings = self.record_cls.get_records_by_parent(
+            parent or record.parent
+        )
+
+        # TODO only index the current record immediately;
+        #      all siblings should be sent to a high-priority celery task
+        #      instead (requires bulk indexing to work)
+        for sibling in siblings:
+            self.indexer.index(sibling)
