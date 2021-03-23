@@ -17,6 +17,7 @@ from invenio_records_resources.services.records.schema import \
 from sqlalchemy.orm.exc import NoResultFound
 
 from .config import RecordDraftServiceConfig
+from .results import VersionsList
 
 
 class RecordDraftService(RecordService):
@@ -286,12 +287,25 @@ class RecordDraftService(RecordService):
             **kwargs
         ).execute()
 
-        return self.result_list(
+        # NOTE: This illustrates some of the entangled code parts:
+        #       the same schema_search_links is used for all
+        #       self.result_list in this service, but actually this class
+        #       needs different schema_search_links (or schema_item_links)
+        #       for published records/drafts/versions...
+        #       The solution, so far, has been to create a new service
+        #       with a different configuration, but that service inherits from
+        #       this service. So this class doesn't have a semantic core: can't
+        #       look at it and associate a single config to get an idea
+        #       of what it does. Different methods assume a different
+        #       config! So we have to resort to hacking in a different
+        #       result_list just for this case.
+        return VersionsList(
             self,
             identity,
             search_result,
             params,
-            links_config=links_config
+            links_config=links_config,
+            pid_value=id_
         )
 
     def delete_draft(self, id_, identity, revision_id=None):
