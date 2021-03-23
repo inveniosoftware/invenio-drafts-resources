@@ -78,7 +78,8 @@ class RecordVersionsResource(CollectionResource, ConfigLoaderMixin):
         """
         item = self.service.new_version(
             resource_requestctx.route["pid_value"],
-            g.identity
+            g.identity,
+            links_config=self.config.draft_links_config
         )
         return item.to_dict(), 201
 

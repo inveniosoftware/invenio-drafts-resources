@@ -27,7 +27,7 @@ class RecordResourceConfig(_RecordResourceConfig):
     }
 
 
-class RecordVersionsResourceConfig(_RecordResourceConfig):
+class RecordVersionsResourceConfig(RecordResourceConfig):
     """Record resource version config."""
 
     list_route = "/records/<pid_value>/versions"

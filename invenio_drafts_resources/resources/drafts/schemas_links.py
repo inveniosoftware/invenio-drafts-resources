@@ -22,6 +22,13 @@ class DraftLinksSchema(Schema):
         permission="read",
         params=lambda draft: {'pid_value': draft.pid.pid_value}
     )
+
+    self_html = Link(
+        template=URITemplate("/uploads/{pid_value}"),
+        permission="read",
+        params=lambda draft: {'pid_value': draft.pid.pid_value}
+    )
+
     publish = Link(
         template=URITemplate("/api/records/{pid_value}/draft/actions/publish"),
         permission="publish",
