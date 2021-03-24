@@ -89,11 +89,12 @@ class RecordDraftService(RecordService):
         """Retrieve latest record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
-        self.require_permission(identity, "read", record=record)
 
         # Retrieve latest if record is not
         if not record.versions.is_latest:
             record = self.record_cls.get_record(record.versions.latest_id)
+
+        self.require_permission(identity, "read", record=record)
 
         return self.result_item(
             self, identity, record, links_config=links_config)
