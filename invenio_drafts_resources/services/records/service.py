@@ -13,7 +13,7 @@ from elasticsearch_dsl.query import Q
 from invenio_db import db
 from invenio_records_resources.services import RecordService
 from invenio_records_resources.services.records.schema import \
-    MarshmallowServiceSchema
+    ServiceSchemaWrapper
 from sqlalchemy.orm.exc import NoResultFound
 
 from .config import RecordDraftServiceConfig
@@ -32,7 +32,7 @@ class RecordDraftService(RecordService):
     @property
     def schema_parent(self):
         """Schema for parent records."""
-        return MarshmallowServiceSchema(self, schema=self.config.schema_parent)
+        return ServiceSchemaWrapper(self, schema=self.config.schema_parent)
 
     # Draft attrs
     @property
@@ -111,10 +111,12 @@ class RecordDraftService(RecordService):
 
         # Load data with service schema
         data, errors = self.schema.load(
-            identity,
             data,
-            pid=draft.pid,
-            record=draft,
+            context=dict(
+                identity=identity,
+                pid=draft.pid,
+                record=draft,
+            ),
             # Saving a draft only saves valid metadata and reports
             # (doesn't raise) errors
             raise_errors=False
@@ -387,10 +389,12 @@ class RecordDraftService(RecordService):
         )
         # Validate the data - will raise ValidationError if not valid.
         self.schema.load(
-            identity,
             data=draft_item.data,
-            pid=draft.pid,
-            record=draft,
+            context=dict(
+                identity=identity,
+                pid=draft.pid,
+                record=draft,
+            ),
             raise_errors=True  # this is the default, but might as well be
                                # explicit
         )
