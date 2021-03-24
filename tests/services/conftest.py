@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,7 +12,6 @@
 See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
-from uuid import uuid4
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
@@ -19,7 +19,7 @@ from mock_module.api import Draft
 from mock_module.service import Service
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def identity_simple():
     """Simple identity fixture."""
     i = Identity(1)
@@ -28,7 +28,7 @@ def identity_simple():
     return i
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def service(appctx):
     """Service instance."""
     return Service()

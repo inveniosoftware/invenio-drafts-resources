@@ -14,6 +14,7 @@ from invenio_records_resources.services import RecordServiceConfig
 from .components import DraftMetadataComponent, PIDComponent
 from .permissions import RecordDraftPermissionPolicy
 from .schema import ParentSchema, RecordSchema
+from .search_params import AllVersionsParam
 
 
 class RecordDraftServiceConfig(RecordServiceConfig):
@@ -33,3 +34,7 @@ class RecordDraftServiceConfig(RecordServiceConfig):
         DraftMetadataComponent,
         PIDComponent,
     ]
+
+    search_params_interpreters_cls = [
+        AllVersionsParam
+    ] + RecordServiceConfig.search_params_interpreters_cls

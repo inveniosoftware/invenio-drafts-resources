@@ -41,7 +41,8 @@ class RecordDraftService(RecordService):
         return self.config.draft_cls
 
     # High-level API
-    # Inherits record search, search_versions, read, create, delete and update
+    # Inherits record search, read, create, delete and update
+
     def search_drafts(self, identity, params=None, links_config=None,
                       es_preference=None, **kwargs):
         """Search for drafts records matching the querystring."""
