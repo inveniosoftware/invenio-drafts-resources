@@ -210,8 +210,8 @@ class RecordDraftService(RecordService):
         self._validate_draft(identity, draft)
 
         # Create the record from the draft
-        record = self.record_cls.publish(draft)
         latest_id = draft.versions.latest_id
+        record = self.record_cls.publish(draft)
 
         # Run components
         for component in self.components:
