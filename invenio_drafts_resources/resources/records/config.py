@@ -9,14 +9,14 @@
 
 """Draft aware Record Resource Config override."""
 
-from flask_resources.errors import create_errormap_handler
-from flask_resources.parsers import HeadersParser
+from flask_resources.parsers import HeadersParser, URLArgsParser
 from invenio_records_resources.resources import \
     RecordResourceConfig as _RecordResourceConfig
 from invenio_records_resources.resources.records.schemas_links import \
     ItemLinksSchema, SearchLinksSchema
 
 from ..drafts.schemas_links import DraftLinksSchema
+from .schemas_url_args import SearchURLArgsSchema
 
 
 class RecordResourceConfig(_RecordResourceConfig):
@@ -24,6 +24,10 @@ class RecordResourceConfig(_RecordResourceConfig):
 
     draft_links_config = {
         "record": DraftLinksSchema
+    }
+
+    request_url_args_parser = {
+        "search": URLArgsParser(SearchURLArgsSchema)
     }
 
 
