@@ -56,15 +56,17 @@ class VersionsList(RecordList):
 
         # TODO: Implements a gradual refactoring of schema dumping
         data = schema.dump(
-            self._identity,
             # It ain't pretty but it will do
             {
                 **self._params,
                 "_pagination": self.pagination,
                 "pid_value": self._pid_value
             },
-            links_factory=links,
-            links_namespace="search",
+            context=dict(
+                identity=self._identity,
+                links_factory=links,
+                links_namespace="search",
+            )
         )
 
         return data.get("links")
