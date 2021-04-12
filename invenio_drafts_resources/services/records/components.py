@@ -8,8 +8,10 @@
 
 """Records service component base classes."""
 
+from flask_babelex import gettext as _
 from invenio_records_resources.services.records.components import \
     MetadataComponent, ServiceComponent
+from marshmallow import ValidationError
 
 
 class PIDComponent(ServiceComponent):
@@ -40,12 +42,26 @@ class DraftFilesComponent(ServiceComponent):
         """New version callback."""
         draft['files'] = record['files']
 
+    def update_draft(self, identity, data=None, draft=None, record=None,
+                     errors=None):
+        """Update callback."""
+        draft_files = record.files
+        if draft_files.enabled and not draft_files.items():
+            errors.append({"field": "metadata.files", "messages": [
+                _("Missing uploaded files. To disable files for "
+                  "this record please mark it as a metadata-only.")]})
+
     # TODO: Add tests for publishing a draft with files
     def publish(self, identity, draft=None, record=None):
         """Copy bucket and files to record."""
         draft_files = draft.files
         bucket = draft_files.bucket
         if draft.files.enabled and bucket:
+            if not draft_files.items():
+                raise ValidationError(_("Missing uploaded files. To disable "
+                                        "files for this record please mark it "
+                                        "as a metadata-only."))
+
             # Set the draft bucket on the record also
             record.bucket = bucket
             record.bucket_id = bucket.id
