@@ -161,7 +161,7 @@ class RecordService(RecordServiceBase):
         for component in self.components:
             if hasattr(component, 'update_draft'):
                 component.update_draft(
-                    identity, record=draft, data=data)
+                    identity, record=draft, data=data, errors=errors)
 
         # Commit and index
         draft.commit()
