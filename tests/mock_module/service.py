@@ -8,6 +8,7 @@ from invenio_drafts_resources.services.records.config import is_draft, \
 
 from .api import Draft, Record
 from .permissions import PermissionPolicy
+from .schemas import RecordSchema
 
 
 class ServiceConfig(RecordServiceConfig):
@@ -16,6 +17,8 @@ class ServiceConfig(RecordServiceConfig):
     permission_policy_cls = PermissionPolicy
     record_cls = Record
     draft_cls = Draft
+
+    schema = RecordSchema
 
     links_item = {
         "self": ConditionalLink(

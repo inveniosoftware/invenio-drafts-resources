@@ -9,7 +9,6 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-import pytest
 from mock_module.api import Record
 
 

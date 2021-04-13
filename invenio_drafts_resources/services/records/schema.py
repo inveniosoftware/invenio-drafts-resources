@@ -8,8 +8,7 @@
 
 """Record schema."""
 
-from invenio_records_resources.services.records.schema import \
-    RecordSchema as RecordSchemaBase
+from invenio_records_resources.services.records.schema import BaseRecordSchema
 from marshmallow import Schema, fields
 from marshmallow_utils.fields import NestedAttribute
 
@@ -28,7 +27,7 @@ class ParentSchema(Schema):
     id = fields.Str()
 
 
-class RecordSchema(RecordSchemaBase):
+class RecordSchema(BaseRecordSchema):
     """Schema for records in JSON."""
 
     parent = NestedAttribute(ParentSchema, dump_only=True)

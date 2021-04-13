@@ -288,8 +288,7 @@ def test_create_publish_new_version(app, service, identity_simple,
     assert record_2['id'] != record['id']
 
 
-def test_read_latest_version(app, service, identity_simple,
-                             input_data):
+def test_read_latest_version(app, service, identity_simple, input_data):
     """Test read the latest version of a record.
 
     This tests the `read_latest` service method.
