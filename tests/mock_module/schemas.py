@@ -21,7 +21,14 @@ class MetadataSchema(Schema):
     title = fields.Str(required=True, validate=validate.Length(min=3))
 
 
+class FilesOptionsSchema(Schema):
+    """Basic files options schema class."""
+
+    enabled = fields.Bool(missing=True)
+
+
 class RecordSchema(BaseRecordSchema):
     """Schema for records in JSON."""
 
     metadata = fields.Nested(MetadataSchema)
+    files = fields.Nested(FilesOptionsSchema)

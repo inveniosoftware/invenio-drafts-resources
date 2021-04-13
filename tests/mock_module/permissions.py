@@ -20,5 +20,6 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_delete = [AnyUser()]
     can_delete_draft = [AnyUser()]
     can_publish = [AnyUser()]
+    can_create_files = [AnyUser()]
     can_read_files = [AnyUser()]
     can_update_files = [AnyUser()]

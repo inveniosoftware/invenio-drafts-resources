@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,7 +11,7 @@
 
 from flask_babelex import gettext as _
 from invenio_records_resources.services.records.components import \
-    MetadataComponent, ServiceComponent
+    FilesOptionsComponent, MetadataComponent, ServiceComponent
 from marshmallow import ValidationError
 
 
@@ -34,6 +35,11 @@ class PIDComponent(ServiceComponent):
 class DraftFilesComponent(ServiceComponent):
     """Draft files service component."""
 
+    def __init__(self, service, *args, **kwargs):
+        """Constructor."""
+        super().__init__(service)
+        self.files_component = FilesOptionsComponent(service)
+
     def edit(self, identity, draft=None, record=None):
         """Edit callback."""
         draft['files'] = record['files']
@@ -42,25 +48,58 @@ class DraftFilesComponent(ServiceComponent):
         """New version callback."""
         draft['files'] = record['files']
 
-    def update_draft(self, identity, data=None, draft=None, record=None,
-                     errors=None):
-        """Update callback."""
-        draft_files = record.files
-        if draft_files.enabled and not draft_files.items():
-            errors.append({"field": "metadata.files", "messages": [
-                _("Missing uploaded files. To disable files for "
-                  "this record please mark it as a metadata-only.")]})
+    def create(self, identity, data=None, record=None):
+        """Assigns files.enabled.
 
-    # TODO: Add tests for publishing a draft with files
+        NOTE: `record` actually refers to the draft
+              (this interface is used in records-resources and rdm-records)
+        """
+        enabled = data.get("files", {}).get("enabled", True)
+        record.files.enabled = enabled
+
+    def update_draft(self, identity, data=None, record=None, errors=None):
+        """Assigns files.enabled and warns if files are missing.
+
+        NOTE: `record` actually refers to the draft
+              (this interface is used in records-resources and rdm-records)
+        """
+        draft = record
+        enabled = data.get("files", {}).get("enabled", True)
+
+        try:
+            self.files_component.assign_files_enabled(enabled, record=draft)
+        except ValidationError as e:
+            errors.append(
+                {
+                    "field": "files.enabled",
+                    "messages": e.messages
+                }
+            )
+            return  # exit early
+
+        if draft.files.enabled and not draft.files.items():
+            errors.append(
+                {
+                    "field": "files.enabled",
+                    "messages": [
+                        _("Missing uploaded files. To disable files for "
+                          "this record please mark it as metadata-only.")
+                    ]
+                }
+            )
+
     def publish(self, identity, draft=None, record=None):
         """Copy bucket and files to record."""
         draft_files = draft.files
         bucket = draft_files.bucket
-        if draft.files.enabled and bucket:
+
+        if draft_files.enabled and bucket:
             if not draft_files.items():
-                raise ValidationError(_("Missing uploaded files. To disable "
-                                        "files for this record please mark it "
-                                        "as a metadata-only."))
+                raise ValidationError(
+                    _("Missing uploaded files. To disable files for "
+                      "this record please mark it as metadata-only."),
+                    field_name="files.enabled"
+                )
 
             # Set the draft bucket on the record also
             record.bucket = bucket
@@ -80,9 +119,7 @@ class DraftFilesComponent(ServiceComponent):
                     record.files[key] = df.object_version, df.metadata
                 else:
                     record.files[key] = df.object_version
-        # TODO: Normally we don't need this... on record creation from a draft
-        # with disabled files, the record should start with `enabled=False`.
-        elif not draft.files.enabled:
+        elif not draft_files.enabled:
             record.files.enabled = False
 
     def delete_draft(self, identity, draft=None, record=None, force=False):

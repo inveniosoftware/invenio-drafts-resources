@@ -15,8 +15,9 @@ fixtures are available.
 
 import pytest
 from flask_principal import Identity, Need, UserNeed
+from invenio_records_resources.services.files import FileService
 from mock_module.api import Draft
-from mock_module.service import ServiceConfig
+from mock_module.service import FileServiceConfig, ServiceConfig
 
 from invenio_drafts_resources.services.records import RecordService
 
@@ -30,10 +31,16 @@ def identity_simple():
     return i
 
 
-@pytest.fixture(scope="module")
-def service(appctx):
+@pytest.fixture()
+def service(appctx, location):
     """Service instance."""
     return RecordService(ServiceConfig)
+
+
+@pytest.fixture()
+def file_service():
+    """File service fixture."""
+    return FileService(FileServiceConfig)
 
 
 @pytest.fixture()

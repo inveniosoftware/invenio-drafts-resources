@@ -21,7 +21,7 @@ from sqlalchemy.orm.exc import NoResultFound
 #
 # Create
 #
-def test_draft_create_empty(app, db):
+def test_draft_create_empty(app, db, location):
     """Test draft creation."""
     # Empty draft creation works, and injects a schema.
     draft = Draft.create({})
@@ -36,7 +36,7 @@ def test_draft_create_empty(app, db):
     )
 
 
-def test_draft_create_parent(app, db):
+def test_draft_create_parent(app, db, location):
     """Test draft creation of the parent record."""
     draft = Draft.create({})
     db.session.commit()
@@ -49,7 +49,7 @@ def test_draft_create_parent(app, db):
     assert draft.pid.object_uuid != draft.parent.pid.object_uuid
 
 
-def test_draft_create_parent_state(app, db):
+def test_draft_create_parent_state(app, db, location):
     """Test draft creation of the parent record."""
     draft = Draft.create({})
     db.session.commit()
@@ -72,7 +72,7 @@ def test_draft_create_parent_state(app, db):
     assert_state(Draft.get_record(draft.id))
 
 
-def test_record_create_parent_state(app, db):
+def test_record_create_parent_state(app, db, location):
     """Test draft creation of the parent record."""
     draft = Draft.create({})
     draft.commit()
@@ -96,7 +96,7 @@ def test_record_create_parent_state(app, db):
     assert_state(Record.get_record(record.id))
 
 
-def test_draft_create_new_version(app, db):
+def test_draft_create_new_version(app, db, location):
     """Test draft creation of the parent record."""
     # A published record.
     record = Record.publish(Draft.create({}))
@@ -117,7 +117,7 @@ def test_draft_create_new_version(app, db):
     assert record.versions.is_latest is True
 
 
-def test_draft_parent_state_hard_delete(app, db):
+def test_draft_parent_state_hard_delete(app, db, location):
     """Test force deletion of a draft."""
     # Initial state: Only draft exists (i.e. no other record versions)
     draft = Draft.create({})
@@ -133,7 +133,7 @@ def test_draft_parent_state_hard_delete(app, db):
     assert RecordMetadata.query.count() == 0
 
 
-def test_draft_parent_state_hard_delete_with_parent(app, db):
+def test_draft_parent_state_hard_delete_with_parent(app, db, location):
     """Test force deletion of a draft."""
     # Initial state: A previous reccord version exists, in addition to draft
     draft = Draft.create({})
@@ -154,7 +154,7 @@ def test_draft_parent_state_hard_delete_with_parent(app, db):
     assert record.versions.latest_id == record.id
 
 
-def test_draft_parent_state_soft_delete(app, db):
+def test_draft_parent_state_soft_delete(app, db, location):
     """Test soft deletion of a draft."""
     # Simulate a record being edited.
     draft = Draft.create({})

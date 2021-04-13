@@ -1,6 +1,9 @@
 """Example service."""
 
-from invenio_records_resources.services import ConditionalLink, RecordLink
+from invenio_records_resources.services import ConditionalLink
+from invenio_records_resources.services import \
+    FileServiceConfig as BaseFileServiceConfig
+from invenio_records_resources.services import RecordLink
 
 from invenio_drafts_resources.services import RecordServiceConfig
 from invenio_drafts_resources.services.records.config import is_draft, \
@@ -41,3 +44,20 @@ class ServiceConfig(RecordServiceConfig):
         ),
         "versions": RecordLink("{+api}/mocks/{id}/versions"),
     }
+
+
+class FileServiceConfig(BaseFileServiceConfig):
+    """File service configuration."""
+
+    permission_policy_cls = PermissionPolicy
+    record_cls = Draft
+
+    # file_links_list = {
+    #     "self": RecordLink("{+api}/mocks/{id}/files"),
+    # }
+
+    # file_links_item = {
+    #     "self": FileLink("{+api}/mocks/{id}/files/{key}"),
+    #     "content": FileLink("{+api}/mocks/{id}/files/{key}/content"),
+    #     "commit": FileLink("{+api}/mocks/{id}/files/{key}/commit"),
+    # }

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,18 +10,6 @@
 """Test draft service links."""
 
 from copy import deepcopy
-
-import pytest
-
-
-@pytest.fixture()
-def input_data():
-    """Input data (as coming from the view layer)."""
-    return {
-        'metadata': {
-            'title': 'Test',
-        },
-    }
 
 
 def assert_expected_links(pid_value, links):
@@ -34,7 +22,7 @@ def assert_expected_links(pid_value, links):
         assert link == links[key]
 
 
-def test_create_draft(client, headers, input_data):
+def test_create_draft(client, headers, input_data, location):
     response = client.post("/mocks", json=input_data, headers=headers)
 
     assert response.status_code == 201
@@ -42,7 +30,7 @@ def test_create_draft(client, headers, input_data):
     assert_expected_links(pid_value, response.json["links"])
 
 
-def test_read_draft(client, headers, input_data):
+def test_read_draft(client, headers, input_data, location):
     response = client.post("/mocks", json=input_data, headers=headers)
     pid_value = response.json['id']
     response = client.get(f"/mocks/{pid_value}/draft", headers=headers)
@@ -51,7 +39,7 @@ def test_read_draft(client, headers, input_data):
     assert_expected_links(pid_value, response.json["links"])
 
 
-def test_update_draft(client, headers, input_data):
+def test_update_draft(client, headers, input_data, location):
     response = client.post("/mocks", json=input_data, headers=headers)
     pid_value = response.json["id"]
     input_data = deepcopy(input_data)
@@ -65,7 +53,7 @@ def test_update_draft(client, headers, input_data):
     assert_expected_links(pid_value, response.json["links"])
 
 
-def test_publish_draft(client, headers, input_data):
+def test_publish_draft(client, headers, input_data, location):
     response = client.post("/mocks", json=input_data, headers=headers)
     pid_value = response.json['id']
 

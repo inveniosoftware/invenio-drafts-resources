@@ -16,7 +16,7 @@ from mock_module.api import Draft
 
 
 @pytest.fixture()
-def example_draft(db, input_data):
+def example_draft(db, input_data, location):
     """Example draft."""
     draft = Draft.create(
         input_data,

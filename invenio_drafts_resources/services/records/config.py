@@ -17,7 +17,8 @@ from invenio_records_resources.services import \
     SearchOptions as SearchOptionsBase
 from invenio_records_resources.services import pagination_links
 
-from .components import DraftMetadataComponent, PIDComponent
+from .components import DraftFilesComponent, DraftMetadataComponent, \
+    PIDComponent
 from .permissions import RecordPermissionPolicy
 from .schema import ParentSchema, RecordSchema
 from .search_params import AllVersionsParam
@@ -132,6 +133,7 @@ class RecordServiceConfig(RecordServiceConfigBase):
     search_versions = SearchVersionsOptions
 
     components = [
+        DraftFilesComponent,  # Should this be here or just in tests?
         DraftMetadataComponent,
         PIDComponent,
     ]

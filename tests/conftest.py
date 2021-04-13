@@ -42,9 +42,15 @@ def create_app(instance_path, entry_points):
 
 @pytest.fixture()
 def input_data():
-    """Input data (as coming from the view layer)."""
+    """Input data (as coming from the view layer).
+
+    Most tests don't care about files, so files are disabled in the fixture.
+    """
     return {
         'metadata': {
             'title': 'Test'
         },
+        'files': {
+            'enabled': False
+        }
     }
