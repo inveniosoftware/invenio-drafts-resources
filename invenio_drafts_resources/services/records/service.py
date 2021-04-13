@@ -39,6 +39,10 @@ class RecordService(RecordServiceBase):
     # High-level API
     # Inherits record search, read, create, delete and update
 
+    def update(self, *args, **kwargs):
+        """Do not use."""
+        raise NotImplementedError("Records should be updated via their draft.")
+
     def search_drafts(self, identity, params=None, es_preference=None,
                       **kwargs):
         """Search for drafts records matching the querystring."""
