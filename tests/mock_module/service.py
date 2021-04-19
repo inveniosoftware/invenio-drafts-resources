@@ -6,6 +6,8 @@ from invenio_records_resources.services import \
 from invenio_records_resources.services import RecordLink
 
 from invenio_drafts_resources.services import RecordServiceConfig
+from invenio_drafts_resources.services.records.components import \
+    DraftFilesComponent
 from invenio_drafts_resources.services.records.config import is_draft, \
     is_record
 
@@ -22,6 +24,10 @@ class ServiceConfig(RecordServiceConfig):
     draft_cls = Draft
 
     schema = RecordSchema
+
+    components = RecordServiceConfig.components + [
+        DraftFilesComponent
+    ]
 
     links_item = {
         "self": ConditionalLink(
