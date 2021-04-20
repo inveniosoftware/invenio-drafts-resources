@@ -30,6 +30,7 @@ from invenio_records_resources.records import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField, \
     PIDStatusCheckField
 from sqlalchemy.orm.exc import NoResultFound
+import datetime
 
 from .systemfields import ParentField, VersionsField
 
@@ -227,3 +228,10 @@ class Draft(Record):
                 fork_version_id=record.revision_id,
             )
         return draft
+
+    @classmethod
+    def remove_softdeleted(cls, seconds_param):
+        seconds_ago = datetime.datetime.now() - datetime.timedelta(seconds=seconds_param)
+        """the delete() doesn't work do to the foreign key violation problem."""
+        #results = cls.model_cls.query.filter(cls.model_cls.is_deleted == True, cls.model_cls.updated < seconds_ago).delete()
+

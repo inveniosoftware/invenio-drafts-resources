@@ -8,6 +8,8 @@
 
 """Data access layer tests."""
 
+import datetime
+
 import pytest
 from invenio_search import current_search_client
 from jsonschema import ValidationError
@@ -224,6 +226,56 @@ def test_draft_soft_delete(app, db, example_draft):
     pytest.raises(NoResultFound, Draft.get_record, example_draft.id)
     draft = Draft.get_record(example_draft.id, with_deleted=True)
     assert draft.parent.id == parent_id
+
+
+def test_draft_hard_delete(app, database, location):
+    """Test draft hard delete of a soft deleted one (as a scheduled task)."""
+    """I cannot commit after a soft delete"""
+    #draft = Draft.create({})
+    #draft.delete(force=False)
+    #draft.commit()
+    #database.session.commit()
+    #Draft.remove_softdeleted(1)
+    #draft.commit()
+    #database.session.commit()
+
+    """Not comitting works (i can get the draftmetadata in the 
+    remove_softdeleted), still the delete() doesn't work do to
+    the foreign key violation problem. """
+    #draft = Draft.create({})
+    #draft.delete(force=False)
+    #database.session.commit()
+    #Draft.remove_softdeleted(1)
+    #database.session.commit()
+
+    # Both parent and draft are deleted
+    #pytest.raises(NoResultFound, ParentRecord.get_record, parent_id)
+    #pytest.raises(NoResultFound, Draft.get_record, example_draft.id)
+
+
+def test_draft_hard_delete_not_enough_time(app, db, example_draft):
+    """Test draft hard delete of a soft deleted one (as a scheduled task).
+    In this case,
+    not enough time has passed since the draft was soft deleted."""
+    parent_id = example_draft.parent.id
+    example_draft.delete(force=False)
+    Draft.remove_softdeleted(86400)
+    db.session.commit()
+
+    # Parent not deleted, but draft is soft deleted.
+    assert ParentRecord.get_record(parent_id)
+    pytest.raises(NoResultFound, Draft.get_record, example_draft.id)
+    draft = Draft.get_record(example_draft.id, with_deleted=True)
+    assert draft.parent.id == parent_id
+
+
+def test_draft_hard_delete_not_enough_time(app, db, example_draft):
+    """Test draft hard delete of a soft deleted one (as a scheduled task).
+    In this case, the draft hasn't been soft deleted."""
+    draft = Draft.get_record(example_draft.id)
+    Draft.remove_softdeleted(1)
+    # Test that the parent record is properly fetched.
+    assert draft.parent == example_draft.parent
 
 
 def test_draft_undelete(app, db, example_draft):
