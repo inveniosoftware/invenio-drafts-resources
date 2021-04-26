@@ -48,14 +48,17 @@ class DraftFilesComponent(ServiceComponent):
         """New version callback."""
         draft['files'] = record['files']
 
-    def create(self, identity, data=None, record=None):
-        """Assigns files.enabled.
+    def create(self, identity, data=None, record=None, errors=None):
+        """Assigns files.enabled and warns if files are missing..
 
         NOTE: `record` actually refers to the draft
               (this interface is used in records-resources and rdm-records)
         """
+        draft = record
         enabled = data.get("files", {}).get("enabled", True)
         record.files.enabled = enabled
+
+        self._check_if_files_are_missing(draft, enabled, errors)
 
     def update_draft(self, identity, data=None, record=None, errors=None):
         """Assigns files.enabled and warns if files are missing.
@@ -66,6 +69,10 @@ class DraftFilesComponent(ServiceComponent):
         draft = record
         enabled = data.get("files", {}).get("enabled", True)
 
+        self._check_if_files_are_missing(draft, enabled, errors)
+
+    def _check_if_files_are_missing(self, draft, enabled, errors):
+        """Warns if files are missing."""
         try:
             self.files_component.assign_files_enabled(enabled, record=draft)
         except ValidationError as e:
