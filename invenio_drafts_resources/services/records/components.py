@@ -65,9 +65,10 @@ class DraftFilesComponent(ServiceComponent):
         """
         draft = record
         enabled = data.get("files", {}).get("enabled", True)
+        default_preview = data.get("files", {}).get("default_preview")
 
         try:
-            self.files_component.assign_files_enabled(enabled, record=draft)
+            self.files_component.assign_files_enabled(draft, enabled)
         except ValidationError as e:
             errors.append(
                 {
@@ -85,6 +86,19 @@ class DraftFilesComponent(ServiceComponent):
                         _("Missing uploaded files. To disable files for "
                           "this record please mark it as metadata-only.")
                     ]
+                }
+            )
+
+        try:
+            self.files_component.assign_files_default_preview(
+                draft,
+                default_preview,
+            )
+        except ValidationError as e:
+            errors.append(
+                {
+                    "field": "files.default_preview",
+                    "messages": e.messages
                 }
             )
 
@@ -119,6 +133,9 @@ class DraftFilesComponent(ServiceComponent):
                     record.files[key] = df.object_version, df.metadata
                 else:
                     record.files[key] = df.object_version
+
+            # Transfer default preview
+            record.files.default_preview = draft_files.default_preview
         elif not draft_files.enabled:
             record.files.enabled = False
 

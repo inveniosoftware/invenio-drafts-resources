@@ -148,6 +148,46 @@ def test_update_draft_files_enabled_error_cases(
     assert updated_draft_dict["files"]["enabled"] is True
 
 
+def test_update_draft_set_default_file_preview(
+        app, location, service, file_service, identity_simple, input_data):
+    input_data["files"] = {"enabled": True}
+    draft = service.create(identity_simple, input_data)
+    default_file = 'file.txt'
+    add_file_to_draft(file_service, draft.id, default_file, identity_simple)
+    input_data["files"] = {
+        "enabled": True,
+        "default_preview": default_file
+    }
+
+    draft = service.update_draft(draft.id, identity_simple, input_data)
+
+    draft_dict = draft.to_dict()
+    assert (
+        {"enabled": True, "default_preview": default_file} ==
+        draft_dict["files"]
+    )
+    assert default_file == draft._record.files.default_preview
+
+
+def test_update_draft_set_default_file_preview_reports_error(
+        app, location, service, file_service, identity_simple, input_data):
+    input_data["files"] = {"enabled": True}
+    draft = service.create(identity_simple, input_data)
+    default_file = 'file.txt'
+    add_file_to_draft(file_service, draft.id, default_file, identity_simple)
+    input_data["files"] = {
+        "enabled": True,
+        "default_preview": "inexisting_file.txt"
+    }
+
+    updated_draft = service.update_draft(draft.id, identity_simple, input_data)
+
+    updated_draft_dict = updated_draft.to_dict()
+    assert updated_draft_dict['errors'][0]['field'] == 'files.default_preview'
+    assert updated_draft_dict['errors'][0]['messages']
+    assert {"enabled": True} == updated_draft_dict["files"]
+
+
 def test_delete_draft(app, service, identity_simple, input_data):
     draft = service.create(identity_simple, input_data)
     assert draft.id
@@ -188,6 +228,27 @@ def test_publish_draft(app, service, identity_simple, input_data):
 
     for key, value in input_data.items():
         assert record[key] == value
+
+
+def test_publish_draft_w_default_preview(
+        app, service, file_service, identity_simple, input_data):
+    input_data["files"] = {"enabled": True}
+    draft = service.create(identity_simple, input_data)
+    default_file = 'file.txt'
+    add_file_to_draft(file_service, draft.id, default_file, identity_simple)
+    input_data["files"] = {
+        "enabled": True,
+        "default_preview": default_file
+    }
+    service.update_draft(draft.id, identity_simple, input_data)
+
+    record = service.publish(draft.id, identity_simple)
+
+    record_dict = record.to_dict()
+    assert (
+        {"enabled": True, "default_preview": default_file} ==
+        record_dict["files"]
+    )
 
 
 def test_fail_to_publish_invalid_draft(app, service, identity_simple):
