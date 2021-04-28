@@ -22,11 +22,10 @@ import pytest
 from invenio_db import db
 from invenio_files_rest.errors import InvalidOperationError
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
-from invenio_records_resources.services.files import FileService
 from marshmallow.exceptions import ValidationError
 from mock_module.models import DraftMetadata, FileDraftMetadata, \
     FileRecordMetadata
-from mock_module.service import DraftFileServiceConfig, ServiceConfig
+from mock_module.service import ServiceConfig
 
 from invenio_drafts_resources.services import RecordService
 

@@ -18,7 +18,7 @@ history = open("CHANGES.rst").read()
 tests_require = [
     "pytest-invenio>=1.4.1",
     "invenio-app>=1.3.0",
-    "docker-services-cli>=0.3.0"
+    "docker-services-cli>=0.3.0",
 ]
 
 # Should follow inveniosoftware/invenio versions
@@ -89,6 +89,9 @@ setup(
         "invenio_i18n.translations": ["messages = invenio_drafts_resources"],
         'invenio_db.models': [
             'invenio_drafts_resources = invenio_drafts_resources.records.models',
+        ],
+        'invenio_celery.tasks': [
+            'invenio_draft_resources = invenio_draft_resources.services.records.tasks',
         ],
     },
     extras_require=extras_require,

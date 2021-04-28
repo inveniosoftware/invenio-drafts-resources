@@ -22,6 +22,7 @@ identifier.
 """
 
 import uuid
+from datetime import datetime
 
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
@@ -227,3 +228,16 @@ class Draft(Record):
                 fork_version_id=record.revision_id,
             )
         return draft
+
+    @classmethod
+    def cleanup_drafts(cls, td):
+        """Clean up (hard delete) all the soft deleted drafts.
+
+        The drafts in the last timedelta span of time won't be deleted.
+        """
+        timestamp = datetime.utcnow() - td
+        draft_model = cls.model_cls
+        draft_model.query.filter(
+            draft_model.is_deleted == True,  # noqa
+            draft_model.updated < timestamp,
+        ).delete()

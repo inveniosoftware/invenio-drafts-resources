@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020 CERN.
+# Copyright (C) 2020-2021 CERN.
 # Copyright (C) 2020 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -504,3 +504,12 @@ class RecordService(RecordServiceBase):
         #      instead (requires bulk indexing to work)
         for sibling in siblings:
             self.indexer.index(sibling)
+
+    def cleanup_drafts(self, timedelta):
+        """Hard delete of soft deleted drafts.
+
+        :param int timedelta: timedelta that should pass since
+            the last update of the draft in order to be hard deleted.
+        """
+        self.draft_cls.cleanup_drafts(timedelta)
+        db.session.commit()
