@@ -25,11 +25,13 @@ class RecordService(RecordServiceBase):
     draft records.
     """
 
-    def __init__(self, config, files_service=None, draft_files_service=None):
+    def __init__(self, config, files_service=None, draft_files_service=None,
+                 secret_links_service=None):
         """Constructor for RecordService."""
         super().__init__(config)
         self._files = files_service
         self._draft_files = draft_files_service
+        self._secret_links = secret_links_service
 
     #
     # Subservices
@@ -43,6 +45,11 @@ class RecordService(RecordServiceBase):
     def draft_files(self):
         """Draft files service."""
         return self._draft_files
+
+    @property
+    def secret_links(self):
+        """Record secret link service."""
+        return self._secret_links
 
     #
     # Properties
