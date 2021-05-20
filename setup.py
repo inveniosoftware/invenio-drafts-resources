@@ -92,7 +92,7 @@ setup(
             'invenio_drafts_resources = invenio_drafts_resources.records.models',
         ],
         'invenio_celery.tasks': [
-            'invenio_draft_resources = invenio_draft_resources.services.records.tasks',
+            'invenio_drafts_resources = invenio_drafts_resources.services.records.tasks',
         ],
     },
     extras_require=extras_require,
