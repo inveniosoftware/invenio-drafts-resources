@@ -40,14 +40,24 @@ def input_data(input_data):
     return input_data
 
 
-@pytest.fixture()
-def service(appctx, location, file_service, draft_file_service):
+@pytest.fixture(scope="module")
+def service(file_service, draft_file_service):
     """Service instance."""
     return RecordService(
         ServiceConfig,
         files_service=file_service,
         draft_files_service=draft_file_service
     )
+
+
+@pytest.fixture(scope="module")
+def base_app(base_app, service, file_service, draft_file_service):
+    """Application factory fixture."""
+    registry = base_app.extensions['invenio-records-resources'].registry
+    registry.register(service, service_id='mock-records-service')
+    registry.register(file_service, service_id='mock-files-service')
+    registry.register(draft_file_service, service_id='mock-draftfiles-service')
+    yield base_app
 
 
 #

@@ -21,13 +21,13 @@ from mock_module.service import FileServiceConfig, ServiceConfig
 from invenio_drafts_resources.services.records import RecordService
 
 
-@pytest.fixture()
-def service(appctx, location):
+@pytest.fixture(scope="module")
+def service():
     """Service instance."""
     return RecordService(ServiceConfig)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def file_service():
     """File service fixture."""
     return FileService(FileServiceConfig)
@@ -39,3 +39,9 @@ def example_record(app, db):
     record = Draft.create({}, metadata={'title': 'Test'})
     db.session.commit()
     return record
+
+
+@pytest.fixture()
+def app(app, location):
+    """Auto-use location fixture."""
+    return app
