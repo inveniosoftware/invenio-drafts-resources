@@ -31,4 +31,4 @@ class RecordResourceConfig(RecordResourceConfigBase):
         "item-files-import": "/<pid_value>/draft/actions/files-import",
     }
 
-    request_args = SearchRequestArgsSchema
+    request_search_args = SearchRequestArgsSchema
