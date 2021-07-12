@@ -16,7 +16,8 @@ from flask_resources import JSONSerializer, ResponseHandler, \
 from invenio_records_resources.resources import \
     RecordResource as RecordResourceBase
 from invenio_records_resources.resources.records.resource import \
-    request_data, request_headers, request_search_args, request_view_args
+    request_data, request_headers, request_read_args, request_search_args, \
+    request_view_args
 from invenio_records_resources.resources.records.utils import es_preference
 
 from .errors import RedirectException
@@ -168,6 +169,7 @@ class RecordResource(RecordResourceBase):
         )
         raise RedirectException(item["links"]["self"])
 
+    @request_read_args
     @request_view_args
     @response_handler()
     def read_draft(self):
