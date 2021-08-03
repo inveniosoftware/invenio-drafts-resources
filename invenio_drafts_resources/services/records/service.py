@@ -101,7 +101,11 @@ class RecordService(RecordServiceBase):
     def search_versions(self, id_, identity, params=None, es_preference=None,
                         **kwargs):
         """Search for record's versions."""
-        record = self.record_cls.pid.resolve(id_, registered_only=False)
+        try:
+            record = self.record_cls.pid.resolve(id_, registered_only=False)
+        except NoResultFound:
+            record = self.draft_cls.pid.resolve(id_, registered_only=False)
+
         self.require_permission(identity, "read", record=record)
 
         # Prepare and execute the search
@@ -482,16 +486,17 @@ class RecordService(RecordServiceBase):
         If the ID belongs to a parent record, no child record will be
         resolved.
         """
-        try:
-            record = self.record_cls.pid.resolve(id_, registered_only=False)
-            parent = record.parent
-        except Exception:  # TODO NoResultFoundException?
-            record = None
-            parent = self.record_cls.parent_record_cls.pid.resolve(
-                id_, registered_only=False
-            )
+        record = self.record_cls.pid.resolve(id_, registered_only=False)
+        parent = record.parent
 
         return record, parent
+
+    def _get_draft_and_parent_by_id(self, id_):
+        """Resolve the draft and its parent, by the given ID."""
+        draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        parent = draft.parent
+
+        return draft, parent
 
     def _index_related_records(self, record, parent):
         """Index all records that are related to the specified ones."""

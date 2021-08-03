@@ -42,6 +42,10 @@ jobs:
 
           - db-service: postgresql9
             search-service: elasticsearch7
+
+          - python-version: 3.9
+            db-service: postgresql9
+            search-service: elasticsearch6
           include:
           - db-service: postgresql9
             DB_EXTRAS: "postgresql"
