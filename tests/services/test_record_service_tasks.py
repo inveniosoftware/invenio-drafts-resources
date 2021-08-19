@@ -23,6 +23,14 @@ def input_data(input_data):
     return input_data
 
 
+@pytest.fixture(scope="module")
+def base_app(base_app, service):
+    """Application factory fixture."""
+    registry = base_app.extensions['invenio-records-resources'].registry
+    registry.register(service, service_id='rdm-records')
+    yield base_app
+
+
 def test_hard_delete_soft_deleted_task(
     app, service, identity_simple, input_data
 ):
@@ -33,7 +41,7 @@ def test_hard_delete_soft_deleted_task(
     assert len(draft_model.query.filter(
         draft_model.is_deleted == True  # noqa
     ).all()) == 1
-    cleanup_drafts(current_service_imp=service, seconds=0)
+    cleanup_drafts(seconds=0)
 
     assert len(draft_model.query.filter(
         draft_model.is_deleted == True  # noqa
