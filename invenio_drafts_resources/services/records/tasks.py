@@ -11,16 +11,16 @@
 from datetime import timedelta
 
 from celery import shared_task
-from invenio_base.utils import obj_or_import_string
+from invenio_records_resources.proxies import current_service_registry
 
 
 @shared_task(ignore_result=True)
-def cleanup_drafts(current_service_imp, seconds=3600):
+def cleanup_drafts(seconds=3600):
     """Hard delete of soft deleted drafts.
 
     :param int seconds: numbers of seconds that should pass since the
         last update of the draft in order to be hard deleted.
     """
     timedelta_param = timedelta(seconds=seconds)
-    current_service = obj_or_import_string(current_service_imp)
-    current_service.cleanup_drafts(timedelta_param)
+    service = current_service_registry.get("rdm-records")
+    service.cleanup_drafts(timedelta_param)

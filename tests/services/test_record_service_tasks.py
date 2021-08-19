@@ -33,7 +33,7 @@ def test_hard_delete_soft_deleted_task(
     assert len(draft_model.query.filter(
         draft_model.is_deleted == True  # noqa
     ).all()) == 1
-    cleanup_drafts(current_service_imp=service, seconds=0)
+    cleanup_drafts(seconds=0)
 
     assert len(draft_model.query.filter(
         draft_model.is_deleted == True  # noqa
