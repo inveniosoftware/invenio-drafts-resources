@@ -428,6 +428,11 @@ class RecordService(RecordServiceBase):
 
         return ret_val
 
+    def validate_draft(self, identity, id_):
+        """Validate a draft."""
+        draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        self._validate_draft(identity, draft)
+
     def _validate_draft(self, identity, draft):
         """Validate a draft.
 
