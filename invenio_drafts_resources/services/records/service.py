@@ -291,6 +291,10 @@ class RecordService(RecordServiceBase):
         if latest_id:
             self._reindex_latest(latest_id)
 
+        for component in self.components:
+            if hasattr(component, 'post_publish'):
+                component.post_publish(identity, record=record)
+
         return self.result_item(
             self, identity, record, links_tpl=self.links_item_tpl)
 

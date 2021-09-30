@@ -43,3 +43,7 @@ class ServiceComponent(BaseServiceComponent):
     def import_files(self, identity, draft=None, record=None):
         """Import files handler."""
         pass
+
+    def post_publish(self, identity, record=None):
+        """Post publish handler."""
+        pass
