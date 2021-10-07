@@ -86,7 +86,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --no-cache-dir -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
+          pip install -c constraints.txt -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
           pip install ".[$EXTRAS]"
           pip freeze
           docker --version
