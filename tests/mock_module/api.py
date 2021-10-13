@@ -4,7 +4,6 @@ from invenio_records.systemfields import ConstantField, ModelField
 from invenio_records_resources.records import FileRecord as FileRecordBase
 from invenio_records_resources.records.systemfields import FilesField, \
     IndexField
-from werkzeug.local import LocalProxy
 
 from invenio_drafts_resources.records import Draft as DraftBase
 from invenio_drafts_resources.records import ParentRecord as ParentRecordBase
@@ -29,7 +28,7 @@ class FileRecord(FileRecordBase):
     """Example record file API."""
 
     model_cls = FileRecordMetadata
-    record_cls = LocalProxy(lambda: Record)
+    record_cls = None  # defined below
 
 
 class Record(RecordBase):
@@ -67,7 +66,7 @@ class FileDraft(FileRecordBase):
     """Example record file API."""
 
     model_cls = FileDraftMetadata
-    record_cls = LocalProxy(lambda: Draft)
+    record_cls = None  # defined below
 
 
 class Draft(DraftBase):
@@ -97,3 +96,7 @@ class Draft(DraftBase):
     bucket_id = ModelField(dump=False)
 
     bucket = ModelField(dump=False)
+
+
+FileRecord.record_cls = Record
+FileDraft.record_cls = Draft
