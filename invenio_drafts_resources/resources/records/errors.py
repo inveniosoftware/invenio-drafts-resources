@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021 CERN.
+# Copyright (C) 2021 TU Wien.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -29,12 +30,12 @@ class RedirectException(HTTPJSONException):
         kwargs.setdefault("description", "Redirecting...")
         super().__init__(**kwargs)
 
-    def get_headers(self, environ=None):
+    def get_headers(self, environ=None, scope=None):
         """Get response headers."""
         return [
             ("Content-Type", "application/json"), ("Location", self.location)]
 
-    def get_body(self, environ=None):
+    def get_body(self, environ=None, scope=None):
         """Get the request body."""
         body = {
             "status": self.code,

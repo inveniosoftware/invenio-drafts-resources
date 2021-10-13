@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2021 CERN.
-# Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2020      Northwestern University.
+# Copyright (C) 2021      TU Wien.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
@@ -59,7 +60,6 @@ setup_requires = [
 ]
 
 install_requires = [
-    "flask>=1.0.4,<2",
     "invenio-records-resources>=0.17.1,<0.18.0",
 ]
 
