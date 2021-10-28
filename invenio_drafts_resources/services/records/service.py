@@ -267,6 +267,7 @@ class RecordService(RecordServiceBase):
 
         # Get the draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        is_published = draft.is_published
 
         # Validate the draft strictly - since a draft can be saved with errors
         # we do a strict validation here to make sure only valid drafts can be
@@ -293,7 +294,9 @@ class RecordService(RecordServiceBase):
 
         for component in self.components:
             if hasattr(component, 'post_publish'):
-                component.post_publish(identity, record=record)
+                component.post_publish(
+                    identity, record=record, is_published=is_published
+                )
 
         return self.result_item(
             self, identity, record, links_tpl=self.links_item_tpl)
