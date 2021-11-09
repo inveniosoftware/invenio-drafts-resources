@@ -94,7 +94,7 @@ class Record(RecordBase):
         """Get all sibling records for the specified parent record."""
         versions = cls.model_cls.query.filter_by(parent_id=parent.id).all()
         return [
-            cls(rec_model.data, model=rec_model)
+            cls(rec_model.data, model=rec_model, parent=parent)
             for rec_model in versions
         ]
 

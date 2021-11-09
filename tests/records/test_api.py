@@ -303,3 +303,24 @@ def test_draft_delete_reindex(app, db, es, example_draft, indexer):
     draft.commit()
     db.session.commit()
     assert indexer.index(draft)['result'] == 'created'
+
+#
+# Get by parent
+#
+def test_get_records_by_parent(app, db, location):
+    """Test get by parent."""
+    # Create two published records
+    record_v1 = Record.publish(Draft.create({}))
+    db.session.commit()
+    draft = Draft.new_version(record_v1)
+    draft.commit()
+    db.session.commit()
+    record_v2 = Record.publish(draft)
+    db.session.commit()
+
+    # Get all two versions.
+    parent = record_v2.parent
+    records = Record.get_records_by_parent(parent)
+
+    # Check that we reuse the parent we passed in.
+    assert id(parent) == id(records[0].parent) == id(records[1].parent)
