@@ -304,6 +304,7 @@ def test_draft_delete_reindex(app, db, es, example_draft, indexer):
     db.session.commit()
     assert indexer.index(draft)['result'] == 'created'
 
+
 #
 # Get by parent
 #
