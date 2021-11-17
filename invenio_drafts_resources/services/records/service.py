@@ -15,6 +15,8 @@ from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import \
     RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
+from invenio_records_resources.services.uow import RecordCommitOp, \
+    RecordDeleteOp, RecordIndexOp, unit_of_work
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -164,7 +166,8 @@ class RecordService(RecordServiceBase):
         return self.result_item(
             self, identity, record, links_tpl=self.links_item_tpl)
 
-    def update_draft(self, id_, identity, data, revision_id=None):
+    @unit_of_work()
+    def update_draft(self, id_, identity, data, revision_id=None, uow=None):
         """Replace a draft."""
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
 
@@ -187,15 +190,13 @@ class RecordService(RecordServiceBase):
         )
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'update_draft'):
-                component.update_draft(
-                    identity, record=draft, data=data, errors=errors)
+        self.run_components(
+            'update_draft', identity, record=draft, data=data,
+            errors=errors, uow=uow
+        )
 
         # Commit and index
-        draft.commit()
-        db.session.commit()
-        self.indexer.index(draft)
+        uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
         return self.result_item(
             self,
@@ -205,19 +206,24 @@ class RecordService(RecordServiceBase):
             errors=errors
         )
 
-    def create(self, identity, data):
+    @unit_of_work()
+    def create(self, identity, data, uow=None):
         """Create a draft for a new record.
 
         It does NOT eagerly create the associated record.
         """
-        return self._create(
+        res = self._create(
            self.draft_cls,
            identity,
            data,
-           raise_errors=False
+           raise_errors=False,
+           uow=uow,
         )
+        uow.register(RecordCommitOp(res._record.parent))
+        return res
 
-    def edit(self, id_, identity):
+    @unit_of_work()
+    def edit(self, id_, identity, uow=None):
         """Create a new revision or a draft for an existing record.
 
         :param id_: record PID value.
@@ -238,22 +244,20 @@ class RecordService(RecordServiceBase):
         draft = self.draft_cls.edit(record)
 
         # Run components
-        for component in self.components:
-            if hasattr(component, "edit"):
-                component.edit(identity, draft=draft, record=record)
+        self.run_components(
+            "edit", identity, draft=draft, record=record, uow=uow)
 
-        draft.commit()
-        db.session.commit()
-        self.indexer.index(draft)
+        uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
         # Reindex the record to trigger update of computed values in the
         # available dumpers of the record.
-        self.indexer.index(record)
+        uow.register(RecordIndexOp(record, indexer=self.indexer))
 
         return self.result_item(
             self, identity, draft, links_tpl=self.links_item_tpl)
 
-    def publish(self, id_, identity):
+    @unit_of_work()
+    def publish(self, id_, identity, uow=None):
         """Publish a draft.
 
         Idea:
@@ -267,7 +271,6 @@ class RecordService(RecordServiceBase):
 
         # Get the draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
-        is_published = draft.is_published
 
         # Validate the draft strictly - since a draft can be saved with errors
         # we do a strict validation here to make sure only valid drafts can be
@@ -279,29 +282,21 @@ class RecordService(RecordServiceBase):
         record = self.record_cls.publish(draft)
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'publish'):
-                component.publish(identity, draft=draft, record=record)
+        self.run_components(
+            'publish', identity, draft=draft, record=record, uow=uow)
 
         # Commit and index
-        record.commit()
-        draft.delete(force=False)
-        db.session.commit()
-        self.indexer.delete(draft)
-        self.indexer.index(record)
-        if latest_id:
-            self._reindex_latest(latest_id)
+        uow.register(RecordCommitOp(record, indexer=self.indexer))
+        uow.register(RecordDeleteOp(draft, force=False, indexer=self.indexer))
 
-        for component in self.components:
-            if hasattr(component, 'post_publish'):
-                component.post_publish(
-                    identity, record=record, is_published=is_published
-                )
+        if latest_id:
+            self._reindex_latest(latest_id, uow=uow)
 
         return self.result_item(
             self, identity, record, links_tpl=self.links_item_tpl)
 
-    def new_version(self, id_, identity):
+    @unit_of_work()
+    def new_version(self, id_, identity, uow=None):
         """Create a new version of a record."""
         # Get the a record - i.e. you can only create a new version in case
         # at least one published record already exists.
@@ -319,26 +314,26 @@ class RecordService(RecordServiceBase):
 
         # Draft for new version does not exists, so create it
         next_draft = self.draft_cls.new_version(record)
+
         # Get the latest published record if it's not the current one.
         if not record.versions.is_latest:
             record = self.record_cls.get_record(record.versions.latest_id)
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'new_version'):
-                component.new_version(
-                    identity, draft=next_draft, record=record)
+        self.run_components(
+            'new_version', identity, draft=next_draft, record=record, uow=uow)
 
         # Commit and index
-        next_draft.commit()
-        db.session.commit()
-        self.indexer.index(next_draft)
-        self._reindex_latest(next_draft.versions.latest_id, record=record)
+        uow.register(RecordCommitOp(next_draft, indexer=self.indexer))
+
+        self._reindex_latest(
+            next_draft.versions.latest_id, record=record, uow=uow)
 
         return self.result_item(
             self, identity, next_draft, links_tpl=self.links_item_tpl)
 
-    def delete_draft(self, id_, identity, revision_id=None):
+    @unit_of_work()
+    def delete_draft(self, id_, identity, revision_id=None, uow=None):
         """Delete a record from database and search indexes."""
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
         latest_id = draft.versions.latest_id
@@ -360,36 +355,36 @@ class RecordService(RecordServiceBase):
         force = False if record else True
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'delete_draft'):
-                component.delete_draft(
-                    identity, draft=draft, record=record, force=force)
+        self.run_components(
+            'delete_draft', identity, draft=draft, record=record,
+            force=force, uow=uow
+        )
 
         # Note, the parent record deletion logic is implemented in the
         # ParentField and will automatically take care of deleting the parent
         # record in case this is the only draft that exists for the parent.
-        draft.delete(force=force)
-        db.session.commit()
-
         # We refresh the index because users are usually redirected to a
         # search result immediately after, and we don't want the users to see
         # their just deleted draft.
-        self.indexer.delete(draft, refresh=True)
+        uow.register(RecordDeleteOp(
+            draft, indexer=self.indexer, force=force, index_refresh=True))
 
         if force:
             # Case 1: We deleted a new draft (without a published record) or a
             # new version draft (without a published).
             # In this case, we reindex the latest published record/draft
-            self._reindex_latest(latest_id, refresh=True)
+            self._reindex_latest(latest_id, refresh=True, uow=uow)
         else:
             # Case 2: We deleted a draft for a published record.
             # In this case we reindex just the published record to trigger and
             # update of computed values.
-            self.indexer.index(record, arguments={"refresh": True})
+            uow.register(RecordIndexOp(
+                record, indexer=self.indexer, index_refresh=True))
 
         return True
 
-    def import_files(self, id_, identity):
+    @unit_of_work()
+    def import_files(self, id_, identity, uow=None):
         """Import files from previous record version."""
         if self.draft_files is None:
             raise RuntimeError("Files support is not enabled.")
@@ -403,14 +398,11 @@ class RecordService(RecordServiceBase):
         self.require_permission(identity, "read_files", record=record)
 
         # Run components
-        for component in self.components:
-            if hasattr(component, 'import_files'):
-                component.import_files(identity, draft=draft, record=record)
+        self.run_components(
+            'import_files', identity, draft=draft, record=record, uow=uow)
 
         # Commit and index
-        draft.commit()
-        db.session.commit()
-        self.indexer.index(draft)
+        uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
         return self.draft_files.file_result_list(
             self.draft_files,
@@ -462,8 +454,9 @@ class RecordService(RecordServiceBase):
                                # explicit
         )
 
+    @unit_of_work()
     def _reindex_latest(self, latest_id, record=None, draft=None,
-                        refresh=False):
+                        refresh=False, uow=None):
         """Reindex the latest published record and draft.
 
         This triggers and update of computed values in the index, such as
@@ -472,8 +465,6 @@ class RecordService(RecordServiceBase):
         This method is internal because it works with a data access layer
         record/draft, and thus should not be called from outside the service.
         """
-        arguments = {"refresh": True} if refresh else {}
-
         # We only have a draft, no latest to index
         if not latest_id:
             return
@@ -482,13 +473,15 @@ class RecordService(RecordServiceBase):
         # want to index the latest published.
         if record is None or latest_id != record.id:
             record = self.record_cls.get_record(latest_id)
-        self.indexer.index(record, arguments=arguments)
+        uow.register(
+            RecordIndexOp(record, indexer=self.indexer, index_refresh=refresh))
 
         # Note, a draft may or may not exists for a published record (depending
         # on if it's being edited).
         try:
             draft = self.draft_cls.get_record(latest_id)
-            self.indexer.index(draft, arguments=arguments)
+            uow.register(RecordIndexOp(
+                draft, indexer=self.indexer, index_refresh=refresh))
         except NoResultFound:
             pass
 
@@ -510,7 +503,8 @@ class RecordService(RecordServiceBase):
 
         return draft, parent
 
-    def _index_related_records(self, record, parent):
+    @unit_of_work()
+    def _index_related_records(self, record, parent, uow=None):
         """Index all records that are related to the specified ones."""
         siblings = self.record_cls.get_records_by_parent(
             parent or record.parent
@@ -520,13 +514,13 @@ class RecordService(RecordServiceBase):
         #      all siblings should be sent to a high-priority celery task
         #      instead (requires bulk indexing to work)
         for sibling in siblings:
-            self.indexer.index(sibling)
+            uow.register(RecordIndexOp(sibling, indexer=self.indexer))
 
-    def cleanup_drafts(self, timedelta):
+    @unit_of_work()
+    def cleanup_drafts(self, timedelta, uow=None):
         """Hard delete of soft deleted drafts.
 
         :param int timedelta: timedelta that should pass since
             the last update of the draft in order to be hard deleted.
         """
         self.draft_cls.cleanup_drafts(timedelta)
-        db.session.commit()

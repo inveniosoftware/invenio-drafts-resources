@@ -85,7 +85,7 @@ class RecordResource(RecordResourceBase):
         hits = self.service.search_drafts(
             identity=g.identity,
             params=resource_requestctx.args,
-            es_preference=es_preference()
+            es_preference=es_preference(),
         )
         return hits.to_dict(), 200
 
