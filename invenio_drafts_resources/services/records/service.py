@@ -100,7 +100,7 @@ class RecordService(RecordServiceBase):
             links_item_tpl=self.links_item_tpl,
         )
 
-    def search_versions(self, id_, identity, params=None, es_preference=None,
+    def search_versions(self, identity, id_, params=None, es_preference=None,
                         **kwargs):
         """Search for record's versions."""
         try:
@@ -138,7 +138,7 @@ class RecordService(RecordServiceBase):
             links_item_tpl=self.links_item_tpl,
         )
 
-    def read_draft(self, id_, identity):
+    def read_draft(self, identity, id_):
         """Retrieve a draft."""
         # Resolve and require permission
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
@@ -152,7 +152,7 @@ class RecordService(RecordServiceBase):
         return self.result_item(
             self, identity, draft, links_tpl=self.links_item_tpl)
 
-    def read_latest(self, id_, identity):
+    def read_latest(self, identity, id_):
         """Retrieve latest record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
@@ -167,7 +167,7 @@ class RecordService(RecordServiceBase):
             self, identity, record, links_tpl=self.links_item_tpl)
 
     @unit_of_work()
-    def update_draft(self, id_, identity, data, revision_id=None, uow=None):
+    def update_draft(self, identity, id_, data, revision_id=None, uow=None):
         """Replace a draft."""
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
 
@@ -223,7 +223,7 @@ class RecordService(RecordServiceBase):
         return res
 
     @unit_of_work()
-    def edit(self, id_, identity, uow=None):
+    def edit(self, identity, id_, uow=None):
         """Create a new revision or a draft for an existing record.
 
         :param id_: record PID value.
@@ -257,7 +257,7 @@ class RecordService(RecordServiceBase):
             self, identity, draft, links_tpl=self.links_item_tpl)
 
     @unit_of_work()
-    def publish(self, id_, identity, uow=None):
+    def publish(self, identity, id_, uow=None):
         """Publish a draft.
 
         Idea:
@@ -295,7 +295,7 @@ class RecordService(RecordServiceBase):
             self, identity, record, links_tpl=self.links_item_tpl)
 
     @unit_of_work()
-    def new_version(self, id_, identity, uow=None):
+    def new_version(self, identity, id_, uow=None):
         """Create a new version of a record."""
         # Get the a record - i.e. you can only create a new version in case
         # at least one published record already exists.
@@ -332,7 +332,7 @@ class RecordService(RecordServiceBase):
             self, identity, next_draft, links_tpl=self.links_item_tpl)
 
     @unit_of_work()
-    def delete_draft(self, id_, identity, revision_id=None, uow=None):
+    def delete_draft(self, identity, id_, revision_id=None, uow=None):
         """Delete a record from database and search indexes."""
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
         latest_id = draft.versions.latest_id
@@ -383,7 +383,7 @@ class RecordService(RecordServiceBase):
         return True
 
     @unit_of_work()
-    def import_files(self, id_, identity, uow=None):
+    def import_files(self, identity, id_, uow=None):
         """Import files from previous record version."""
         if self.draft_files is None:
             raise RuntimeError("Files support is not enabled.")

@@ -98,8 +98,8 @@ class RecordResource(RecordResourceBase):
         GET /records/:pid_value/versions
         """
         hits = self.service.search_versions(
+            g.identity,
             resource_requestctx.view_args["pid_value"],
-            identity=g.identity,
             params=resource_requestctx.args,
             es_preference=es_preference()
         )
@@ -113,8 +113,8 @@ class RecordResource(RecordResourceBase):
         POST /records/:pid_value/versions
         """
         item = self.service.new_version(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return item.to_dict(), 201
 
@@ -126,8 +126,8 @@ class RecordResource(RecordResourceBase):
         POST /records/:pid_value/draft
         """
         item = self.service.edit(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return item.to_dict(), 201
 
@@ -136,8 +136,8 @@ class RecordResource(RecordResourceBase):
     def publish(self):
         """Publish the draft."""
         item = self.service.publish(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return item.to_dict(), 202
 
@@ -152,8 +152,8 @@ class RecordResource(RecordResourceBase):
     def import_files(self):
         """Import files from previous record version."""
         files = self.service.import_files(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return files.to_dict(), 201
 
@@ -164,8 +164,8 @@ class RecordResource(RecordResourceBase):
         GET /records/:pid_value/versions/latest
         """
         item = self.service.read_latest(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         raise RedirectException(item["links"]["self"])
 
@@ -178,8 +178,8 @@ class RecordResource(RecordResourceBase):
         GET /records/:pid_value/draft
         """
         item = self.service.read_draft(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
         )
         return item.to_dict(), 200
 
@@ -193,8 +193,8 @@ class RecordResource(RecordResourceBase):
         PUT /records/:pid_value/draft
         """
         item = self.service.update_draft(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
             resource_requestctx.data or {},
             revision_id=resource_requestctx.headers.get("if_match"),
         )
@@ -208,8 +208,8 @@ class RecordResource(RecordResourceBase):
         DELETE /records/:pid_value/draft
         """
         self.service.delete_draft(
-            resource_requestctx.view_args["pid_value"],
             g.identity,
+            resource_requestctx.view_args["pid_value"],
             revision_id=resource_requestctx.headers.get("if_match"),
         )
         return "", 204

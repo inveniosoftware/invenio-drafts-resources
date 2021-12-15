@@ -65,11 +65,11 @@ def base_app(base_app, service, file_service, draft_file_service):
 #
 def add_file_to_draft(draft_file_service, draft_id, file_id, identity):
     """Add a file to the record."""
-    draft_file_service.init_files(draft_id, identity, data=[{'key': file_id}])
+    draft_file_service.init_files(identity, draft_id, data=[{'key': file_id}])
     draft_file_service.set_file_content(
-        draft_id, file_id, identity, BytesIO(b'test file content')
+        identity, draft_id, file_id, BytesIO(b'test file content')
     )
-    result = draft_file_service.commit_file(draft_id, file_id, identity)
+    result = draft_file_service.commit_file(identity, draft_id, file_id)
     return result
 
 
@@ -99,7 +99,7 @@ def test_create_delete_draft(app, service, input_data, identity_simple):
     assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=1)
 
     # Delete draft
-    service.delete_draft(draft.id, identity_simple)
+    service.delete_draft(identity_simple, draft.id)
     assert_counts(buckets=0, objs=0, fileinstances=1, filedrafts=0)
 
 
@@ -111,7 +111,7 @@ def test_create_publish(app, service, input_data, identity_simple):
     assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=1)
 
     # Publish
-    record = service.publish(draft.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
     assert_counts(
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
     assert record._record.bucket.locked is True
@@ -122,17 +122,17 @@ def test_edit_delete(app, service, input_data, identity_simple, monkeypatch):
     # Create and publish
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
-    record = service.publish(draft.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
 
     # Edit draft (when soft-deleted draft record exists)
-    draft = service.edit(record.id, identity_simple)
+    draft = service.edit(identity_simple, record.id)
     assert_counts(
         buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
     assert record._record.bucket.locked is True
     assert draft._record.bucket.locked is False
 
     # Delete draft
-    draft = service.delete_draft(draft.id, identity_simple)
+    draft = service.delete_draft(identity_simple, draft.id)
     assert_counts(
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
@@ -146,12 +146,12 @@ def test_edit_delete(app, service, input_data, identity_simple, monkeypatch):
     monkeypatch.setattr(service.config, 'indexer_cls', MagicMock())
 
     # Edit draft (when no soft-deleted draft record exists)
-    draft = service.edit(record.id, identity_simple)
+    draft = service.edit(identity_simple, record.id)
     assert_counts(
         buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
     # Delete draft
-    draft = service.delete_draft(draft.id, identity_simple)
+    draft = service.delete_draft(identity_simple, draft.id)
     assert_counts(
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
@@ -161,13 +161,13 @@ def test_edit_publish(app, service, input_data, identity_simple, monkeypatch):
     # Create, publish and edit draft.
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
-    record = service.publish(draft.id, identity_simple)
-    draft = service.edit(record.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
+    draft = service.edit(identity_simple, record.id)
     assert_counts(
         buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
     # Publish the edits
-    record = service.publish(draft.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
     assert_counts(
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
@@ -181,12 +181,12 @@ def test_edit_publish(app, service, input_data, identity_simple, monkeypatch):
     monkeypatch.setattr(service.config, 'indexer_cls', MagicMock())
 
     # Edit
-    draft = service.edit(record.id, identity_simple)
+    draft = service.edit(identity_simple, record.id)
     assert_counts(
         buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
     # Publish
-    record = service.publish(draft.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
     assert_counts(
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
@@ -196,10 +196,10 @@ def test_new_version(app, service, input_data, identity_simple, monkeypatch):
     # Create and publish
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
-    service.publish(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
 
     # New version
-    draft = service.new_version(draft.id, identity_simple)
+    draft = service.new_version(identity_simple, draft.id)
     assert_counts(
         buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
@@ -209,7 +209,7 @@ def test_new_version(app, service, input_data, identity_simple, monkeypatch):
         buckets=2, objs=2, fileinstances=2, filedrafts=1, filerecords=1)
 
     # Publish
-    service.publish(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
     assert_counts(
         buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=2)
 
@@ -219,14 +219,14 @@ def test_new_version_delete(app, service, input_data, identity_simple):
     # Create, publish, new_version, add_file
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
-    service.publish(draft.id, identity_simple)
-    draft = service.new_version(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
+    draft = service.new_version(identity_simple, draft.id)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
     assert_counts(
         buckets=2, objs=2, fileinstances=2, filedrafts=1, filerecords=1)
 
     # Delete new version
-    service.delete_draft(draft.id, identity_simple)
+    service.delete_draft(identity_simple, draft.id)
     assert_counts(
         buckets=1, objs=1, fileinstances=2, filedrafts=0, filerecords=1)
 
@@ -239,13 +239,13 @@ def test_import_files(app, service, input_data, identity_simple):
     # Create, publish, new_version
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
-    service.publish(draft.id, identity_simple)
-    draft = service.new_version(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
+    draft = service.new_version(identity_simple, draft.id)
     assert_counts(
         buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Import files
-    service.import_files(draft.id, identity_simple)
+    service.import_files(identity_simple, draft.id)
     assert_counts(
         buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
@@ -255,13 +255,13 @@ def test_import_files_disabled(app, service, input_data, identity_simple):
     # Create, publish, new_version
     input_data['files']['enabled'] = False
     draft = service.create(identity_simple, input_data)
-    service.publish(draft.id, identity_simple)
-    draft = service.new_version(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
+    draft = service.new_version(identity_simple, draft.id)
     assert_counts(
         buckets=2, objs=0, fileinstances=0, filedrafts=0, filerecords=0)
 
     with pytest.raises(ValidationError):
-        service.import_files(draft.id, identity_simple)
+        service.import_files(identity_simple, draft.id)
 
 
 #
@@ -273,19 +273,19 @@ def test_edit_publish_default_preview(
     # Create, publish and edit draft.
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, 'test', identity_simple)
-    record = service.publish(draft.id, identity_simple)
-    draft = service.edit(record.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
+    draft = service.edit(identity_simple, record.id)
     assert 'default_preview' not in draft.data['files']
 
     # Set the default preview
     data = draft.to_dict()
     data['files']['default_preview'] = 'test'
-    draft = service.update_draft(draft.id, identity_simple, data)
+    draft = service.update_draft(identity_simple, draft.id, data)
     # TODO: fails because it needs schema to load the value.
     assert draft.data['files']['default_preview'] == 'test'
 
     # Publish change
-    record = service.publish(draft.id, identity_simple)
+    record = service.publish(identity_simple, draft.id)
     assert record.data['files']['default_preview'] == 'test'
 
 
@@ -303,7 +303,7 @@ def test_update_draft_set_default_file_preview(
         "enabled": True,
         "default_preview": default_file
     }
-    draft = service.update_draft(draft.id, identity_simple, input_data)
+    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Default preview should have been updated
     assert draft.data["files"] == {
@@ -326,7 +326,7 @@ def test_update_draft_set_default_file_preview_reports_error(
         "enabled": True,
         "default_preview": "inexisting_file.txt"
     }
-    draft = service.update_draft(draft.id, identity_simple, input_data)
+    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Default preview should NOT be set
     assert draft.errors[0]['field'] == 'files.default_preview'
@@ -340,8 +340,7 @@ def test_update_draft_set_default_file_preview_reports_error(
 def test_missing_files(app, service, identity_simple, input_data):
     # Test files.enabled = True when no files
     draft = service.create(identity_simple, input_data)
-    draft = service.update_draft(
-        draft.id, identity_simple, input_data)
+    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Files should be enabled
     assert draft.data["files"]["enabled"] is True
@@ -363,8 +362,7 @@ def test_disable_files_error(
     # Try to set files.enabled = False
     input_data = draft.data
     input_data["files"] = {"enabled": False}
-    draft = service.update_draft(
-        draft.id, identity_simple, input_data)
+    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Should not be possible to disable files, when files exists
     assert draft.data["files"]["enabled"] is True
@@ -380,7 +378,7 @@ def test_fail_to_publish_draft_with_no_files(
     draft = service.create(identity_simple, input_data)
 
     with pytest.raises(ValidationError) as e:
-        service.publish(draft.id, identity_simple)
+        service.publish(identity_simple, draft.id)
 
     assert e.value.field_name == 'files.enabled'
     files_missing_msg = e.value.messages

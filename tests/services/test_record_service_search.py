@@ -14,10 +14,10 @@ from .utils import create_and_publish
 def create_two_versions(service, identity_simple, input_data):
     """Create 2 versions."""
     record = create_and_publish(service, identity_simple, input_data)
-    draft = service.new_version(record.id, identity_simple)
+    draft = service.new_version(identity_simple, record.id)
     # new_version resets files.enabled to True
-    service.update_draft(draft.id, identity_simple, input_data)
-    record_2 = service.publish(draft.id, identity_simple)
+    service.update_draft(identity_simple, draft.id, input_data)
+    record_2 = service.publish(identity_simple, draft.id)
     service.record_cls.index.refresh()
     return [record, record_2]
 

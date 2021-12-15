@@ -34,7 +34,7 @@ def test_hard_delete_soft_deleted(
     app, service, identity_simple, input_data
 ):
     draft = service.create(identity_simple, input_data)
-    service.publish(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
     draft_model = service.draft_cls.model_cls
 
     assert len(draft_model.query.filter(
@@ -51,7 +51,7 @@ def test_hard_delete_soft_deleted_not_enough_time(
     app, service, identity_simple, input_data
 ):
     draft = service.create(identity_simple, input_data)
-    service.publish(draft.id, identity_simple)
+    service.publish(identity_simple, draft.id)
     draft_model = service.draft_cls.model_cls
 
     assert len(draft_model.query.filter(

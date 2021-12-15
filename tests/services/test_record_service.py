@@ -71,7 +71,7 @@ def test_read_draft(app, service, identity_simple, input_data):
     draft = service.create(identity_simple, input_data)
     assert draft.id
 
-    draft_2 = service.read_draft(draft.id, identity_simple)
+    draft_2 = service.read_draft(identity_simple, draft.id)
     assert draft.id == draft_2.id
 
 
@@ -84,12 +84,12 @@ def test_update_draft(app, service, identity_simple, input_data):
     input_data['metadata']['title'] = edited_title
 
     # Update draft content
-    update_draft = service.update_draft(draft.id, identity_simple, input_data)
+    update_draft = service.update_draft(identity_simple, draft.id, input_data)
     assert update_draft["metadata"]['title'] == edited_title
     assert draft.id == update_draft.id
 
     # Check the updates where saved
-    update_draft = service.read_draft(draft.id, identity_simple)
+    update_draft = service.read_draft(identity_simple, draft.id)
     assert draft.id == update_draft.id
     assert update_draft["metadata"]['title'] == edited_title
 
@@ -101,7 +101,7 @@ def test_update_draft_invalid_field(app, service, identity_simple, input_data):
     edited_title = 100
     input_data['metadata']['title'] = edited_title
 
-    updated_draft = service.update_draft(draft.id, identity_simple, input_data)
+    updated_draft = service.update_draft(identity_simple, draft.id, input_data)
     updated_draft_dict = updated_draft.to_dict()
 
     assert draft.id == updated_draft.id
@@ -113,13 +113,12 @@ def test_delete_draft(app, service, identity_simple, input_data):
     draft = service.create(identity_simple, input_data)
     assert draft.id
 
-    success = service.delete_draft(draft.id, identity_simple)
-    assert success
+    assert service.delete_draft(identity_simple, draft.id)
 
     # Check draft deletion
     with pytest.raises(PIDDoesNotExistError):
         # NOTE: Draft and Record have the same `id`
-        delete_draft = service.read_draft(draft.id, identity_simple)
+        service.read_draft(identity_simple, draft.id)
 
 
 def test_publish_draft(app, service, identity_simple, input_data):
@@ -138,10 +137,10 @@ def test_publish_draft(app, service, identity_simple, input_data):
     # Check draft deletion
     with pytest.raises(NoResultFound):
         # NOTE: Draft and Record have the same `id`
-        draft = service.read_draft(record.id, identity_simple)
+        draft = service.read_draft(identity_simple, record.id)
 
     # Test record exists
-    record = service.read(record.id, identity_simple)
+    record = service.read(identity_simple, record.id)
 
     assert record.id
     assert record._record.pid.status == PIDStatus.REGISTERED
@@ -163,20 +162,20 @@ def test_fail_to_publish_invalid_draft(app, service, identity_simple):
     draft = service.create(identity_simple, input_data)
 
     with pytest.raises(ValidationError) as e:
-        record = service.publish(draft.id, identity_simple)
+        record = service.publish(identity_simple, draft.id)
 
     exception = e.value
     assert "metadata" not in exception.valid_data
 
     # Draft still there
-    draft = service.read_draft(draft.id, identity_simple)
+    draft = service.read_draft(identity_simple, draft.id)
     assert draft
     assert draft._record.pid.status == PIDStatus.NEW
     assert draft._record.parent.pid.status == PIDStatus.NEW
 
     # Test no published record exists
     with pytest.raises(PIDUnregistered) as e:
-        record = service.read(draft.id, identity_simple)
+        record = service.read(identity_simple, draft.id)
 
 
 #
@@ -195,7 +194,7 @@ def test_create_publish_new_revision(app, service, identity_simple,
     recid = record.id
 
     # Create new draft of said record
-    draft = service.edit(recid, identity_simple)
+    draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
     # create, soft-delete, undelete, update
@@ -206,21 +205,21 @@ def test_create_publish_new_revision(app, service, identity_simple,
     edited_title = "Edited title"
     input_data['metadata']['title'] = edited_title
 
-    update_draft = service.update_draft(draft.id, identity_simple, input_data)
+    update_draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Check the actual record was not modified
-    record = service.read(recid, identity_simple)
+    record = service.read(identity_simple, recid)
     assert record["metadata"]['title'] == orig_title
 
     # Publish it to check the increment in version_id
-    record = service.publish(recid, identity_simple)
+    record = service.publish(identity_simple, recid)
 
     assert record.id == recid
     assert record._record.revision_id == 2
     assert record["metadata"]['title'] == edited_title
 
     # Check it was actually edited
-    record = service.read(recid, identity_simple)
+    record = service.read(identity_simple, recid)
     assert record["metadata"]['title'] == edited_title
 
 
@@ -234,20 +233,20 @@ def test_mutiple_edit(app, service, identity_simple, input_data):
     recid = record.id
 
     # Create new draft of said record
-    draft = service.edit(recid, identity_simple)
+    draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
     assert draft._record.revision_id == 5
 
-    draft = service.edit(recid, identity_simple)
+    draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
     assert draft._record.revision_id == 5
 
     # Publish it to check the increment in version_id
-    record = service.publish(recid, identity_simple)
+    record = service.publish(identity_simple, recid)
 
-    draft = service.edit(recid, identity_simple)
+    draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
     assert draft._record.revision_id == 8  # soft-delete, undelete, update
@@ -263,7 +262,7 @@ def test_create_publish_new_version(app, service, identity_simple,
     recid = record.id
 
     # Create new version
-    draft = service.new_version(recid, identity_simple)
+    draft = service.new_version(identity_simple, recid)
 
     assert draft._record.revision_id == 2
     assert draft['id'] != record['id']
@@ -272,10 +271,10 @@ def test_create_publish_new_version(app, service, identity_simple,
 
     # Re-disable files
     input_data["files"] = {"enabled": False}
-    draft = service.update_draft(draft.id, identity_simple, input_data)
+    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Publish it
-    record_2 = service.publish(draft.id, identity_simple)
+    record_2 = service.publish(identity_simple, draft.id)
 
     assert record_2.id
     assert record_2._record.pid.status == PIDStatus.REGISTERED
@@ -293,17 +292,17 @@ def test_read_latest_version(app, service, identity_simple, input_data):
     recid = record.id
 
     # Create new version
-    draft = service.new_version(recid, identity_simple)
+    draft = service.new_version(identity_simple, recid)
 
     # Re-disable files
     input_data["files"] = {"enabled": False}
-    draft = service.update_draft(draft.id, identity_simple, input_data)
+    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Publish it
-    record_2 = service.publish(draft.id, identity_simple)
+    record_2 = service.publish(identity_simple, draft.id)
     recid_2 = record_2.id
 
-    latest = service.read_latest(recid, identity_simple)
+    latest = service.read_latest(identity_simple, recid)
     assert latest['id'] == recid_2
-    latest = service.read_latest(recid_2, identity_simple)
+    latest = service.read_latest(identity_simple, recid_2)
     assert latest['id'] == recid_2
