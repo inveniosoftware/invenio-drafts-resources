@@ -237,7 +237,18 @@ class Draft(Record):
         """
         timestamp = datetime.utcnow() - td
         draft_model = cls.model_cls
-        draft_model.query.filter(
+        models = draft_model.query.filter(
             draft_model.is_deleted == True,  # noqa
             draft_model.updated < timestamp,
-        ).delete()
+        ).all()
+
+        # we need to clear the foreign keys in the version info
+        for model in models:
+            draft = cls(model.data, model=model)
+            draft.versions.clear_next()
+
+        # now we can delete the drafts without violating foreign keys
+        ids = [model.id for model in models]
+        draft_model.query.filter(draft_model.id.in_(ids)).delete(
+            synchronize_session=False
+        )
