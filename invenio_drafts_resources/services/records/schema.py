@@ -33,4 +33,5 @@ class RecordSchema(BaseRecordSchema):
     parent = NestedAttribute(ParentSchema, dump_only=True)
     versions = NestedAttribute(VersionsSchema, dump_only=True)
     is_published = fields.Boolean(dump_only=True)
+    is_draft = fields.Boolean(dump_only=True)
     expires_at = fields.Str(dump_only=True)
