@@ -19,7 +19,6 @@ from io import BytesIO
 from unittest.mock import MagicMock
 
 import pytest
-from invenio_db import db
 from invenio_files_rest.errors import InvalidOperationError
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from marshmallow.exceptions import ValidationError
@@ -86,7 +85,7 @@ def assert_counts(buckets=0, objs=0, fileinstances=0, filedrafts=0,
 #
 # Files tests (ensure proper management of all related objects)
 #
-def test_create_delete_draft(app, service, input_data, identity_simple):
+def test_create_delete_draft(app, db, service, input_data, identity_simple):
     """Test creation and deletion of a draft."""
     assert_counts(buckets=0, objs=0, fileinstances=0, filedrafts=0)
 
@@ -103,7 +102,7 @@ def test_create_delete_draft(app, service, input_data, identity_simple):
     assert_counts(buckets=0, objs=0, fileinstances=1, filedrafts=0)
 
 
-def test_create_publish(app, service, input_data, identity_simple):
+def test_create_publish(app, db, service, input_data, identity_simple):
     """Test creation and publish of a draft."""
     # Create draft and file
     draft = service.create(identity_simple, input_data)
@@ -117,7 +116,9 @@ def test_create_publish(app, service, input_data, identity_simple):
     assert record._record.bucket.locked is True
 
 
-def test_edit_delete(app, service, input_data, identity_simple, monkeypatch):
+def test_edit_delete(
+    app, db, service, input_data, identity_simple, monkeypatch
+):
     """Test edit with delete of a published draft."""
     # Create and publish
     draft = service.create(identity_simple, input_data)
@@ -156,7 +157,9 @@ def test_edit_delete(app, service, input_data, identity_simple, monkeypatch):
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
 
-def test_edit_publish(app, service, input_data, identity_simple, monkeypatch):
+def test_edit_publish(
+    app, db, service, input_data, identity_simple, monkeypatch
+):
     """Test edit and publish."""
     # Create, publish and edit draft.
     draft = service.create(identity_simple, input_data)
@@ -191,7 +194,9 @@ def test_edit_publish(app, service, input_data, identity_simple, monkeypatch):
         buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
 
-def test_new_version(app, service, input_data, identity_simple, monkeypatch):
+def test_new_version(
+    app, db, service, input_data, identity_simple, monkeypatch
+):
     """Test new version."""
     # Create and publish
     draft = service.create(identity_simple, input_data)
@@ -214,7 +219,7 @@ def test_new_version(app, service, input_data, identity_simple, monkeypatch):
         buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=2)
 
 
-def test_new_version_delete(app, service, input_data, identity_simple):
+def test_new_version_delete(app, db, service, input_data, identity_simple):
     """Test new version."""
     # Create, publish, new_version, add_file
     draft = service.create(identity_simple, input_data)
@@ -234,7 +239,7 @@ def test_new_version_delete(app, service, input_data, identity_simple):
 #
 # Test import files
 #
-def test_import_files(app, service, input_data, identity_simple):
+def test_import_files(app, db, service, input_data, identity_simple):
     """Test new version."""
     # Create, publish, new_version
     draft = service.create(identity_simple, input_data)
@@ -250,7 +255,7 @@ def test_import_files(app, service, input_data, identity_simple):
         buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
 
-def test_import_files_disabled(app, service, input_data, identity_simple):
+def test_import_files_disabled(app, db, service, input_data, identity_simple):
     """Test new version."""
     # Create, publish, new_version
     input_data['files']['enabled'] = False
