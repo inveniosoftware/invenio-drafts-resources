@@ -27,7 +27,7 @@ def input_data(input_data):
 def base_app(base_app, service):
     """Application factory fixture."""
     registry = base_app.extensions['invenio-records-resources'].registry
-    registry.register(service, service_id='rdm-records')
+    registry.register(service, service_id='records')
     yield base_app
 
 

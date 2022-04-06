@@ -22,5 +22,5 @@ def cleanup_drafts(seconds=3600):
         last update of the draft in order to be hard deleted.
     """
     timedelta_param = timedelta(seconds=seconds)
-    service = current_service_registry.get("rdm-records")
+    service = current_service_registry.get("records")
     service.cleanup_drafts(timedelta_param)
