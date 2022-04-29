@@ -18,6 +18,7 @@ Test to add:
 from io import BytesIO
 
 import pytest
+from invenio_db import db
 from invenio_files_rest.errors import InvalidOperationError
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDUnregistered
 from invenio_pidstore.models import PIDStatus
@@ -306,3 +307,36 @@ def test_read_latest_version(app, service, identity_simple, input_data):
     assert latest['id'] == recid_2
     latest = service.read_latest(identity_simple, recid_2)
     assert latest['id'] == recid_2
+
+
+def test_reindexing_all_siblings(app, service, identity_simple, input_data):
+    """Test if reindexing sibling records includes drafts."""
+    record = create_and_publish(service, identity_simple, input_data)._obj
+    recid = record["id"]
+
+    # Edit the record, and make it somehow out of sync with the index
+    draft = service.edit(identity_simple, recid)._obj
+    draft.metadata["title"] = "Test (draft)"
+    draft.commit()
+    db.session.commit()
+    draft.index.refresh()
+
+    # Make sure that the DB is correct, but the index is out of date
+    # (note: service.search_draft(...) would always give me 0 results here)
+    metadata = service.read_draft(identity_simple, recid).data["metadata"]
+    assert metadata["title"] == "Test (draft)"
+    hits = [
+        hit for hit in service.draft_cls.index.search() if hit["id"] == recid
+    ]
+    assert hits
+    assert hits[0]["metadata"]["title"] == record.metadata["title"]
+
+    # Reindex all sibling records and drafts
+    # and make sure that the draft is updated now
+    service._index_related_records(record, parent=record.parent)
+    draft.index.refresh()
+    hits = [
+        hit for hit in service.draft_cls.index.search() if hit["id"] == recid
+    ]
+    assert hits
+    assert hits[0]["metadata"]["title"] == draft.metadata["title"]

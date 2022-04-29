@@ -12,6 +12,7 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_edit = [AnyUser()]
     can_new_version = [AnyUser()]
     can_search = [AnyUser()]
+    can_search_drafts = [AnyUser()]
     can_create = [AnyUser()]
     can_read = [AnyUser()]
     can_read_draft = [AnyUser()]
