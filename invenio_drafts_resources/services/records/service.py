@@ -535,6 +535,11 @@ class RecordService(RecordServiceBase):
         siblings = self.record_cls.get_records_by_parent(
             parent or record.parent
         )
+        if self.draft_cls is not None:
+            # if drafts are available, reindex them as well
+            siblings.extend(
+                self.draft_cls.get_records_by_parent(parent or record.parent)
+            )
 
         # TODO only index the current record immediately;
         #      all siblings should be sent to a high-priority celery task
