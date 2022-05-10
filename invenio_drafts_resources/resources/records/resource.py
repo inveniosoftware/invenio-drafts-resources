@@ -9,15 +9,14 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-import marshmallow as ma
 from flask import g
 from flask_resources import JSONSerializer, ResponseHandler, \
     resource_requestctx, response_handler, route, with_content_negotiation
 from invenio_records_resources.resources import \
     RecordResource as RecordResourceBase
 from invenio_records_resources.resources.records.resource import \
-    request_data, request_headers, request_read_args, request_search_args, \
-    request_view_args
+    request_data, request_extra_args, request_headers, request_read_args, \
+    request_search_args, request_view_args
 from invenio_records_resources.resources.records.utils import es_preference
 
 from .errors import RedirectException
@@ -74,6 +73,7 @@ class RecordResource(RecordResourceBase):
 
         return rules
 
+    @request_extra_args
     @request_search_args
     @request_view_args
     @response_handler(many=True)
@@ -86,9 +86,11 @@ class RecordResource(RecordResourceBase):
             identity=g.identity,
             params=resource_requestctx.args,
             es_preference=es_preference(),
+            expand=resource_requestctx.args.get("expand", False),
         )
         return hits.to_dict(), 200
 
+    @request_extra_args
     @request_search_args
     @request_view_args
     @response_handler(many=True)
@@ -101,10 +103,12 @@ class RecordResource(RecordResourceBase):
             g.identity,
             resource_requestctx.view_args["pid_value"],
             params=resource_requestctx.args,
-            es_preference=es_preference()
+            es_preference=es_preference(),
+            expand=resource_requestctx.args.get("expand", False),
         )
         return hits.to_dict(), 200
 
+    @request_extra_args
     @request_view_args
     @response_handler()
     def new_version(self):
@@ -115,9 +119,11 @@ class RecordResource(RecordResourceBase):
         item = self.service.new_version(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 201
 
+    @request_extra_args
     @request_view_args
     @response_handler()
     def edit(self):
@@ -128,9 +134,11 @@ class RecordResource(RecordResourceBase):
         item = self.service.edit(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 201
 
+    @request_extra_args
     @request_view_args
     @response_handler()
     def publish(self):
@@ -138,6 +146,7 @@ class RecordResource(RecordResourceBase):
         item = self.service.publish(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 202
 
@@ -157,6 +166,7 @@ class RecordResource(RecordResourceBase):
         )
         return files.to_dict(), 201
 
+    @request_extra_args
     @request_view_args
     def read_latest(self):
         """Redirect to latest record.
@@ -166,9 +176,11 @@ class RecordResource(RecordResourceBase):
         item = self.service.read_latest(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            expand=resource_requestctx.args.get("expand", False),
         )
         raise RedirectException(item["links"]["self"])
 
+    @request_extra_args
     @request_read_args
     @request_view_args
     @response_handler()
@@ -180,9 +192,11 @@ class RecordResource(RecordResourceBase):
         item = self.service.read_draft(
             g.identity,
             resource_requestctx.view_args["pid_value"],
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 200
 
+    @request_extra_args
     @request_headers
     @request_view_args
     @request_data
@@ -197,6 +211,7 @@ class RecordResource(RecordResourceBase):
             resource_requestctx.view_args["pid_value"],
             resource_requestctx.data or {},
             revision_id=resource_requestctx.headers.get("if_match"),
+            expand=resource_requestctx.args.get("expand", False),
         )
         return item.to_dict(), 200
 

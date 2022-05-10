@@ -10,7 +10,6 @@
 """Primary service for working with records and drafts."""
 
 from elasticsearch_dsl.query import Q
-from invenio_db import db
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import \
     RecordService as RecordServiceBase
@@ -67,7 +66,7 @@ class RecordService(RecordServiceBase):
         raise NotImplementedError("Records should be updated via their draft.")
 
     def search_drafts(self, identity, params=None, es_preference=None,
-                      **kwargs):
+                      expand=False, **kwargs):
         """Search for drafts records matching the querystring."""
         self.require_permission(identity, 'search_drafts')
 
@@ -98,10 +97,12 @@ class RecordService(RecordServiceBase):
                 "args": params
             }),
             links_item_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
     def search_versions(self, identity, id_, params=None, es_preference=None,
-                        **kwargs):
+                        expand=False, **kwargs):
         """Search for record's versions."""
         try:
             record = self.record_cls.pid.resolve(id_, registered_only=False)
@@ -136,9 +137,11 @@ class RecordService(RecordServiceBase):
                 context={"id": id_, "args": params}
             ),
             links_item_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
-    def read_draft(self, identity, id_):
+    def read_draft(self, identity, id_, expand=False):
         """Retrieve a draft."""
         # Resolve and require permission
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
@@ -150,9 +153,13 @@ class RecordService(RecordServiceBase):
                 component.read_draft(identity, draft=draft)
 
         return self.result_item(
-            self, identity, draft, links_tpl=self.links_item_tpl)
+            self, identity, draft,
+            links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
+        )
 
-    def read_latest(self, identity, id_):
+    def read_latest(self, identity, id_, expand=False):
         """Retrieve latest record."""
         # Resolve and require permission
         record = self.record_cls.pid.resolve(id_)
@@ -164,10 +171,15 @@ class RecordService(RecordServiceBase):
         self.require_permission(identity, "read", record=record)
 
         return self.result_item(
-            self, identity, record, links_tpl=self.links_item_tpl)
+            self, identity, record,
+            links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
+        )
 
     @unit_of_work()
-    def update_draft(self, identity, id_, data, revision_id=None, uow=None):
+    def update_draft(self, identity, id_, data, revision_id=None, uow=None,
+                     expand=False):
         """Replace a draft."""
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
 
@@ -203,11 +215,13 @@ class RecordService(RecordServiceBase):
             identity,
             draft,
             links_tpl=self.links_item_tpl,
-            errors=errors
+            errors=errors,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
         )
 
     @unit_of_work()
-    def create(self, identity, data, uow=None):
+    def create(self, identity, data, uow=None, expand=False):
         """Create a draft for a new record.
 
         It does NOT eagerly create the associated record.
@@ -218,12 +232,13 @@ class RecordService(RecordServiceBase):
            data,
            raise_errors=False,
            uow=uow,
+           expand=expand,
         )
         uow.register(RecordCommitOp(res._record.parent))
         return res
 
     @unit_of_work()
-    def edit(self, identity, id_, uow=None):
+    def edit(self, identity, id_, uow=None, expand=False):
         """Create a new revision or a draft for an existing record.
 
         :param id_: record PID value.
@@ -254,10 +269,14 @@ class RecordService(RecordServiceBase):
         uow.register(RecordIndexOp(record, indexer=self.indexer))
 
         return self.result_item(
-            self, identity, draft, links_tpl=self.links_item_tpl)
+            self, identity, draft,
+            links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
+        )
 
     @unit_of_work()
-    def publish(self, identity, id_, uow=None):
+    def publish(self, identity, id_, uow=None, expand=False):
         """Publish a draft.
 
         Idea:
@@ -292,10 +311,14 @@ class RecordService(RecordServiceBase):
             self._reindex_latest(latest_id, uow=uow)
 
         return self.result_item(
-            self, identity, record, links_tpl=self.links_item_tpl)
+            self, identity, record,
+            links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
+        )
 
     @unit_of_work()
-    def new_version(self, identity, id_, uow=None):
+    def new_version(self, identity, id_, uow=None, expand=False):
         """Create a new version of a record."""
         # Get the a record - i.e. you can only create a new version in case
         # at least one published record already exists.
@@ -329,7 +352,11 @@ class RecordService(RecordServiceBase):
             next_draft.versions.latest_id, record=record, uow=uow)
 
         return self.result_item(
-            self, identity, next_draft, links_tpl=self.links_item_tpl)
+            self, identity, next_draft,
+            links_tpl=self.links_item_tpl,
+            expandable_fields=self.expandable_fields,
+            expand=expand,
+        )
 
     @unit_of_work()
     def delete_draft(self, identity, id_, revision_id=None, uow=None):
