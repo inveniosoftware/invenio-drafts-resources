@@ -311,17 +311,47 @@ def test_draft_delete_reindex(app, db, es, example_draft, indexer):
 def test_get_records_by_parent(app, db, location):
     """Test get by parent."""
     # Create two published records
-    record_v1 = Record.publish(Draft.create({}))
+    draft_v1 = Draft.create({})
     db.session.commit()
-    draft = Draft.new_version(record_v1)
-    draft.commit()
-    db.session.commit()
-    record_v2 = Record.publish(draft)
-    db.session.commit()
-
-    # Get all two versions.
-    parent = record_v2.parent
+    parent = draft_v1.parent
+    drafts = Draft.get_records_by_parent(parent)
+    assert len(drafts) == 1
+    assert id(parent) == id(drafts[0].parent)
     records = Record.get_records_by_parent(parent)
+    assert len(records) == 0
 
-    # Check that we reuse the parent we passed in.
+    record_v1 = Record.publish(draft_v1)
+    draft_v1.delete()  # simulate service `publish`, will soft delete drafts
+    db.session.commit()
+    parent = record_v1.parent
+    drafts = Draft.get_records_by_parent(parent)
+    assert len(drafts) == 1
+    assert id(parent) == id(drafts[0].parent)
+    drafts = Draft.get_records_by_parent(parent, include_deleted=False)
+    assert len(drafts) == 0
+    records = Record.get_records_by_parent(parent)
+    assert len(records) == 1
+    assert id(parent) == id(records[0].parent)
+
+    draft_v2 = Draft.new_version(record_v1)
+    draft_v2.commit()
+    parent = draft_v2.parent
+    db.session.commit()
+    drafts = Draft.get_records_by_parent(parent)
+    assert len(drafts) == 2
+    assert id(parent) == id(drafts[0].parent)
+    records = Record.get_records_by_parent(record_v1.parent)
+    assert len(records) == 1
+    assert id(record_v1.parent) == id(records[0].parent)
+
+    record_v2 = Record.publish(draft_v2)
+    draft_v2.delete()  # simulate service `publish`, will soft delete drafts
+    db.session.commit()
+    parent = record_v2.parent
+    drafts = Draft.get_records_by_parent(parent)
+    assert len(drafts) == 2
+    drafts = Draft.get_records_by_parent(parent, include_deleted=False)
+    assert len(drafts) == 0
+    records = Record.get_records_by_parent(parent)
+    assert len(records) == 2
     assert id(parent) == id(records[0].parent) == id(records[1].parent)

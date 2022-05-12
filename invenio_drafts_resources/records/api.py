@@ -90,9 +90,13 @@ class Record(RecordBase):
     versions = VersionsField(create=True, set_latest=True)
 
     @classmethod
-    def get_records_by_parent(cls, parent):
+    def get_records_by_parent(cls, parent, include_deleted=True):
         """Get all sibling records for the specified parent record."""
-        versions = cls.model_cls.query.filter_by(parent_id=parent.id).all()
+        query = cls.model_cls.query.filter_by(parent_id=parent.id)
+        if not include_deleted:
+            query = query.filter_by(is_deleted=False)
+        versions = query.all()
+
         return [
             cls(rec_model.data, model=rec_model, parent=parent)
             for rec_model in versions

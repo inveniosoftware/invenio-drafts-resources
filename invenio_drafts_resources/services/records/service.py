@@ -531,15 +531,22 @@ class RecordService(RecordServiceBase):
 
     @unit_of_work()
     def _index_related_records(self, record, parent, uow=None):
-        """Index all records that are related to the specified ones."""
+        """Index all records that are related to the specified ones.
+
+        Soft deleted records (including published drafts) will not be indexed
+        because the JSON payload is empty.
+        """
+        _parent = parent or record.parent
         siblings = self.record_cls.get_records_by_parent(
-            parent or record.parent
+            _parent, include_deleted=False
         )
+
         if self.draft_cls is not None:
             # if drafts are available, reindex them as well
-            siblings.extend(
-                self.draft_cls.get_records_by_parent(parent or record.parent)
+            drafts = self.draft_cls.get_records_by_parent(
+                _parent, include_deleted=False
             )
+            siblings.extend(drafts)
 
         # TODO only index the current record immediately;
         #      all siblings should be sent to a high-priority celery task
