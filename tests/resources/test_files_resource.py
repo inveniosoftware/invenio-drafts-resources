@@ -58,7 +58,7 @@ def published_id(client, location, headers):
     return id_
 
 
-def test_files_publish_flow(client, es_clear, location, headers):
+def test_files_publish_flow(client, search_clear, location, headers):
     """Test record creation."""
     h = headers
     # Create a draft
@@ -113,7 +113,7 @@ def test_files_publish_flow(client, es_clear, location, headers):
     assert res.json["entries"][0]["status"] == "completed"
 
 
-def test_metadata_only_record(client, es_clear, location, headers):
+def test_metadata_only_record(client, search_clear, location, headers):
     """Test record with files disabled."""
     h = headers
     # Create a draft
@@ -150,7 +150,7 @@ def test_metadata_only_record(client, es_clear, location, headers):
     assert "entries" not in res.json
 
 
-def test_import_files(client, es_clear, location, headers, published_id):
+def test_import_files(client, search_clear, location, headers, published_id):
     """Test import files from previous version."""
     h = headers
     id_ = published_id
@@ -176,7 +176,7 @@ def test_import_files(client, es_clear, location, headers, published_id):
     assert len(res.json["entries"]) == 1
 
 
-def test_import_files_metadata_only(client, es_clear, location, headers):
+def test_import_files_metadata_only(client, search_clear, location, headers):
     """Test import files from previous version."""
     h = headers
 
@@ -207,7 +207,7 @@ def test_import_files_metadata_only(client, es_clear, location, headers):
     assert res.status_code == 400
 
 
-def test_import_files_no_version(client, es_clear, location, headers):
+def test_import_files_no_version(client, search_clear, location, headers):
     """Test import files from previous version."""
     h = headers
 

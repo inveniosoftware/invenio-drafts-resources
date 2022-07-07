@@ -9,7 +9,6 @@
 
 """Primary service for working with records and drafts."""
 
-from elasticsearch_dsl.query import Q
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
@@ -19,6 +18,7 @@ from invenio_records_resources.services.uow import (
     RecordIndexOp,
     unit_of_work,
 )
+from invenio_search.engine import dsl
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -69,7 +69,7 @@ class RecordService(RecordServiceBase):
         raise NotImplementedError("Records should be updated via their draft.")
 
     def search_drafts(
-        self, identity, params=None, es_preference=None, expand=False, **kwargs
+        self, identity, params=None, search_preference=None, expand=False, **kwargs
     ):
         """Search for drafts records matching the querystring."""
         self.require_permission(identity, "search_drafts")
@@ -81,13 +81,13 @@ class RecordService(RecordServiceBase):
             "search_drafts",
             identity,
             params,
-            es_preference,
+            search_preference,
             record_cls=self.draft_cls,
             search_opts=self.config.search_drafts,
             # `has_draft` systemfield is not defined here. This is not ideal
             # but it helps avoid overriding the method. See how is used in
             # https://github.com/inveniosoftware/invenio-rdm-records
-            extra_filter=Q("term", has_draft=False),
+            extra_filter=dsl.Q("term", has_draft=False),
             permission_action="read_draft",
             **kwargs
         ).execute()
@@ -106,7 +106,7 @@ class RecordService(RecordServiceBase):
         )
 
     def search_versions(
-        self, identity, id_, params=None, es_preference=None, expand=False, **kwargs
+        self, identity, id_, params=None, search_preference=None, expand=False, **kwargs
     ):
         """Search for record's versions."""
         try:
@@ -123,10 +123,12 @@ class RecordService(RecordServiceBase):
             "search_versions",
             identity,
             params,
-            es_preference,
+            search_preference,
             record_cls=self.record_cls,
             search_opts=self.config.search_versions,
-            extra_filter=Q("term", **{"parent.id": str(record.parent.pid.pid_value)}),
+            extra_filter=dsl.Q(
+                "term", **{"parent.id": str(record.parent.pid.pid_value)}
+            ),
             permission_action="read",
             **kwargs
         ).execute()
@@ -389,7 +391,7 @@ class RecordService(RecordServiceBase):
 
         # We soft-delete a draft when a published record exists, in order to
         # keep the version_id counter around for optimistic concurrency
-        # control (both for ES indexing and for REST API clients)
+        # control (both for search indexing and for REST API clients)
         force = False if record else True
 
         # Run components

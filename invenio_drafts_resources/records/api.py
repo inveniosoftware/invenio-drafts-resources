@@ -201,7 +201,7 @@ class Draft(Record):
         try:
             # We soft-delete a draft once it has been published, in order to
             # keep the version_id counter around for optimistic concurrency
-            # control (both for ES indexing and for REST API clients)
+            # control (both for search indexing and for REST API clients)
             draft = cls.get_record(record.id, with_deleted=True)
             if draft.is_deleted:
                 draft.undelete()

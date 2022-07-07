@@ -26,7 +26,7 @@ def _assert_single_item_response(response):
 #
 
 
-def test_create_draft(client, headers, input_data, location, es_clear):
+def test_create_draft(client, headers, input_data, location, search_clear):
     """Test draft creation of a non-existing record."""
     response = client.post("/mocks", json=input_data, headers=headers)
 
@@ -34,7 +34,7 @@ def test_create_draft(client, headers, input_data, location, es_clear):
     _assert_single_item_response(response)
 
 
-def test_read_draft(client, headers, input_data, location, es_clear):
+def test_read_draft(client, headers, input_data, location, search_clear):
     response = client.post("/mocks", json=input_data, headers=headers)
 
     assert response.status_code == 201
@@ -47,7 +47,7 @@ def test_read_draft(client, headers, input_data, location, es_clear):
     _assert_single_item_response(response)
 
 
-def test_update_draft(client, headers, input_data, location, es_clear):
+def test_update_draft(client, headers, input_data, location, search_clear):
     response = client.post("/mocks", json=input_data, headers=headers)
 
     assert response.status_code == 201
@@ -76,7 +76,7 @@ def test_update_draft(client, headers, input_data, location, es_clear):
     assert update_response.json["id"] == recid
 
 
-def test_delete_draft(client, headers, input_data, location, es_clear):
+def test_delete_draft(client, headers, input_data, location, search_clear):
     response = client.post("/mocks", json=input_data, headers=headers)
 
     assert response.status_code == 201
@@ -110,7 +110,7 @@ def _create_and_publish(client, headers, input_data):
     return recid
 
 
-def test_publish_draft(client, headers, input_data, location, es_clear):
+def test_publish_draft(client, headers, input_data, location, search_clear):
     """Test draft publication of a non-existing record.
 
     It has to first create said draft.
@@ -130,7 +130,7 @@ def test_publish_draft(client, headers, input_data, location, es_clear):
     _assert_single_item_response(response)
 
 
-def test_search_versions(client, headers, input_data, location, es_clear):
+def test_search_versions(client, headers, input_data, location, search_clear):
     """Test search for versions."""
     recid = _create_and_publish(client, headers, input_data)
     Record.index.refresh()
@@ -146,7 +146,9 @@ def test_search_versions(client, headers, input_data, location, es_clear):
 #
 
 
-def test_create_publish_new_revision(client, headers, input_data, location, es_clear):
+def test_create_publish_new_revision(
+    client, headers, input_data, location, search_clear
+):
     """Test draft creation of an existing record and publish it."""
     recid = _create_and_publish(client, headers, input_data)
 
@@ -187,7 +189,7 @@ def test_create_publish_new_revision(client, headers, input_data, location, es_c
     assert response.json["metadata"]["title"] == input_data["metadata"]["title"]
 
 
-def test_mutiple_edit(client, headers, input_data, location, es_clear):
+def test_mutiple_edit(client, headers, input_data, location, search_clear):
     """Test the revision_id when editing record multiple times.
 
     This tests the `edit` service method.

@@ -135,7 +135,7 @@ def test_edit_delete(app, db, service, input_data, identity_simple, monkeypatch)
     assert c == 1
     db.session.commit()
 
-    # Elasticsearch will complain if we try we don't wait a minute, so disable
+    # Search engine will complain if we try we don't wait a minute, so disable
     # the indexer.
     monkeypatch.setattr(service.config, "indexer_cls", MagicMock())
 
@@ -166,7 +166,7 @@ def test_edit_publish(app, db, service, input_data, identity_simple, monkeypatch
     assert c == 1
     db.session.commit()
 
-    # Elasticsearch will complain if we try we don't wait a minute, so disable
+    # engine will complain if we try we don't wait a minute, so disable
     # the indexer.
     monkeypatch.setattr(service.config, "indexer_cls", MagicMock())
 

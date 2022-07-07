@@ -40,7 +40,7 @@ class SearchOptions(SearchOptionsBase):
     sort_options = {
         "bestmatch": dict(
             title=_("Best match"),
-            fields=["_score"],  # ES defaults to desc on `_score` field
+            fields=["_score"],  # search defaults to desc on `_score` field
         ),
         "newest": dict(
             title=_("Newest"),
@@ -69,7 +69,7 @@ class SearchDraftsOptions(SearchOptions):
     sort_options = {
         "bestmatch": dict(
             title=_("Best match"),
-            fields=["_score"],  # ES defaults to desc on `_score` field
+            fields=["_score"],  # search defaults to desc on `_score` field
         ),
         "updated-desc": dict(
             title=_("Recently updated"),

@@ -257,16 +257,16 @@ def test_draft_dump_load_idempotence(app, db, example_draft):
 #
 # Indexing
 #
-def test_draft_indexing(app, db, es, example_draft, indexer):
+def test_draft_indexing(app, db, search, example_draft, indexer):
     """Test indexing of a draft."""
-    # Index document in ES
+    # Index document in search cluster
     assert indexer.index(example_draft)["result"] == "created"
-    # Retrieve document from ES
+    # Retrieve document from search cluster
     data = current_search_client.get(
         "draftsresources-drafts-draft-v1.0.0", id=example_draft.id, doc_type="_doc"
     )
 
-    # Loads the ES data and compare
+    # Loads the search cluster data and compare
     draft = Draft.loads(data["_source"])
 
     assert draft == example_draft
@@ -282,7 +282,7 @@ def test_draft_indexing(app, db, es, example_draft, indexer):
     assert draft.metadata == example_draft["metadata"]
 
 
-def test_draft_delete_reindex(app, db, es, example_draft, indexer):
+def test_draft_delete_reindex(app, db, search, example_draft, indexer):
     """Test reindexing of a soft-deleted draft."""
     draft = example_draft
 
