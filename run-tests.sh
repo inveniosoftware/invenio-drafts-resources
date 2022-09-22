@@ -52,6 +52,7 @@ if [[ ${keep_services} -eq 0 ]]; then
 fi
 
 python -m check_manifest
+python -m setup extract_messages --dry-run
 python -m sphinx.cmd.build -qnNW docs docs/_build/html
 eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-elasticsearch} --env)"
 # Note: expansion of pytest_args looks like below to not cause an unbound
