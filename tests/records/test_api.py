@@ -263,7 +263,7 @@ def test_draft_indexing(app, db, search, example_draft, indexer):
     assert indexer.index(example_draft)["result"] == "created"
     # Retrieve document from search cluster
     data = current_search_client.get(
-        "draftsresources-drafts-draft-v1.0.0", id=example_draft.id, doc_type="_doc"
+        "draftsresources-drafts-draft-v1.0.0", id=example_draft.id
     )
 
     # Loads the search cluster data and compare
