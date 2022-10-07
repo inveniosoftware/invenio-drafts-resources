@@ -12,3 +12,4 @@ Authors
 Invenio Records Resources module to create REST APIs
 
 - CERN <info@inveniosoftware.org>
+- KTH Royal Institute of Technology <info@kth.se>
