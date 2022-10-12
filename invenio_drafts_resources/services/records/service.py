@@ -500,12 +500,12 @@ class RecordService(RecordServiceBase):
 
         return ret_val
 
-    def validate_draft(self, identity, id_):
+    def validate_draft(self, identity, id_, ignore_field_permissions=False):
         """Validate a draft."""
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
-        self._validate_draft(identity, draft)
+        self._validate_draft(identity, draft, ignore_field_permissions)
 
-    def _validate_draft(self, identity, draft):
+    def _validate_draft(self, identity, draft, ignore_field_permissions=False):
         """Validate a draft.
 
         This method is internal because it works with a data access layer
@@ -515,16 +515,30 @@ class RecordService(RecordServiceBase):
         # projection for the given identity). This way we can load and validate
         # the data with the service schema.
         draft_item = self.result_item(self, identity, draft)
+        validation_context = {
+            "identity": identity,
+            "pid": draft.pid,
+            "record": draft,
+        }
+
+        if ignore_field_permissions:
+            # optionally, we override the field-level permission checks with an
+            # "allow all" because sometimes we only care about the structural and
+            # semantic validation of drafts, but not the permissions that have been
+            # checked elsewhere already
+
+            def always_allow(*args, **kwargs):
+                """Liberal override for permission_policy.allows(...)."""
+                return True
+
+            validation_context["field_permission_check"] = always_allow
+
         # Validate the data - will raise ValidationError if not valid.
+        # note: schema.dump() will not raise ValidationErrors since marshmallow 3.0.0rc9
         self.schema.load(
             data=draft_item.data,
-            context=dict(
-                identity=identity,
-                pid=draft.pid,
-                record=draft,
-            ),
-            raise_errors=True  # this is the default, but might as well be
-            # explicit
+            context=validation_context,
+            raise_errors=True,  # this is the default, but might as well be explicit
         )
 
     @unit_of_work()
