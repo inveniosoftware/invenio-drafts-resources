@@ -9,6 +9,7 @@
 
 """Primary service for working with records and drafts."""
 
+from flask import current_app
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
@@ -19,7 +20,9 @@ from invenio_records_resources.services.uow import (
     unit_of_work,
 )
 from invenio_search.engine import dsl
+from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.local import LocalProxy
 
 
 class RecordService(RecordServiceBase):
@@ -60,6 +63,29 @@ class RecordService(RecordServiceBase):
     def draft_cls(self):
         """Factory for creating a record class."""
         return self.config.draft_cls
+
+    @property
+    def draft_indexer(self):
+        """Factory for creating an indexer instance."""
+        return self.config.draft_indexer_cls(
+            # the routing key is mandatory in the indexer constructor since
+            # it is afterwards passed explicitly to the created consumers
+            # and producers. this means that it is not strictly necessary to
+            # pass it to the queue constructor. however, it is passed for
+            # consistency (in case the queue is used by itself) and to help
+            # entity declaration on publish.
+            queue=LocalProxy(
+                lambda: Queue(
+                    self.config.draft_indexer_queue_name,
+                    exchange=current_app.config["INDEXER_MQ_EXCHANGE"],
+                    routing_key=self.config.draft_indexer_queue_name,
+                )
+            ),
+            routing_key=self.config.draft_indexer_queue_name,
+            record_cls=self.config.draft_cls,
+            record_to_index=self.record_to_index,
+            record_dumper=self.config.index_dumper,
+        )
 
     # High-level API
     # Inherits record search, read, create, delete and update
@@ -462,10 +488,8 @@ class RecordService(RecordServiceBase):
         """
         ret_val = super().rebuild_index(identity)
 
-        for draft_meta in self.draft_cls.model_cls.query.all():
-            draft = self.draft_cls(draft_meta.data, model=draft_meta)
-            if not draft.is_deleted:
-                self.indexer.index(draft)
+        drafts = self.draft_cls.model_cls.query.filter_by(is_deleted=False).all()
+        self.draft_indexer.bulk_index([draft.id for draft in drafts])
 
         return ret_val
 

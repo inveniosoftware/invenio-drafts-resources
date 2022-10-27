@@ -11,6 +11,7 @@
 """RecordDraft Service API config."""
 
 from flask_babelex import gettext as _
+from invenio_indexer.api import RecordIndexer
 from invenio_records_resources.services import ConditionalLink, RecordLink
 from invenio_records_resources.services import (
     RecordServiceConfig as RecordServiceConfigBase,
@@ -125,6 +126,9 @@ class RecordServiceConfig(RecordServiceConfigBase):
 
     # WHY: We want to force user input choice here.
     draft_cls = None
+
+    draft_indexer_cls = RecordIndexer
+    draft_indexer_queue_name = f"{RecordServiceConfigBase.indexer_queue_name}-drafts"
 
     schema = RecordSchema
 
