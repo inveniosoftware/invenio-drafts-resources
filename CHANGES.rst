@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.0.1 (2022-11-15)
+
+- use bulk indexing for service `rebuild_index` method.
+
 Version 1.0.0 (2022-11-04)
 
 - bump invenio-records-resources version
