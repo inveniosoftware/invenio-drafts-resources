@@ -10,6 +10,7 @@
 """Primary service for working with records and drafts."""
 
 from flask import current_app
+from invenio_db import db
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
@@ -488,8 +489,14 @@ class RecordService(RecordServiceBase):
         """
         ret_val = super().rebuild_index(identity)
 
-        drafts = self.draft_cls.model_cls.query.filter_by(is_deleted=False).all()
-        self.draft_indexer.bulk_index([draft.id for draft in drafts])
+        model_cls = self.draft_cls.model_cls
+        drafts = (
+            db.session.query(model_cls.id)
+            .filter(model_cls.is_deleted == False)
+            .yield_per(1000)
+        )
+
+        self.draft_indexer.bulk_index((draft.id for draft in drafts))
 
         return ret_val
 
