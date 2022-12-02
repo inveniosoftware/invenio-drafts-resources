@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.0.3 (2022-12-02)
+
+- Fix rebuild index memory usage
+
 Version 1.0.2 (2022-11-25)
 
 - Add i18n translations.
