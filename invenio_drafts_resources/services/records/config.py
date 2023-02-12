@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2020 Northwestern University.
-# Copyright (C) 2022 Graz University of Technology.
+# Copyright (C) 2022-2023 Graz University of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -10,7 +10,7 @@
 
 """RecordDraft Service API config."""
 
-from flask_babelex import gettext as _
+from invenio_i18n import gettext as _
 from invenio_indexer.api import RecordIndexer
 from invenio_records_resources.services import ConditionalLink, RecordLink
 from invenio_records_resources.services import (

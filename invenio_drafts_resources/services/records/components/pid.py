@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2021 CERN.
 # Copyright (C) 2021 Northwestern University.
+# Copyright (C) 2023 Graz University of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,7 +10,6 @@
 
 """Records service component base classes."""
 
-from flask_babelex import gettext as _
 from invenio_records_resources.services.records.components import ServiceComponent
 
 
