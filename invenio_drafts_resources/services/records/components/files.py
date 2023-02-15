@@ -10,6 +10,7 @@
 """Records service component base classes."""
 
 from flask_babelex import gettext as _
+from invenio_records_resources.services.files.transfer import TransferType
 from invenio_records_resources.services.records.components import FilesOptionsComponent
 from marshmallow import ValidationError
 
@@ -130,6 +131,15 @@ class DraftFilesComponent(ServiceComponent):
                     ),
                     field_name="files.enabled",
                 )
+        if draft.files.enabled:
+            for file_record in draft.files.values():
+                if not TransferType(file_record.file.storage_class).is_completed:
+                    raise ValidationError(
+                        _(
+                            "One or more files have not completed their transfer, please wait."
+                        ),
+                        field_name="files",
+                    )
 
         if record.bucket_id:
             self._publish_edit(identity, draft, record)

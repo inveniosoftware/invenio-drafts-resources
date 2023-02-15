@@ -16,11 +16,12 @@ Test to add:
 """
 
 from io import BytesIO
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from invenio_files_rest.errors import InvalidOperationError
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
+from invenio_records_resources.services.files.transfer import TransferType
 from marshmallow.exceptions import ValidationError
 from mock_module.models import DraftMetadata, FileDraftMetadata, FileRecordMetadata
 from mock_module.service import ServiceConfig
@@ -302,6 +303,31 @@ def test_update_draft_set_default_file_preview_reports_error(
     assert draft.errors[0]["field"] == "files.default_preview"
     assert draft.errors[0]["messages"]
     assert draft.data["files"] == {"enabled": True}
+
+
+@patch("invenio_records_resources.services.files.transfer.fetch_file")
+def test_publish_with_fetch_files(
+    p_fetch_file, app, service, draft_file_service, input_data, identity_simple
+):
+    """Tests wether it is possible to submit a record if the file isn't fully downloaded."""
+    draft = service.create(identity_simple, input_data)  # 1
+    file_to_initialise = [
+        {
+            "key": "article.txt",
+            "uri": "https://inveniordm.test/files/article.txt",
+            "storage_class": "F",
+        }
+    ]
+
+    files = draft_file_service.init_files(
+        identity_simple, draft.id, data=file_to_initialise
+    )
+
+    for file_record in files.entries:
+        assert file_record["storage_class"] == TransferType.FETCH
+
+    with pytest.raises(ValidationError):
+        service.publish(identity_simple, draft.id)
 
 
 #

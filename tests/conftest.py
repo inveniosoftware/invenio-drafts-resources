@@ -27,6 +27,9 @@ def app_config(app_config):
 
     Needed to set the fields on the custom fields schema.
     """
+    app_config["RECORDS_RESOURCES_FILES_ALLOWED_DOMAINS"] = [
+        "inveniordm.test",
+    ]
     app_config["FILES_REST_STORAGE_CLASS_LIST"] = {
         "L": "Local",
         "F": "Fetch",
