@@ -28,3 +28,4 @@ class RecordPermissionPolicy(RecordPermissionPolicyBase):
     can_read_draft = [AnyUser()]
     can_update_draft = [AnyUser()]
     can_delete_draft = [AnyUser()]
+    can_manage_files = [AnyUser()]

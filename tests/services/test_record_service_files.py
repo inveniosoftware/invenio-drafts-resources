@@ -24,6 +24,7 @@ from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from invenio_records_resources.services.files.transfer import TransferType
 from marshmallow.exceptions import ValidationError
 from mock_module.models import DraftMetadata, FileDraftMetadata, FileRecordMetadata
+from mock_module.permissions import PermissionPolicy
 from mock_module.service import ServiceConfig
 
 from invenio_drafts_resources.services import RecordService
@@ -390,3 +391,23 @@ def test_fail_to_add_files_to_draft_with_files_disabled(
 
     with pytest.raises(InvalidOperationError):
         add_file_to_draft(service.draft_files, draft.id, "file.txt", identity_simple)
+
+
+def test_manage_files_permissions(
+    app, service, identity_simple, input_data, monkeypatch
+):
+    class ManageFilesPermissionPolicy(PermissionPolicy):
+        can_manage_files = []
+
+    monkeypatch.setattr(
+        service.config,
+        "permission_policy_cls",
+        ManageFilesPermissionPolicy,
+    )
+
+    input_data["files"]["enabled"] = False
+    draft = service.create(identity_simple, input_data)
+    assert draft.errors[0]["field"] == "files.enabled"
+    assert draft.errors[0]["messages"] == [
+        "You don't have permissions to manage files options.",
+    ]

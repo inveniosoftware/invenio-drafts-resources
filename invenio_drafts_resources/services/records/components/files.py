@@ -35,8 +35,20 @@ class DraftFilesComponent(ServiceComponent):
         NOTE: `record` actually refers to the draft
               (this interface is used in records-resources and rdm-records)
         """
-        enabled = data.get("files", {}).get("enabled", True)
-        record.files.enabled = enabled
+        draft = record
+        if self.service.check_permission(identity, "manage_files"):
+            enabled = data.get("files", {}).get("enabled", True)
+            draft.files.enabled = enabled
+        else:
+            errors.append(
+                {
+                    "field": "files.enabled",
+                    "messages": [
+                        _("You don't have permissions to manage files options.")
+                    ],
+                }
+            )
+            return  # exit early
 
     def update_draft(self, identity, data=None, record=None, errors=None):
         """Assigns files.enabled and warns if files are missing.
@@ -47,25 +59,35 @@ class DraftFilesComponent(ServiceComponent):
         draft = record
         enabled = data.get("files", {}).get("enabled", True)
         default_preview = data.get("files", {}).get("default_preview")
+        if self.service.check_permission(identity, "manage_files"):
+            try:
+                self.files_component.assign_files_enabled(draft, enabled)
+            except ValidationError as e:
+                errors.append({"field": "files.enabled", "messages": e.messages})
+                return  # exit early
 
-        try:
-            self.files_component.assign_files_enabled(draft, enabled)
-        except ValidationError as e:
-            errors.append({"field": "files.enabled", "messages": e.messages})
-            return  # exit early
-
-        if draft.files.enabled and not draft.files.items():
+            if draft.files.enabled and not draft.files.items():
+                errors.append(
+                    {
+                        "field": "files.enabled",
+                        "messages": [
+                            _(
+                                "Missing uploaded files. To disable files for "
+                                "this record please mark it as metadata-only."
+                            )
+                        ],
+                    }
+                )
+        else:
             errors.append(
                 {
                     "field": "files.enabled",
                     "messages": [
-                        _(
-                            "Missing uploaded files. To disable files for "
-                            "this record please mark it as metadata-only."
-                        )
+                        _("You don't have permissions to manage files options.")
                     ],
                 }
             )
+            return  # exit early
 
         try:
             self.files_component.assign_files_default_preview(
