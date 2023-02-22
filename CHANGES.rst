@@ -9,6 +9,11 @@
 Changes
 =======
 
+Version 1.0.4 (2023-02-22)
+
+- service: allow to ignore field-level permission checks in validate_draft
+- files: publishing files pending download from Fetch
+
 Version 1.0.3 (2022-12-02)
 
 - Fix rebuild index memory usage
