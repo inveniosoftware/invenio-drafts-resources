@@ -9,6 +9,11 @@
 Changes
 =======
 
+Version 1.1.0 (2023-03-02)
+
+- remove deprecated flask-babelex dependency and imports
+- install invenio-i18n explicitly
+
 Version 1.0.4 (2023-02-22)
 
 - service: allow to ignore field-level permission checks in validate_draft
