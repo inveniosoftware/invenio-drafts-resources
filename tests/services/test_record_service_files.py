@@ -405,6 +405,11 @@ def test_manage_files_permissions(
         ManageFilesPermissionPolicy,
     )
 
+    # Not modifying files options (i.e. sending `files.enabled: true`) doesn't error
+    draft = service.create(identity_simple, input_data)
+    assert not draft.errors
+
+    # Modyfing/disabling files should return an error
     input_data["files"]["enabled"] = False
     draft = service.create(identity_simple, input_data)
     assert draft.errors[0]["field"] == "files.enabled"
