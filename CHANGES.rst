@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.2.0 (2023-03-24)
+
+- bump invenio-records-resources to v2.0.0
+
 Version 1.1.1 (2023-03-03)
 
 - permissions: add can manage files permission to the draft
