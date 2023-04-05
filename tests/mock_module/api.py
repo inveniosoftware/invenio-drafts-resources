@@ -56,6 +56,7 @@ class Record(RecordBase):
 
     files = FilesField(
         store=False,
+        dump=True,
         file_cls=FileRecord,
         # Don't create
         create=False,

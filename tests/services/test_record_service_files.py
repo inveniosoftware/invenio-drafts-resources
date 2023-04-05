@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -121,6 +121,7 @@ def test_edit_delete(app, db, service, input_data, identity_simple, monkeypatch)
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
     record = service.publish(identity_simple, draft.id)
+    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Edit draft (when soft-deleted draft record exists)
     draft = service.edit(identity_simple, record.id)
