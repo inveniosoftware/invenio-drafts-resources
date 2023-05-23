@@ -26,5 +26,8 @@ class PIDComponent(ServiceComponent):
         if force:
             draft.__class__.pid.session_merge(draft)
             draft.pid.delete()
-            draft.parent.__class__.pid.session_merge(draft.parent)
-            draft.parent.pid.delete()
+
+            # Only delete parent PID if there are no other versions
+            if draft.versions.latest_index == 1:
+                draft.parent.__class__.pid.session_merge(draft.parent)
+                draft.parent.pid.delete()

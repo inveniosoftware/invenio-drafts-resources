@@ -279,6 +279,60 @@ def test_create_publish_new_version(app, service, identity_simple, input_data):
     assert record_2["id"] != record["id"]
 
 
+def test_multi_version_delete_draft(app, service, identity_simple, input_data):
+    """Test deleting drafts of a multi-version record.
+
+    Both individual version PIDs and parent PID should stay 'REGISTERED' when deleting
+    drafts of a multi-version record.
+    """
+    record = create_and_publish(service, identity_simple, input_data)
+    recid_v1 = record.id
+
+    def assert_record_pids_status(recid):
+        record = service.read(identity_simple, recid)
+        assert record._record.pid.status == PIDStatus.REGISTERED
+        assert record._record.parent.pid.status == PIDStatus.REGISTERED
+
+    # Edit record v1
+    draft = service.edit(identity_simple, recid_v1)
+    assert_record_pids_status(recid_v1)
+
+    # Delete edit draft of record v1
+    service.delete_draft(identity_simple, draft.id)
+    assert_record_pids_status(recid_v1)
+
+    # Create new version (v2)
+    draft = service.new_version(identity_simple, recid_v1)
+    assert_record_pids_status(recid_v1)
+
+    # Delete new version (v2) draft
+    service.delete_draft(identity_simple, draft.id)
+    assert_record_pids_status(recid_v1)
+
+    # Create new version (v2) and publish
+    draft = service.new_version(identity_simple, recid_v1)
+    record_v2 = service.publish(identity_simple, draft.id)
+    recid_v2 = record_v2.id
+    assert_record_pids_status(recid_v1)
+    assert_record_pids_status(recid_v2)
+
+    # Edit both record v1 and v2
+    draft_v1 = service.edit(identity_simple, recid_v1)
+    draft_v2 = service.edit(identity_simple, recid_v2)
+    assert_record_pids_status(recid_v1)
+    assert_record_pids_status(recid_v2)
+
+    # Delete draft v1
+    service.delete_draft(identity_simple, draft_v1.id)
+    assert_record_pids_status(recid_v1)
+    assert_record_pids_status(recid_v2)
+
+    # Delete draft v2
+    service.delete_draft(identity_simple, draft_v2.id)
+    assert_record_pids_status(recid_v1)
+    assert_record_pids_status(recid_v2)
+
+
 def test_read_latest_version(app, service, identity_simple, input_data):
     """Test read the latest version of a record.
 
