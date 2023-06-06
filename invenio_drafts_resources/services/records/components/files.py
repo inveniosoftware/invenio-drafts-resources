@@ -39,7 +39,9 @@ class DraftFilesComponent(ServiceComponent):
         enabled = data.get("files", {}).get("enabled", True)
 
         if draft.files.enabled != enabled:
-            if not self.service.check_permission(identity, "manage_files"):
+            if not self.service.check_permission(
+                identity, "manage_files", record=draft
+            ):
                 errors.append(
                     {
                         "field": "files.enabled",
@@ -63,7 +65,9 @@ class DraftFilesComponent(ServiceComponent):
         default_preview = data.get("files", {}).get("default_preview")
 
         if draft.files.enabled != enabled:
-            if not self.service.check_permission(identity, "manage_files"):
+            if not self.service.check_permission(
+                identity, "manage_files", record=draft
+            ):
                 errors.append(
                     {
                         "field": "files.enabled",
