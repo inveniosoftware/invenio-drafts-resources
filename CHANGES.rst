@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.4.1 (2023-06-06)
+
+- fix permission check for managing files
+
 Version 1.4.0 (2023-04-25)
 
 - upgrade invenio-records-resources
