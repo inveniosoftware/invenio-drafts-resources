@@ -359,7 +359,7 @@ class RecordService(RecordServiceBase):
     @unit_of_work()
     def new_version(self, identity, id_, uow=None, expand=False):
         """Create a new version of a record."""
-        # Get the a record - i.e. you can only create a new version in case
+        # Get the record - i.e. you can only create a new version in case
         # at least one published record already exists.
         record = self.record_cls.pid.resolve(id_)
 
@@ -373,7 +373,7 @@ class RecordService(RecordServiceBase):
                 self, identity, next_draft, links_tpl=self.links_item_tpl
             )
 
-        # Draft for new version does not exists, so create it
+        # Draft for new version does not exist, so create it
         next_draft = self.draft_cls.new_version(record)
 
         # Get the latest published record if it's not the current one.
@@ -563,7 +563,7 @@ class RecordService(RecordServiceBase):
             record = self.record_cls.get_record(latest_id)
         uow.register(RecordIndexOp(record, indexer=self.indexer, index_refresh=refresh))
 
-        # Note, a draft may or may not exists for a published record (depending
+        # Note, a draft may or may not exist for a published record (depending
         # on if it's being edited).
         try:
             draft = self.draft_cls.get_record(latest_id)

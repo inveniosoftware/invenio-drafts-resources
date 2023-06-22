@@ -10,7 +10,7 @@
 """Record service component for drafts."""
 
 from .base import ServiceComponent
-from .files import DraftFilesComponent
+from .files import DraftFilesComponent, DraftAuxiliaryFilesComponent
 from .metadata import DraftMetadataComponent
 from .pid import PIDComponent
 from .relations import RelationsComponent
@@ -21,4 +21,5 @@ __all__ = (
     "DraftMetadataComponent",
     "PIDComponent",
     "RelationsComponent",
+    "DraftAuxiliaryFilesComponent",
 )
