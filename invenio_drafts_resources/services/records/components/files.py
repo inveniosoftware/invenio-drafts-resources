@@ -9,11 +9,13 @@
 # details.
 
 """Records service component base classes."""
+from invenio_i18n import gettext as _
 
 from .files_base import RecordFilesComponent
 from invenio_records_resources.services.records.components import (
-    AuxFilesOptionsComponent,
+    MediaFilesOptionsComponent,
 )
+from marshmallow import ValidationError
 
 
 class DraftFilesComponent(RecordFilesComponent):
@@ -25,13 +27,117 @@ class DraftFilesComponent(RecordFilesComponent):
     _files_bucket_id_attr_key = "bucket_id"
 
 
-class DraftAuxiliaryFilesComponent(RecordFilesComponent):
-    _files_attr_key = "aux_files"
-    _files_data_key = "aux_files"
-    _files_bucket_attr_key = "aux_bucket"
-    _files_bucket_id_attr_key = "aux_bucket_id"
+class DraftMediaFilesComponent(RecordFilesComponent):
+    """Draft media files component."""
+
+    _files_attr_key = "media_files"
+    _files_data_key = "media_files"
+    _files_bucket_attr_key = "media_bucket"
+    _files_bucket_id_attr_key = "media_bucket_id"
 
     def __init__(self, service, *args, **kwargs):
         """Constructor."""
         super().__init__(service)
-        self.files_component = AuxFilesOptionsComponent(service)
+        self.files_component = MediaFilesOptionsComponent(service)
+
+    def create(self, identity, data=None, record=None, errors=None):
+        """Assigns files.enabled.
+
+        NOTE: `record` actually refers to the draft
+              (this interface is used in records-resources and rdm-records)
+        """
+        draft = record
+        files = self.get_record_files(draft)
+
+        # disable the media files by default
+        enabled = data.get(self.files_data_key, {}).get("enabled", False)
+
+        files.enabled = enabled
+
+    def update_draft(self, identity, data=None, record=None, errors=None):
+        """Assigns files.enabled and warns if files are missing.
+
+        NOTE: `record` actually refers to the draft
+              (this interface is used in records-resources and rdm-records)
+        """
+        draft = record
+        draft_files = self.get_record_files(draft)
+        record_files = self.get_record_files(record)
+        enabled = data.get(self.files_data_key, {}).get("enabled", record_files.enabled)
+        default_preview = data.get(self.files_data_key, {}).get("default_preview")
+
+        try:
+            self.files_component.assign_files_enabled(draft, enabled)
+        except ValidationError as e:
+            errors.append(
+                {"field": f"{self.files_data_key}.enabled", "messages": e.messages}
+            )
+            return  # exit early
+
+        if draft_files.enabled and not draft_files.items():
+            errors.append(
+                {
+                    "field": f"{self.files_data_key}.enabled",
+                    "messages": [
+                        _(
+                            "Missing uploaded files. To disable files for "
+                            "this record please mark it as metadata-only."
+                        )
+                    ],
+                }
+            )
+
+        try:
+            self.files_component.assign_files_default_preview(
+                draft,
+                default_preview,
+            )
+        except ValidationError as e:
+            errors.append(
+                {
+                    "field": f"f{self.files_data_key}.default_preview",
+                    "messages": e.messages,
+                }
+            )
+
+    def edit(self, identity, draft=None, record=None):
+        """Edit callback."""
+        draft_files = self.get_record_files(draft)
+        record_files = self.get_record_files(record)
+        draft_bucket = self.get_record_bucket(draft)
+        if draft_bucket is None:
+            # Happens, when a soft-deleted draft is un-deleted.
+            draft[self.files_data_key] = {"enabled": record_files.enabled}
+            # re-fetch the files attribute - above data getter sets the attribute
+            draft_files = self.get_record_files(draft)
+            draft_files.create_bucket()
+        draft_files.copy(record_files)
+        # in the media files we don't lock the bucket
+        # - they can be simply edited from draft
+
+    def _publish_edit(self, identity, draft, record):
+        """Action when publishing an edit to an existing record."""
+        # TODO: For published records, we should sync changes from the
+        # draft bucket to the record bucket, so that an instance could
+        # potentially allow a user to update files. For now, sync() only
+        # changes the default_preview and order
+        record_files = self.get_record_files(record)
+        draft_files = self.get_record_files(draft)
+        record_files.sync(draft_files)
+        record_files.unlock()
+        record_files.copy(draft_files)
+        record_files.lock()
+
+        # Teardown the bucket and files created in edit().
+        if draft_files.enabled:
+            draft_files.delete_all()
+        draft_files.remove_bucket(force=True)
+
+    def new_version(self, identity, draft=None, record=None):
+        """New version callback."""
+        # We don't copy files from the previous version, but instead allow
+        # users to import the files.
+        draft_files = self.get_record_files(draft)
+        record_files = self.get_record_files(record)
+        draft_files.enabled = record_files.enabled
+        draft_files.copy(record_files)

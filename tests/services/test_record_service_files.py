@@ -182,6 +182,39 @@ def test_edit_publish(app, db, service, input_data, identity_simple, monkeypatch
     assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
 
+def test_edit_draft_files(app, db, service, input_data, identity_simple, monkeypatch):
+    """Test edit and publish."""
+    # Create, publish and edit draft.
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    record = service.publish(identity_simple, draft.id)
+    draft = service.edit(identity_simple, record.id)
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+
+    # Publish the edits
+    record = service.publish(identity_simple, draft.id)
+    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+
+    # Cleanup deleted drafts.
+    c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
+    assert c == 1
+    db.session.commit()
+
+    # engine will complain if we try we don't wait a minute, so disable
+    # the indexer.
+    monkeypatch.setattr(service.config, "indexer_cls", MagicMock())
+
+    # Edit
+    draft = service.edit(identity_simple, record.id)
+    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+
+    # Publish
+    record = service.publish(identity_simple, draft.id)
+    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+
+
+
 def test_new_version(app, db, service, input_data, identity_simple, monkeypatch):
     """Test new version."""
     # Create and publish

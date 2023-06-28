@@ -60,10 +60,10 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
               (this interface is used in records-resources and rdm-records)
         """
         draft = record
-        files = self.get_record_files(draft)
+        draft_files = self.get_record_files(draft)
         enabled = data.get(self.files_data_key, {}).get("enabled", True)
         default_preview = data.get(self.files_data_key, {}).get("default_preview")
-        if files.enabled != enabled:
+        if draft_files.enabled != enabled:
             if not self.service.check_permission(
                 identity, "manage_files", record=draft
             ):
@@ -85,10 +85,10 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
             )
             return  # exit early
 
-        if files.enabled and not files.items():
+        if draft_files.enabled and not draft_files.items():
             errors.append(
                 {
-                    "field": "files.enabled",
+                    "field": f"{self.files_data_key}.enabled",
                     "messages": [
                         _(
                             "Missing uploaded files. To disable files for "
@@ -113,20 +113,26 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
 
     def edit(self, identity, draft=None, record=None):
         """Edit callback."""
-        files = self.get_record_files(draft)
-        if draft.bucket is None:
+        draft_files = self.get_record_files(draft)
+        record_files = self.get_record_files(record)
+        draft_bucket = self.get_record_bucket(draft)
+        if draft_bucket is None:
             # Happens, when a soft-deleted draft is un-deleted.
             draft[self.files_data_key] = {"enabled": True}
-            files.create_bucket()
-        files.copy(record.files)
+            # re-fetch the files attribute - above data getter sets the attribute
+            draft_files = self.get_record_files(draft)
+            draft_files.create_bucket()
+        draft_files.copy(record_files)
+        # force going through the new version
+        draft_files.lock()
 
     def new_version(self, identity, draft=None, record=None):
         """New version callback."""
         # We don't copy files from the previous version, but instead allow
         # users to import the files.
         draft_files = self.get_record_files(draft)
-        files = self.get_record_files(draft)
-        draft_files.enabled = files.enabled
+        record_files = self.get_record_files(record)
+        draft_files.enabled = record_files.enabled
 
     def _publish_new(self, identity, draft, record):
         """Action when publishing a new draft."""
@@ -134,15 +140,16 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
         # bucket from the draft to the record (instead of creating a new, and
         # deleting one). For consistency, we keep a bucket for all records
         # independently of if they have files enabled or not.
-        files = self.get_record_files(record)
+        record_files = self.get_record_files(record)
         draft_files = self.get_record_files(draft)
-        files.set_bucket(draft.bucket)
-        files.copy(draft_files, copy_obj=False)
+        draft_bucket = self.get_record_bucket(draft)
+        record_files.set_bucket(draft_bucket)
+        record_files.copy(draft_files, copy_obj=False)
 
         # Lock the bucket
         # TODO: Make the locking step optional in the future (so
         # instances can potentially allow files changes if desired).
-        files.lock()
+        record_files.lock()
 
         # Cleanup
         if draft_files.enabled:
@@ -155,18 +162,23 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
         # draft bucket to the record bucket, so that an instance could
         # potentially allow a user to update files. For now, sync() only
         # changes the default_preview and order
-        files = self.get_record_files(record)
+        record_files = self.get_record_files(record)
         draft_files = self.get_record_files(draft)
-        files.sync(draft_files)
+
+        record_files.sync(draft_files)
 
         # Teardown the bucket and files created in edit().
         if draft_files.enabled:
             draft_files.delete_all()
+        draft_files.unlock()
         draft_files.remove_bucket(force=True)
 
     def publish(self, identity, draft=None, record=None):
         """Copy bucket and files to record."""
+
         draft_files = self.get_record_files(draft)
+        record_bucket_id = self.get_record_bucket_id(record)
+
         if draft_files.enabled and draft_files.bucket:
             if not draft_files.items():
                 raise ValidationError(
@@ -174,7 +186,7 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
                         "Missing uploaded files. To disable files for "
                         "this record please mark it as metadata-only."
                     ),
-                    field_name=f"f{self.files_data_key}.enabled",
+                    field_name=f"{self.files_data_key}.enabled",
                 )
         if draft_files.enabled:
             for file_record in draft_files.values():
@@ -183,10 +195,9 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
                         _(
                             "One or more files have not completed their transfer, please wait."
                         ),
-                        field_name="files",
+                        field_name=self.files_data_key,
                     )
-
-        if record.bucket_id:
+        if record_bucket_id:
             self._publish_edit(identity, draft, record)
         else:
             self._publish_new(identity, draft, record)
@@ -208,17 +219,20 @@ class RecordFilesComponent(ServiceComponent, BaseRecordFilesComponent):
         draft_files = self.get_record_files(draft)
         if not draft_files.enabled:
             raise ValidationError(
-                _("Files support must be enabled."), field_name="files.enabled"
+                _("Files support must be enabled."),
+                field_name=f"{self.files_data_key}.enabled"
             )
 
         if draft_files.items():
             raise ValidationError(
-                _("Please remove all files first."), field_name="files.enabled"
+                _("Please remove all files first."),
+                field_name=f"{self.files_data_key}.enabled"
             )
 
-        if not files.enabled and not files.bucket:
+        if not record_files.enabled and not record_files.bucket:
             raise ValidationError(
-                _("The record has no files."), field_name="files.enabled"
+                _("The record has no files."),
+                field_name=f"{self.files_data_key}.enabled"
             )
 
         # Copy over the files

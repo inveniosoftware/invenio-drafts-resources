@@ -289,7 +289,7 @@ class RecordService(RecordServiceBase):
         except NoResultFound:
             pass
 
-        # Draft does not exists - so get the main record we want to edit and
+        # Draft does not exist - so get the main record we want to edit and
         # create a draft from it
         record = self.record_cls.pid.resolve(id_)
         self.require_permission(identity, "edit", record=record)
