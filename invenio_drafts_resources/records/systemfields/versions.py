@@ -199,8 +199,8 @@ class VersionsField(SystemField):
         # The parent record is created on pre_create.
         versions = self.obj(record)
         if self._create and self._set_next:
-            # if fork is none - it's a new?
-            versions.set_next()
+            if not record.is_published:
+                versions.set_next()
         elif self._create and self._set_latest:
             versions.set_latest()
 

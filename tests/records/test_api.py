@@ -133,6 +133,26 @@ def test_draft_parent_state_hard_delete(app, db, location):
     assert RecordMetadata.query.count() == 0
 
 
+def test_new_draft_of_published_record_doesnt_override_next_draft_id(app, db, location):
+    # Fake a published record without a draft. That's the situation we get after
+    # cleanup_drafts has run on a newly published record
+    parent = ParentRecord.create({})
+    record = Record.create({}, parent=parent)
+    record.register()
+
+    # Create new_version before a record's draft exists
+    new_version_draft = Draft.new_version(record)
+    db.session.commit()
+    assert record.versions.next_draft_id == new_version_draft.id
+    assert record.versions.latest_id == record.id
+
+    # Check next_draft_id still holds after edit
+    Draft.edit(record)
+    db.session.commit()
+    assert record.versions.next_draft_id == new_version_draft.id
+    assert record.versions.latest_id == record.id
+
+
 def test_draft_parent_state_hard_delete_with_parent(app, db, location):
     """Test force deletion of a draft."""
     # Initial state: A previous reccord version exists, in addition to draft

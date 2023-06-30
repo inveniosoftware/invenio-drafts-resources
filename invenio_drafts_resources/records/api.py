@@ -215,10 +215,10 @@ class Draft(Record):
                 # Note, other values like bucket_id values was kept in the
                 # soft-deleted record, so we are not setting them again here.
         except NoResultFound:
-            # If a draft was ever force deleted, then we will create the draft.
-            # This is a very exceptional case as normally, when we edit a
-            # record then the soft-deleted draft exists and we are in above
-            # case.
+            # If a draft was ever force deleted, then we re-create it.
+            # A classic scenario for this case is editing a published record
+            # after enough time has passed for its original draft to have
+            # been cleaned up. It then needs to be recreated.
             draft = cls.create(
                 {},
                 # A draft to edit a record must share the id and uuid.
