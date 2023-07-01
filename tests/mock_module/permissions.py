@@ -26,6 +26,13 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_commit_files = [AnyUser()]
     can_read_files = [AnyUser()]
     can_update_files = [AnyUser()]
+    can_draft_media_create_files = [AnyUser()]
+    can_draft_media_set_content_files = [AnyUser()]
+    can_draft_media_get_content_files = [AnyUser()]
+    can_draft_media_commit_files = [AnyUser()]
+    can_draft_media_update_files = [AnyUser()]
+    can_draft_media_delete_files = [AnyUser()]
+
     can_draft_create_files = [AnyUser()]
     can_draft_set_content_files = [AnyUser()]
     can_draft_get_content_files = [AnyUser()]

@@ -70,8 +70,10 @@ def base_app(
 
     registry = base_app.extensions["invenio-records-resources"].registry
     registry.register(service, service_id="mock-records-service")
+
     registry.register(file_service, service_id="mock-files-service")
     registry.register(draft_file_service, service_id="mock-draftfiles-service")
+
     yield base_app
 
 

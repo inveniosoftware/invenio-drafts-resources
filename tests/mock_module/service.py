@@ -7,10 +7,13 @@ from invenio_records_resources.services import (
 from invenio_records_resources.services import RecordLink
 
 from invenio_drafts_resources.services import RecordServiceConfig
-from invenio_drafts_resources.services.records.components import DraftFilesComponent
+from invenio_drafts_resources.services.records.components import (
+    DraftFilesComponent,
+    DraftMediaFilesComponent,
+)
 from invenio_drafts_resources.services.records.config import is_draft, is_record
 
-from .api import Draft, Record
+from .api import Draft, DraftMediaFiles, Record, RecordMediaFiles
 from .permissions import PermissionPolicy
 from .schemas import RecordSchema
 
@@ -25,7 +28,10 @@ class ServiceConfig(RecordServiceConfig):
     schema = RecordSchema
     default_files_enabled = True
 
-    components = RecordServiceConfig.components + [DraftFilesComponent]
+    components = RecordServiceConfig.components + [
+        DraftFilesComponent,
+        DraftMediaFilesComponent,
+    ]
 
     links_item = {
         "self": ConditionalLink(
@@ -47,6 +53,18 @@ class ServiceConfig(RecordServiceConfig):
     }
 
 
+class MediaFilesRecordServiceConfig(RecordServiceConfig):
+    """Record with media files service config."""
+
+    service_id = "mock-record-media-files-service"
+    record_cls = RecordMediaFiles
+    draft_cls = DraftMediaFiles
+
+    components = [
+        DraftMediaFilesComponent,
+    ]
+
+
 class FileServiceConfig(BaseFileServiceConfig):
     """File service configuration."""
 
@@ -61,3 +79,22 @@ class DraftFileServiceConfig(BaseFileServiceConfig):
     permission_policy_cls = PermissionPolicy
     permission_action_prefix = "draft_"
     record_cls = Draft
+
+
+class MediaFileServiceConfig(BaseFileServiceConfig):
+    """File service configuration."""
+
+    service_id = "record-media-files-service"
+    allow_upload = False
+    permission_policy_cls = PermissionPolicy
+    permission_action_prefix = "draft_media_"
+    record_cls = RecordMediaFiles
+
+
+class DraftMediaFileServiceConfig(BaseFileServiceConfig):
+    """File service configuration."""
+
+    service_id = "draft-media-files"
+    permission_policy_cls = PermissionPolicy
+    permission_action_prefix = "draft_media_"
+    record_cls = DraftMediaFiles

@@ -16,7 +16,12 @@ import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
 from invenio_records_resources.services.files import FileService
-from mock_module.service import DraftFileServiceConfig, FileServiceConfig
+from mock_module.service import (
+    DraftFileServiceConfig,
+    DraftMediaFileServiceConfig,
+    FileServiceConfig,
+    MediaFileServiceConfig,
+)
 
 pytest_plugins = ("celery.contrib.pytest",)
 
@@ -82,6 +87,18 @@ def file_service():
 def draft_file_service():
     """File service fixture."""
     return FileService(DraftFileServiceConfig)
+
+
+@pytest.fixture(scope="module")
+def media_file_service():
+    """File service fixture."""
+    return FileService(MediaFileServiceConfig)
+
+
+@pytest.fixture(scope="module")
+def media_draft_file_service():
+    """File service fixture."""
+    return FileService(DraftMediaFileServiceConfig)
 
 
 @pytest.fixture()

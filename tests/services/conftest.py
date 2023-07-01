@@ -16,7 +16,11 @@ fixtures are available.
 import pytest
 from invenio_records_resources.services.files import FileService
 from mock_module.api import Draft
-from mock_module.service import FileServiceConfig, ServiceConfig
+from mock_module.service import (
+    FileServiceConfig,
+    MediaFilesRecordServiceConfig,
+    ServiceConfig,
+)
 
 from invenio_drafts_resources.services.records import RecordService
 
@@ -25,6 +29,16 @@ from invenio_drafts_resources.services.records import RecordService
 def service():
     """Service instance."""
     return RecordService(ServiceConfig)
+
+
+@pytest.fixture(scope="module")
+def service_with_media_files(media_file_service, media_draft_file_service):
+    """Service instance."""
+    return RecordService(
+        MediaFilesRecordServiceConfig,
+        files_service=media_file_service,
+        draft_files_service=media_draft_file_service,
+    )
 
 
 @pytest.fixture(scope="module")

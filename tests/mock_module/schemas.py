@@ -24,8 +24,8 @@ class MetadataSchema(Schema):
     title = fields.Str(required=True, validate=validate.Length(min=3))
 
 
-class FilesOptionsSchema(Schema):
-    """Basic files options schema class."""
+class FilesSchema(Schema):
+    """Basic files schema class."""
 
     enabled = fields.Bool(missing=True)
     # allow unsetting
@@ -52,7 +52,8 @@ class RecordSchema(BaseRecordSchema):
     """Schema for records in JSON."""
 
     metadata = fields.Nested(MetadataSchema)
-    files = fields.Nested(FilesOptionsSchema)
+    files = fields.Nested(FilesSchema)
+    media_files = fields.Nested(FilesSchema)
 
     def get_attribute(self, obj, attr, default):
         """Override how attributes are retrieved when dumping.

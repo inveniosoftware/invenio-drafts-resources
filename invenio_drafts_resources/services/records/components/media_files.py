@@ -10,26 +10,14 @@
 
 """Records service component base classes."""
 from invenio_i18n import gettext as _
-from invenio_records_resources.services.records.components import (
-    MediaFilesOptionsComponent,
-)
+from invenio_records_resources.services.base.config import _make_cls
 from marshmallow import ValidationError
 
-from .files import DraftFilesComponent
+from .base import BaseRecordFilesComponent
 
 
-class DraftMediaFilesComponent(DraftFilesComponent):
+class _DraftMediaFilesComponent(BaseRecordFilesComponent):
     """Draft media files component."""
-
-    _files_attr_key = "media_files"
-    _files_data_key = "media_files"
-    _files_bucket_attr_key = "media_bucket"
-    _files_bucket_id_attr_key = "media_bucket_id"
-
-    def __init__(self, service, *args, **kwargs):
-        """Constructor."""
-        super().__init__(service)
-        self.files_component = MediaFilesOptionsComponent(service)
 
     def create(self, identity, data=None, record=None, errors=None):
         """Assigns files.enabled.
@@ -58,7 +46,7 @@ class DraftMediaFilesComponent(DraftFilesComponent):
         default_preview = data.get(self.files_data_key, {}).get("default_preview")
 
         try:
-            self.files_component.assign_files_enabled(draft, enabled)
+            self.assign_files_enabled(draft, enabled)
         except ValidationError as e:
             errors.append(
                 {"field": f"{self.files_data_key}.enabled", "messages": e.messages}
@@ -79,7 +67,7 @@ class DraftMediaFilesComponent(DraftFilesComponent):
             )
 
         try:
-            self.files_component.assign_files_default_preview(
+            self.assign_files_default_preview(
                 draft,
                 default_preview,
             )
@@ -136,3 +124,16 @@ class DraftMediaFilesComponent(DraftFilesComponent):
         """Import files callback."""
         # We don't need the import for media files
         return
+
+
+MediaFilesAttrConfig = {
+    "_files_attr_key": "media_files",
+    "_files_data_key": "media_files",
+    "_files_bucket_attr_key": "media_bucket",
+    "_files_bucket_id_attr_key": "media_bucket_id",
+}
+
+### Configure file attributes for media files component
+DraftMediaFilesComponent = _make_cls(
+    _DraftMediaFilesComponent, {**MediaFilesAttrConfig}
+)

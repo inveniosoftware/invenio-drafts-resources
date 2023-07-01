@@ -19,7 +19,7 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import pytest
-from invenio_files_rest.errors import InvalidOperationError
+from invenio_files_rest.errors import BucketLockedError, InvalidOperationError
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
 from invenio_records_resources.services.files.transfer import TransferType
 from marshmallow.exceptions import ValidationError
@@ -37,6 +37,7 @@ from invenio_drafts_resources.services import RecordService
 def input_data(input_data):
     """Enable files."""
     input_data["files"]["enabled"] = True
+    input_data["media_files"] = {"enabled": False}
     return input_data
 
 
@@ -51,12 +52,26 @@ def service(file_service, draft_file_service):
 
 
 @pytest.fixture(scope="module")
-def base_app(base_app, service, file_service, draft_file_service):
+def base_app(
+    base_app,
+    service,
+    file_service,
+    draft_file_service,
+    service_with_media_files,
+    media_file_service,
+    media_draft_file_service,
+):
     """Application factory fixture."""
     registry = base_app.extensions["invenio-records-resources"].registry
     registry.register(service, service_id="mock-records-service")
+    registry.register(service, service_id="mock-records-media-files,service")
     registry.register(file_service, service_id="mock-files-service")
     registry.register(draft_file_service, service_id="mock-draftfiles-service")
+    registry.register(
+        service_with_media_files, service_id="mock-record-media-files-service"
+    )
+    registry.register(media_draft_file_service, service_id="mock-draft-media-files")
+    registry.register(media_file_service, service_id="mock-media-files-service")
     yield base_app
 
 
@@ -91,11 +106,11 @@ def test_create_delete_draft(app, db, service, input_data, identity_simple):
 
     # Create draft
     draft = service.create(identity_simple, input_data)
-    assert_counts(buckets=1, objs=0, fileinstances=0, filedrafts=0)
+    assert_counts(buckets=2, objs=0, fileinstances=0, filedrafts=0)
 
     # Add file
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=1)
 
     # Delete draft
     service.delete_draft(identity_simple, draft.id)
@@ -107,11 +122,11 @@ def test_create_publish(app, db, service, input_data, identity_simple):
     # Create draft and file
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=1)
 
     # Publish
     record = service.publish(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
     assert record._record.bucket.locked is True
 
 
@@ -121,17 +136,18 @@ def test_edit_delete(app, db, service, input_data, identity_simple, monkeypatch)
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
     record = service.publish(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Edit draft (when soft-deleted draft record exists)
     draft = service.edit(identity_simple, record.id)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
     assert record._record.bucket.locked is True
-    assert draft._record.bucket.locked is False
+    # we don't want to allow modifying files on the draft - go through new version
+    assert draft._record.bucket.locked is True
 
     # Delete draft
     draft = service.delete_draft(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Cleanup deleted drafts.
     c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
@@ -144,11 +160,58 @@ def test_edit_delete(app, db, service, input_data, identity_simple, monkeypatch)
 
     # Edit draft (when no soft-deleted draft record exists)
     draft = service.edit(identity_simple, record.id)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
     # Delete draft
     draft = service.delete_draft(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+
+
+def test_edit_delete_media_files(
+    app, db, service, service_with_media_files, input_data, identity_simple, monkeypatch
+):
+    """Test edit with delete of a published draft."""
+    input_data["media_files"] = {"enabled": True}
+    # Create and publish
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    # add media file
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test2", identity_simple
+    )
+    record = service.publish(identity_simple, draft.id)
+    assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=1)
+
+    # Edit draft (when soft-deleted draft record exists)
+    draft = service.edit(identity_simple, record.id)
+
+    assert_counts(buckets=4, objs=4, fileinstances=2, filedrafts=1, filerecords=1)
+    assert record._record.bucket.locked is True
+    # we don't want to allow modifying files on the draft - go through new version
+    assert draft._record.bucket.locked is True
+    # make sure we can modify media files
+    assert draft._record.media_bucket.locked is False
+
+    # Delete draft
+    draft = service.delete_draft(identity_simple, draft.id)
+    assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=1)
+
+    # Cleanup deleted drafts.
+    c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
+    assert c == 1
+    db.session.commit()
+
+    # Search engine will complain if we try we don't wait a minute, so disable
+    # the indexer.
+    monkeypatch.setattr(service.config, "indexer_cls", MagicMock())
+
+    # Edit draft (when no soft-deleted draft record exists)
+    draft = service.edit(identity_simple, record.id)
+    assert_counts(buckets=4, objs=4, fileinstances=2, filedrafts=1, filerecords=1)
+
+    # Delete draft
+    draft = service.delete_draft(identity_simple, draft.id)
+    assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=1)
 
 
 def test_edit_publish(app, db, service, input_data, identity_simple, monkeypatch):
@@ -158,11 +221,11 @@ def test_edit_publish(app, db, service, input_data, identity_simple, monkeypatch
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
     record = service.publish(identity_simple, draft.id)
     draft = service.edit(identity_simple, record.id)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
     # Publish the edits
     record = service.publish(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Cleanup deleted drafts.
     c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
@@ -175,44 +238,35 @@ def test_edit_publish(app, db, service, input_data, identity_simple, monkeypatch
 
     # Edit
     draft = service.edit(identity_simple, record.id)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
     # Publish
     record = service.publish(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
 
-def test_edit_draft_files(app, db, service, input_data, identity_simple, monkeypatch):
+def test_edit_draft_files(
+    app, db, service, service_with_media_files, input_data, identity_simple, monkeypatch
+):
     """Test edit and publish."""
+    input_data["media_files"] = {"enabled": True}
     # Create, publish and edit draft.
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test2", identity_simple
+    )
     record = service.publish(identity_simple, draft.id)
     draft = service.edit(identity_simple, record.id)
-    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
-    # Publish the edits
-    record = service.publish(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    # expected to go via new version after initial publish
+    with pytest.raises(BucketLockedError):
+        add_file_to_draft(service.draft_files, draft.id, "test2", identity_simple)
 
-    # Cleanup deleted drafts.
-    c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
-    assert c == 1
-    db.session.commit()
-
-    # engine will complain if we try we don't wait a minute, so disable
-    # the indexer.
-    monkeypatch.setattr(service.config, "indexer_cls", MagicMock())
-
-    # Edit
-    draft = service.edit(identity_simple, record.id)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
-
-    # Publish
-    record = service.publish(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
-
+    # add media file - the media files bucket should not be locked
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test23", identity_simple
+    )
 
 
 def test_new_version(app, db, service, input_data, identity_simple, monkeypatch):
@@ -224,15 +278,51 @@ def test_new_version(app, db, service, input_data, identity_simple, monkeypatch)
 
     # New version
     draft = service.new_version(identity_simple, draft.id)
-    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=4, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Add file
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
-    assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=2, filedrafts=1, filerecords=1)
 
     # Publish
     service.publish(identity_simple, draft.id)
-    assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=2)
+    assert_counts(buckets=4, objs=2, fileinstances=2, filedrafts=0, filerecords=2)
+
+
+def test_new_version_with_media_files(
+    app, db, service, service_with_media_files, input_data, identity_simple, monkeypatch
+):
+    """Test new version."""
+    # Create and publish
+    input_data["media_files"] = {"enabled": True}
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test2", identity_simple
+    )
+    service.publish(identity_simple, draft.id)
+
+    # New version
+    draft = service.new_version(identity_simple, draft.id)
+
+    # objects: 1 media file of the record + 1 file of the record
+    # + 1 media file of the draft (copied to new version) = 3
+    # file instances: 1 media file of the draft, 1 media file of the new version record
+    assert_counts(buckets=4, objs=3, fileinstances=2, filedrafts=0, filerecords=1)
+
+    # Add file
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    # add media file
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test23", identity_simple
+    )
+
+    # objects: added 1 file and 1 media file = 5
+    assert_counts(buckets=4, objs=5, fileinstances=4, filedrafts=1, filerecords=1)
+
+    # Publish
+    service.publish(identity_simple, draft.id)
+    assert_counts(buckets=4, objs=5, fileinstances=4, filedrafts=0, filerecords=2)
 
 
 def test_new_version_delete(app, db, service, input_data, identity_simple):
@@ -243,11 +333,39 @@ def test_new_version_delete(app, db, service, input_data, identity_simple):
     service.publish(identity_simple, draft.id)
     draft = service.new_version(identity_simple, draft.id)
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
-    assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=2, filedrafts=1, filerecords=1)
 
     # Delete new version
     service.delete_draft(identity_simple, draft.id)
-    assert_counts(buckets=1, objs=1, fileinstances=2, filedrafts=0, filerecords=1)
+    assert_counts(buckets=2, objs=1, fileinstances=2, filedrafts=0, filerecords=1)
+
+
+def test_new_version_with_media_files_delete(
+    app, db, service, service_with_media_files, input_data, identity_simple
+):
+    """Test new version."""
+    # Create, publish, new_version, add_file
+    input_data["media_files"] = {"enabled": True}
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test2", identity_simple
+    )
+    service.publish(identity_simple, draft.id)
+    draft = service.new_version(identity_simple, draft.id)
+    add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
+    add_file_to_draft(
+        service_with_media_files.draft_files, draft.id, "test23", identity_simple
+    )
+
+    # objects: 1 media file of the record + 1 file of the record
+    #           + 1 media file of the draft (copied to new version) = 3
+    #           + 1 media file in a new version + 1 regular file in a new version
+    assert_counts(buckets=4, objs=5, fileinstances=4, filedrafts=1, filerecords=1)
+
+    # Delete new version
+    service.delete_draft(identity_simple, draft.id)
+    assert_counts(buckets=2, objs=2, fileinstances=4, filedrafts=0, filerecords=1)
 
 
 #
@@ -260,11 +378,11 @@ def test_import_files(app, db, service, input_data, identity_simple):
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
     service.publish(identity_simple, draft.id)
     draft = service.new_version(identity_simple, draft.id)
-    assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
+    assert_counts(buckets=4, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Import files
     service.import_files(identity_simple, draft.id)
-    assert_counts(buckets=2, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
+    assert_counts(buckets=4, objs=2, fileinstances=1, filedrafts=1, filerecords=1)
 
 
 def test_import_files_disabled(app, db, service, input_data, identity_simple):
@@ -274,7 +392,7 @@ def test_import_files_disabled(app, db, service, input_data, identity_simple):
     draft = service.create(identity_simple, input_data)
     service.publish(identity_simple, draft.id)
     draft = service.new_version(identity_simple, draft.id)
-    assert_counts(buckets=2, objs=0, fileinstances=0, filedrafts=0, filerecords=0)
+    assert_counts(buckets=4, objs=0, fileinstances=0, filedrafts=0, filerecords=0)
 
     with pytest.raises(ValidationError):
         service.import_files(identity_simple, draft.id)
@@ -286,6 +404,7 @@ def test_import_files_disabled(app, db, service, input_data, identity_simple):
 def test_edit_publish_default_preview(app, service, input_data, identity_simple):
     """Test edit and publish."""
     # Create, publish and edit draft.
+    input_data["media_files"] = {"enabled": False}
     draft = service.create(identity_simple, input_data)
     add_file_to_draft(service.draft_files, draft.id, "test", identity_simple)
     record = service.publish(identity_simple, draft.id)
@@ -295,6 +414,7 @@ def test_edit_publish_default_preview(app, service, input_data, identity_simple)
     # Set the default preview
     data = draft.to_dict()
     data["files"]["default_preview"] = "test"
+    data["media_files"] = {"enabled": False}
     draft = service.update_draft(identity_simple, draft.id, data)
     # TODO: fails because it needs schema to load the value.
     assert draft.data["files"]["default_preview"] == "test"
