@@ -10,7 +10,8 @@
 """Record service component for drafts."""
 
 from .base import ServiceComponent
-from .files import DraftFilesComponent, DraftMediaFilesComponent
+from .files import DraftFilesComponent
+from .media_files import DraftMediaFilesComponent
 from .metadata import DraftMetadataComponent
 from .pid import PIDComponent
 from .relations import RelationsComponent
