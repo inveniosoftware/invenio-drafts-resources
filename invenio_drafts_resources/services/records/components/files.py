@@ -36,7 +36,9 @@ class DraftFilesComponent(ServiceComponent):
               (this interface is used in records-resources and rdm-records)
         """
         draft = record
-        enabled = data.get("files", {}).get("enabled", True)
+        enabled = data.get("files", {}).get(
+            "enabled", self.service.config.default_files_enabled
+        )
 
         if draft.files.enabled != enabled:
             if not self.service.check_permission(
