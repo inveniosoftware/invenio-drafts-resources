@@ -9,6 +9,11 @@
 Changes
 =======
 
+Version 1.4.2 (2023-07-05)
+
+- transifex: update config
+- components: add default files enabled variable
+
 Version 1.4.1 (2023-06-06)
 
 - fix permission check for managing files
