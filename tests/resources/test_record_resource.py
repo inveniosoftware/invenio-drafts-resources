@@ -231,6 +231,7 @@ def test_redirect_to_latest_version(client, headers, input_data, location):
     response = client.post(f"/mocks/{recid}/versions", headers=headers)
     recid_2 = response.json["id"]
 
+    # This and other file related tests are flaky
     # NOTE: Assuming a new version should indeed have its files.enabled set to
     #       True automatically, we have to reset it to False for this test.
     client.put(f"/mocks/{recid_2}/draft", json=input_data, headers=headers)
