@@ -7,6 +7,7 @@
 # details.
 
 """Data access layer tests."""
+from datetime import timedelta
 
 import pytest
 from invenio_search import current_search_client
@@ -134,23 +135,32 @@ def test_draft_parent_state_hard_delete(app, db, location):
 
 
 def test_new_draft_of_published_record_doesnt_override_next_draft_id(app, db, location):
-    # Fake a published record without a draft. That's the situation we get after
-    # cleanup_drafts has run on a newly published record
+
+    # Classic draft of published record having been cleaned up scenario
+    record_1 = Record.publish(Draft.create({}))
+    db.session.commit()
+    Draft.cleanup_drafts(timedelta(0))
+
+    # Wider test for any situation where draft of record doesn't exist anymore
+    # e.g. admin force deletion
     parent = ParentRecord.create({})
-    record = Record.create({}, parent=parent)
-    record.register()
+    record_2 = Record.create({}, parent=parent)
+    record_2.register()
 
-    # Create new_version before a record's draft exists
-    new_version_draft = Draft.new_version(record)
     db.session.commit()
-    assert record.versions.next_draft_id == new_version_draft.id
-    assert record.versions.latest_id == record.id
 
-    # Check next_draft_id still holds after edit
-    Draft.edit(record)
-    db.session.commit()
-    assert record.versions.next_draft_id == new_version_draft.id
-    assert record.versions.latest_id == record.id
+    for record in [record_1, record_2]:
+        # Create new_version before a record's draft exists
+        new_version_draft = Draft.new_version(record)
+        db.session.commit()
+        assert record.versions.next_draft_id == new_version_draft.id
+        assert record.versions.latest_id == record.id
+
+        # Check next_draft_id still holds after edit
+        Draft.edit(record)
+        db.session.commit()
+        assert record.versions.next_draft_id == new_version_draft.id
+        assert record.versions.latest_id == record.id
 
 
 def test_draft_parent_state_hard_delete_with_parent(app, db, location):
