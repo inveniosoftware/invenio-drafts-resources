@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.5.0 (2023-07-11)
+
+- add media files components
+
 Version 1.4.2 (2023-07-05)
 
 - transifex: update config
