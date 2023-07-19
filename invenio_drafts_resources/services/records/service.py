@@ -9,6 +9,8 @@
 
 """Primary service for working with records and drafts."""
 
+import itertools
+
 from flask import current_app
 from invenio_db import db
 from invenio_records_resources.services import LinksTemplate
@@ -606,7 +608,7 @@ class RecordService(RecordServiceBase):
             drafts = self.draft_cls.get_records_by_parent(
                 _parent, include_deleted=False
             )
-            siblings.extend(drafts)
+            siblings = itertools.chain(siblings, drafts)
 
         # TODO only index the current record immediately;
         #      all siblings should be sent to a high-priority celery task

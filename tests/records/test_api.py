@@ -311,22 +311,22 @@ def test_get_records_by_parent(app, db, location):
     draft_v1 = Draft.create({})
     db.session.commit()
     parent = draft_v1.parent
-    drafts = Draft.get_records_by_parent(parent)
+    drafts = list(Draft.get_records_by_parent(parent))
     assert len(drafts) == 1
     assert id(parent) == id(drafts[0].parent)
-    records = Record.get_records_by_parent(parent)
+    records = list(Record.get_records_by_parent(parent))
     assert len(records) == 0
 
     record_v1 = Record.publish(draft_v1)
     draft_v1.delete()  # simulate service `publish`, will soft delete drafts
     db.session.commit()
     parent = record_v1.parent
-    drafts = Draft.get_records_by_parent(parent)
+    drafts = list(Draft.get_records_by_parent(parent))
     assert len(drafts) == 1
     assert id(parent) == id(drafts[0].parent)
-    drafts = Draft.get_records_by_parent(parent, include_deleted=False)
+    drafts = list(Draft.get_records_by_parent(parent, include_deleted=False))
     assert len(drafts) == 0
-    records = Record.get_records_by_parent(parent)
+    records = list(Record.get_records_by_parent(parent))
     assert len(records) == 1
     assert id(parent) == id(records[0].parent)
 
@@ -334,10 +334,10 @@ def test_get_records_by_parent(app, db, location):
     draft_v2.commit()
     parent = draft_v2.parent
     db.session.commit()
-    drafts = Draft.get_records_by_parent(parent)
+    drafts = list(Draft.get_records_by_parent(parent))
     assert len(drafts) == 2
     assert id(parent) == id(drafts[0].parent)
-    records = Record.get_records_by_parent(record_v1.parent)
+    records = list(Record.get_records_by_parent(record_v1.parent))
     assert len(records) == 1
     assert id(record_v1.parent) == id(records[0].parent)
 
@@ -345,10 +345,10 @@ def test_get_records_by_parent(app, db, location):
     draft_v2.delete()  # simulate service `publish`, will soft delete drafts
     db.session.commit()
     parent = record_v2.parent
-    drafts = Draft.get_records_by_parent(parent)
+    drafts = list(Draft.get_records_by_parent(parent))
     assert len(drafts) == 2
-    drafts = Draft.get_records_by_parent(parent, include_deleted=False)
+    drafts = list(Draft.get_records_by_parent(parent, include_deleted=False))
     assert len(drafts) == 0
-    records = Record.get_records_by_parent(parent)
+    records = list(Record.get_records_by_parent(parent))
     assert len(records) == 2
     assert id(parent) == id(records[0].parent) == id(records[1].parent)

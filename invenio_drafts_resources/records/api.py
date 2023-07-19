@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2021 CERN.
+# Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -92,15 +92,14 @@ class Record(RecordBase):
     @classmethod
     def get_records_by_parent(cls, parent, include_deleted=True):
         """Get all sibling records for the specified parent record."""
-        query = cls.model_cls.query.filter_by(parent_id=parent.id)
+        versions = cls.model_cls.query.filter_by(parent_id=parent.id)
         if not include_deleted:
-            query = query.filter_by(is_deleted=False)
-        versions = query.all()
+            versions = versions.filter_by(is_deleted=False)
 
-        return [
+        return (
             cls(rec_model.data, model=rec_model, parent=parent)
             for rec_model in versions
-        ]
+        )
 
     @classmethod
     def publish(cls, draft):
