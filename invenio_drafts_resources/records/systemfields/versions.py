@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 CERN.
+# Copyright (C) 2021-2023 CERN.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -9,13 +9,10 @@
 """Versions field."""
 
 import uuid
-from copy import copy
 
 from invenio_db import db
-from invenio_records.systemfields import RelatedModelField
+from invenio_records.systemfields import SystemFieldContext
 from invenio_records.systemfields.base import SystemField
-from sqlalchemy import inspect
-from sqlalchemy.exc import IntegrityError
 
 
 def uuid_or_none(val):
@@ -166,6 +163,19 @@ class VersionsManager:
         )
 
 
+class VersionsFieldContext(SystemFieldContext):
+    """Version field context."""
+
+    @property
+    def model_cls(self):
+        """Versions model class."""
+        return self.record_cls.versions_model_cls
+
+    def resolve(self, *, parent_id):
+        """Resolve a versions state from a parent ID."""
+        return self.model_cls.query.filter_by(parent_id=parent_id).one()
+
+
 class VersionsField(SystemField):
     """Versions field."""
 
@@ -240,7 +250,7 @@ class VersionsField(SystemField):
         """
         if record is None:
             # access by class
-            return self
+            return VersionsFieldContext(self, owner)
         # access by object
         return self.obj(record)
 

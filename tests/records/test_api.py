@@ -317,6 +317,12 @@ def test_get_records_by_parent(app, db, location):
     records = list(Record.get_records_by_parent(parent))
     assert len(records) == 0
 
+    state = Draft.versions.resolve(parent_id=parent.id)
+    assert state == Record.versions.resolve(parent_id=parent.id)
+    assert state.latest_id is None
+    assert state.latest_index is None
+    assert state.next_draft_id == draft_v1.id
+
     record_v1 = Record.publish(draft_v1)
     draft_v1.delete()  # simulate service `publish`, will soft delete drafts
     db.session.commit()
@@ -330,6 +336,12 @@ def test_get_records_by_parent(app, db, location):
     assert len(records) == 1
     assert id(parent) == id(records[0].parent)
 
+    state = Record.versions.resolve(parent_id=parent.id)
+    assert state == Draft.versions.resolve(parent_id=parent.id)
+    assert state.latest_id == record_v1.id
+    assert state.latest_index == 1
+    assert state.next_draft_id is None
+
     draft_v2 = Draft.new_version(record_v1)
     draft_v2.commit()
     parent = draft_v2.parent
@@ -340,6 +352,12 @@ def test_get_records_by_parent(app, db, location):
     records = list(Record.get_records_by_parent(record_v1.parent))
     assert len(records) == 1
     assert id(record_v1.parent) == id(records[0].parent)
+
+    state = Draft.versions.resolve(parent_id=parent.id)
+    assert state == Record.versions.resolve(parent_id=parent.id)
+    assert state.latest_id == record_v1.id
+    assert state.latest_index == 1
+    assert state.next_draft_id == draft_v2.id
 
     record_v2 = Record.publish(draft_v2)
     draft_v2.delete()  # simulate service `publish`, will soft delete drafts
@@ -352,3 +370,9 @@ def test_get_records_by_parent(app, db, location):
     records = list(Record.get_records_by_parent(parent))
     assert len(records) == 2
     assert id(parent) == id(records[0].parent) == id(records[1].parent)
+
+    state = Record.versions.resolve(parent_id=parent.id)
+    assert state == Draft.versions.resolve(parent_id=parent.id)
+    assert state.latest_id == record_v2.id
+    assert state.latest_index == 2
+    assert state.next_draft_id is None
