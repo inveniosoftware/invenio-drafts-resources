@@ -10,6 +10,6 @@
 """Invenio Drafts Resources module to create REST APIs."""
 
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 
 __all__ = ("__version__",)

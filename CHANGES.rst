@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.6.0 (2023-07-21)
+
+- Add parent id resolver
+
 Version 1.5.0 (2023-07-11)
 
 - add media files components
