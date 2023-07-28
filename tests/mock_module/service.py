@@ -26,7 +26,6 @@ class ServiceConfig(RecordServiceConfig):
     draft_cls = Draft
 
     schema = RecordSchema
-    default_files_enabled = True
 
     components = RecordServiceConfig.components + [
         DraftFilesComponent,

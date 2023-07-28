@@ -12,5 +12,5 @@ from invenio_records_resources.services.records.components.files import FilesAtt
 
 from .base import BaseRecordFilesComponent
 
-### Configure file attributes for files component
+# Configure file attributes for files component
 DraftFilesComponent = _make_cls(BaseRecordFilesComponent, {**FilesAttrConfig})

@@ -220,7 +220,7 @@ def test_create_publish_new_revision(app, service, identity_simple, input_data):
     assert record["metadata"]["title"] == edited_title
 
 
-def test_mutiple_edit(app, service, identity_simple, input_data):
+def test_multiple_edit(app, service, identity_simple, input_data):
     """Test the revision_id when editing record multiple times..
 
     This tests the `edit` service method.

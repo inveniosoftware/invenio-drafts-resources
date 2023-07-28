@@ -72,7 +72,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         """
         draft = record
         files = self.get_record_files(draft)
-        enabled = data.get("files", {}).get(
+        enabled = data.get(self.files_data_key, {}).get(
             "enabled", self.service.config.default_files_enabled
         )
 
@@ -100,13 +100,15 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         """
         draft = record
         draft_files = self.get_record_files(draft)
-        enabled = data.get("files", {}).get(
-            "enabled", self.service.config.default_files_enabled
-        )
         default_preview = data.get(self.files_data_key, {}).get("default_preview")
         can_toggle_files = self.service.check_permission(
             identity, "manage_files", record=draft
         )
+
+        enabled = data.get(self.files_data_key, {}).get(
+            "enabled", self.service.config.default_files_enabled
+        )
+
         if draft_files.enabled != enabled:
             if not can_toggle_files:
                 errors.append(
@@ -159,15 +161,20 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         draft_files = self.get_record_files(draft)
         record_files = self.get_record_files(record)
         draft_bucket = self.get_record_bucket(draft)
+        lock_files = self.service.config.lock_edit_published_files(record)
+
         if draft_bucket is None:
             # Happens, when a soft-deleted draft is un-deleted.
             draft[self.files_data_key] = {"enabled": True}
             # re-fetch the files attribute - above data getter sets the attribute
             draft_files = self.get_record_files(draft)
             draft_files.create_bucket()
+
+        # we copy always file objects and tear them down when publish
         draft_files.copy(record_files)
-        # force going through the new version
-        draft_files.lock()
+        if lock_files:
+            # force going through the new version
+            draft_files.lock()
 
     def new_version(self, identity, draft=None, record=None):
         """New version callback."""
@@ -176,6 +183,14 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         draft_files = self.get_record_files(draft)
         record_files = self.get_record_files(record)
         draft_files.enabled = record_files.enabled
+
+    def _purge_bucket_and_ovs(self, files):
+        """Purge associated bucket and object versions."""
+        if files.bucket.locked:
+            files.unlock()
+        if files.enabled:
+            files.delete_all(softdelete_obj=False, remove_rf=True)
+        files.remove_bucket(force=True)
 
     def _publish_new(self, identity, draft, record):
         """Action when publishing a new draft."""
@@ -186,36 +201,30 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         record_files = self.get_record_files(record)
         draft_files = self.get_record_files(draft)
         draft_bucket = self.get_record_bucket(draft)
+
         record_files.set_bucket(draft_bucket)
         record_files.copy(draft_files, copy_obj=False)
-
         # Lock the bucket
-        # TODO: Make the locking step optional in the future (so
-        # instances can potentially allow files changes if desired).
         record_files.lock()
 
         # Cleanup
         if draft_files.enabled:
-            draft_files.delete_all(remove_obj=False)
+            # Hard delete all draft file records but keep the object versions
+            draft_files.delete_all(remove_obj=False, remove_rf=True)
         draft_files.unset_bucket()
 
     def _publish_edit(self, identity, draft, record):
         """Action when publishing an edit to an existing record."""
-        # TODO: For published records, we should sync changes from the
-        # draft bucket to the record bucket, so that an instance could
-        # potentially allow a user to update files. For now, sync() only
-        # changes the default_preview and order
-
         record_files = self.get_record_files(record)
         draft_files = self.get_record_files(draft)
 
-        record_files.sync(draft_files)
+        # sync draft files with record
+        record_files.unlock()
+        record_files.sync(draft_files, delete_extras=True)
+        record_files.lock()
 
         # Teardown the bucket and files created in edit().
-        draft_files.unlock()
-        if draft_files.enabled:
-            draft_files.delete_all()
-        draft_files.remove_bucket(force=True)
+        self._purge_bucket_and_ovs(draft_files)
 
     def publish(self, identity, draft=None, record=None):
         """Copy bucket and files to record."""
@@ -252,10 +261,9 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
             deleted instead of soft deleted (i.e. an unpublished draft).
         """
         draft_files = self.get_record_files(draft)
-        draft_files.unlock()
-        if draft_files.enabled:
-            draft_files.delete_all(draft)
-        draft_files.remove_bucket(force=True)
+
+        # Teardown the bucket and files.
+        self._purge_bucket_and_ovs(draft_files)
 
     def import_files(self, identity, draft=None, record=None):
         """Import files handler."""

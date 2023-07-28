@@ -29,7 +29,9 @@ class _DraftMediaFilesComponent(BaseRecordFilesComponent):
         files = self.get_record_files(draft)
 
         # disable the media files by default
-        enabled = data.get(self.files_data_key, {}).get("enabled", False)
+        enabled = data.get(self.files_data_key, {}).get(
+            "enabled", self.service.config.default_media_files_enabled
+        )
 
         files.enabled = enabled
 
@@ -90,26 +92,25 @@ class _DraftMediaFilesComponent(BaseRecordFilesComponent):
             # re-fetch the files attribute - above data getter sets the attribute
             draft_files = self.get_record_files(draft)
             draft_files.create_bucket()
+        # we copy always file objects and tear them down when publish
         draft_files.copy(record_files)
         # in the media files we don't lock the bucket
         # - they can be simply edited from draft
 
     def _publish_edit(self, identity, draft, record):
         """Action when publishing an edit to an existing record."""
-        # TODO: For published records, we should sync changes from the
-        # draft bucket to the record bucket, so that an instance could
-        # potentially allow a user to update files. For now, sync() only
-        # changes the default_preview and order
         record_files = self.get_record_files(record)
         draft_files = self.get_record_files(draft)
-        record_files.sync(draft_files)
+
         record_files.unlock()
-        record_files.copy(draft_files)
+        # we make sure that record files are enabled according to draft because
+        # media files can be enabled after the first publish and thus the record will
+        # have an outdated value
+        record_files.enabled = draft_files.enabled
+        record_files.sync(draft_files, delete_extras=True)
         record_files.lock()
         # Teardown the bucket and files created in edit().
-        if draft_files.enabled:
-            draft_files.delete_all()
-        draft_files.remove_bucket(force=True)
+        self._purge_bucket_and_ovs(draft_files)
 
     def new_version(self, identity, draft=None, record=None):
         """New version callback."""

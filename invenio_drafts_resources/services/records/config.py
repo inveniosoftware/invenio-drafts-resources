@@ -35,6 +35,11 @@ def is_record(record, ctx):
     return not record.is_draft
 
 
+def lock_edit_published_files(record):
+    """Should published files be locked from editing in current record version."""
+    return True
+
+
 class SearchOptions(SearchOptionsBase):
     """Search options."""
 
@@ -142,6 +147,13 @@ class RecordServiceConfig(RecordServiceConfigBase):
         DraftMetadataComponent,
         PIDComponent,
     ]
+
+    default_files_enabled = True
+    # we disable by default media files. The feature is only available via REST API
+    # and they should be enabled before an upload is made i.e update the draft to
+    # set `media_files.enabled` to True
+    default_media_files_enabled = False
+    lock_edit_published_files = lock_edit_published_files
 
     links_item = {
         "self": ConditionalLink(
