@@ -340,6 +340,7 @@ def test_read_latest_version(app, service, identity_simple, input_data):
     """
     record = create_and_publish(service, identity_simple, input_data)
     recid = record.id
+    parent_recid = record.data["parent"]["id"]
 
     # Create new version
     draft = service.new_version(identity_simple, recid)
@@ -355,6 +356,9 @@ def test_read_latest_version(app, service, identity_simple, input_data):
     latest = service.read_latest(identity_simple, recid)
     assert latest["id"] == recid_2
     latest = service.read_latest(identity_simple, recid_2)
+    assert latest["id"] == recid_2
+    # Check that parent returns latest version
+    latest = service.read_latest(identity_simple, parent_recid)
     assert latest["id"] == recid_2
 
 

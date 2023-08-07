@@ -196,13 +196,26 @@ class RecordService(RecordServiceBase):
         )
 
     def read_latest(self, identity, id_, expand=False):
-        """Retrieve latest record."""
-        # Resolve and require permission
-        record = self.record_cls.pid.resolve(id_)
+        """Retrieve latest record.
 
-        # Retrieve latest if record is not
-        if not record.versions.is_latest:
-            record = self.record_cls.get_record(record.versions.latest_id)
+        If provided with the ID of a parent record it will resolve it and return the latest version of the record.
+        """
+        # Resolve and require permission
+
+        try:
+            record = self.record_cls.pid.resolve(id_)
+            # Retrieve latest if record is not
+            if not record.versions.is_latest:
+                record = self.record_cls.get_record(record.versions.latest_id)
+        except NoResultFound:
+            parent_pid = self.record_cls.parent_record_cls.pid.resolve(id_)
+            version_state = self.record_cls.versions.resolve(
+                parent_id=parent_pid.pid.object_uuid
+            )
+            if version_state and version_state.latest_id:
+                record = self.record_cls.get_record(version_state.latest_id)
+            else:
+                raise NoResultFound("Failed to fetch the record versions.")
 
         self.require_permission(identity, "read", record=record)
 

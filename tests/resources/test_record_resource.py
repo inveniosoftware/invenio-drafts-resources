@@ -147,7 +147,7 @@ def test_search_versions(client, headers, input_data, location, search_clear):
 
 
 def test_create_publish_new_revision(
-    client, headers, input_data, location, search_clear
+    app, db, client, headers, input_data, location, search_clear
 ):
     """Test draft creation of an existing record and publish it."""
     recid = _create_and_publish(client, headers, input_data)
