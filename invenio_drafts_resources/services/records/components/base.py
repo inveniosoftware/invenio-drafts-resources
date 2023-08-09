@@ -8,7 +8,6 @@
 #
 
 """Base class for service components."""
-
 from invenio_i18n import gettext as _
 from invenio_records_resources.services.files.transfer import TransferType
 from invenio_records_resources.services.records.components import (
@@ -105,10 +104,11 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
             "enabled", self.service.config.default_files_enabled
         )
         default_preview = data.get(self.files_data_key, {}).get("default_preview")
+        can_toggle_files = self.service.check_permission(
+            identity, "manage_files", record=draft
+        )
         if draft_files.enabled != enabled:
-            if not self.service.check_permission(
-                identity, "manage_files", record=draft
-            ):
+            if not can_toggle_files:
                 errors.append(
                     {
                         "field": f"{self.files_data_key}.enabled",
@@ -128,15 +128,16 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
             return  # exit early
 
         if draft_files.enabled and not draft_files.items():
+            if can_toggle_files:
+                my_message = _(
+                    "Missing uploaded files. To disable files for this record please mark it as metadata-only."
+                )
+            else:
+                my_message = _("Missing uploaded files.")
             errors.append(
                 {
                     "field": f"{self.files_data_key}.enabled",
-                    "messages": [
-                        _(
-                            "Missing uploaded files. To disable files for "
-                            "this record please mark it as metadata-only."
-                        )
-                    ],
+                    "messages": [my_message],
                 }
             )
 
