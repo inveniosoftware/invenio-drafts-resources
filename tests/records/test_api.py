@@ -135,7 +135,7 @@ def test_draft_parent_state_hard_delete(app, db, location):
 
 
 def test_new_draft_of_published_record_doesnt_override_next_draft_id(app, db, location):
-
+    """Test multiple drafts when editing multiple versions of the same record."""
     # Classic draft of published record having been cleaned up scenario
     record_1 = Record.publish(Draft.create({}))
     db.session.commit()
