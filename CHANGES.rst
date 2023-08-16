@@ -9,6 +9,11 @@
 Changes
 =======
 
+Version 1.8.0 (2023-08-16)
+
+- components: conditional lock of files
+- components: refactor file workflow
+
 Version 1.7.1 (2023-08-14)
 
 - fix an issue where the next version of the draft is incorrectly set
