@@ -615,10 +615,13 @@ class RecordService(RecordServiceBase):
             uow.register(RecordIndexOp(sibling, indexer=self.indexer))
 
     @unit_of_work()
-    def cleanup_drafts(self, timedelta, uow=None):
+    def cleanup_drafts(self, timedelta, uow=None, search_gc_deletes=60):
         """Hard delete of soft deleted drafts.
 
         :param int timedelta: timedelta that should pass since
             the last update of the draft in order to be hard deleted.
+        :param int search_gc_deletes: time in seconds, corresponding to the search cluster
+            setting `index.gc_deletes` (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-delete.html#delete-versioning),
+            default to 60 seconds. Search cluster caches deleted documents for `index.gc_deletes` seconds.
         """
-        self.draft_cls.cleanup_drafts(timedelta)
+        self.draft_cls.cleanup_drafts(timedelta, search_gc_deletes)

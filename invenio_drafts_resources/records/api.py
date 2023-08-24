@@ -22,7 +22,7 @@ identifier.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
@@ -233,12 +233,19 @@ class Draft(Record):
         return draft
 
     @classmethod
-    def cleanup_drafts(cls, td):
+    def cleanup_drafts(cls, td, search_gc_deletes=60):
         """Clean up (hard delete) all the soft deleted drafts.
 
-        The drafts in the last timedelta span of time won't be deleted.
+        The soft-deleted drafts in the last timedelta span of time won't be deleted,
+        including `search_gc_deletes` seconds timedelta. This ensures that only
+        drafts fully removed from the search cluster can be hard-deleted (e.g. when
+        `td` is very short), avoiding search conflicts.
+
+        :param int search_gc_deletes: time in seconds, corresponding to the search cluster
+            setting `index.gc_deletes` (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-delete.html#delete-versioning),
+            default to 60 seconds. Search cluster caches deleted documents for `index.gc_deletes` seconds.
         """
-        timestamp = datetime.utcnow() - td
+        timestamp = datetime.utcnow() - td - timedelta(seconds=search_gc_deletes)
         draft_model = cls.model_cls
         models = draft_model.query.filter(
             draft_model.is_deleted == True,  # noqa

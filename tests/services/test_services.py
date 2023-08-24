@@ -38,7 +38,7 @@ def test_hard_delete_soft_deleted(app, service, identity_simple, input_data):
     assert (
         len(draft_model.query.filter(draft_model.is_deleted == True).all()) == 1  # noqa
     )
-    service.cleanup_drafts(timedelta(seconds=0))
+    service.cleanup_drafts(timedelta(seconds=0), search_gc_deletes=0)
 
     assert (
         len(draft_model.query.filter(draft_model.is_deleted == True).all()) == 0  # noqa
@@ -55,7 +55,7 @@ def test_hard_delete_soft_deleted_not_enough_time(
     assert (
         len(draft_model.query.filter(draft_model.is_deleted == True).all()) == 1  # noqa
     )
-    service.cleanup_drafts(timedelta(seconds=10))
+    service.cleanup_drafts(timedelta(seconds=10), search_gc_deletes=0)
 
     assert (
         len(draft_model.query.filter(draft_model.is_deleted == True).all()) == 1  # noqa
