@@ -17,6 +17,7 @@ from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
 from invenio_records_resources.services.uow import (
+    RecordBulkIndexOp,
     RecordCommitOp,
     RecordDeleteOp,
     RecordIndexOp,
@@ -637,3 +638,46 @@ class RecordService(RecordServiceBase):
             the last update of the draft in order to be hard deleted.
         """
         self.draft_cls.cleanup_drafts(timedelta)
+
+    @unit_of_work()
+    def reindex_latest_first(
+        self, identity, search_preference=None, extra_filter=None, uow=None
+    ):
+        """Reindexes records matching the query filter, prioritizing latest versions.
+
+        Records will be retrieved from search engine and current versions re-indexed first.
+        The latest version of a record is reindexed twice, but we trade that off for the guarantee that it also gets re-indexed first.
+
+        .. warning::
+
+            this service call should only be used during asynchronous calls (e.g. not inside a HTTP request context), since ``search.sync()`` might take some time.
+        """
+        self.require_permission(identity, "manage")
+
+        # Create a search instance with the given filters. We avoid the overhead of executing params interpreters (e.g. aggregations)
+        search = self.create_search(
+            identity,
+            self.record_cls,
+            self.config.search,
+            permission_action="read",
+            extra_filter=extra_filter,
+            preference=search_preference,
+        )
+
+        # Search only latest versions and register them for indexing
+        latest_versions = search.filter("term", **{"versions.is_latest": True}).scan()
+        for res in latest_versions:
+            try:
+                record = self.record_cls.pid.resolve(res.id)
+                uow.register(RecordIndexOp(record, indexer=self.indexer))
+            # Safe check, only re-index records that are resolvable
+            except:
+                continue
+
+        # Search all versions and register them for bulk indexing
+        # source(False): don't return any field, just the metadata
+        all_versions = search.source(False).scan()
+        all_iterable_ids = (res.meta.id for res in all_versions)
+        uow.register(RecordBulkIndexOp(all_iterable_ids, indexer=self.indexer))
+
+        return True
