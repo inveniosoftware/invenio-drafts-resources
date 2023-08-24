@@ -39,7 +39,7 @@ def test_hard_delete_soft_deleted_task(app, service, identity_simple, input_data
     assert (
         len(draft_model.query.filter(draft_model.is_deleted == True).all()) == 1  # noqa
     )
-    cleanup_drafts(seconds=0)
+    cleanup_drafts(seconds=0, search_gc_deletes=0)
 
     assert (
         len(draft_model.query.filter(draft_model.is_deleted == True).all()) == 0  # noqa
