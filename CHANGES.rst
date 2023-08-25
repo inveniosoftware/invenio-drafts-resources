@@ -9,6 +9,11 @@
 Changes
 =======
 
+Version 1.8.1 (2023-08-25)
+
+- tasks: add margin time window for search to purge deleted documents
+- services: move reindex latest records from records-resources
+
 Version 1.8.0 (2023-08-16)
 
 - components: conditional lock of files
