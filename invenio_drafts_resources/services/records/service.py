@@ -107,6 +107,13 @@ class RecordService(RecordServiceBase):
         # Prepare and execute the search
         params = params or {}
 
+        # `has_draft` systemfield is not defined here. This is not ideal
+        # but it helps avoid overriding the method. See how is used in
+        # https://github.com/inveniosoftware/invenio-rdm-records
+        extra_filter = dsl.Q("term", has_draft=False)
+        if filter_ := kwargs.pop("extra_filter", None):
+            extra_filter = filter_ & extra_filter
+
         search_result = self._search(
             "search_drafts",
             identity,
@@ -114,12 +121,9 @@ class RecordService(RecordServiceBase):
             search_preference,
             record_cls=self.draft_cls,
             search_opts=self.config.search_drafts,
-            # `has_draft` systemfield is not defined here. This is not ideal
-            # but it helps avoid overriding the method. See how is used in
-            # https://github.com/inveniosoftware/invenio-rdm-records
-            extra_filter=dsl.Q("term", has_draft=False),
+            extra_filter=extra_filter,
             permission_action="read_draft",
-            **kwargs
+            **kwargs,
         ).execute()
 
         return self.result_list(
@@ -145,6 +149,9 @@ class RecordService(RecordServiceBase):
             record = self.draft_cls.pid.resolve(id_, registered_only=False)
 
         self.require_permission(identity, "read", record=record)
+        extra_filter = dsl.Q("term", **{"parent.id": str(record.parent.pid.pid_value)})
+        if filter_ := kwargs.pop("extra_filter", None):
+            extra_filter = filter_ & extra_filter
 
         # Prepare and execute the search
         params = params or {}
@@ -156,11 +163,9 @@ class RecordService(RecordServiceBase):
             search_preference,
             record_cls=self.record_cls,
             search_opts=self.config.search_versions,
-            extra_filter=dsl.Q(
-                "term", **{"parent.id": str(record.parent.pid.pid_value)}
-            ),
+            extra_filter=extra_filter,
             permission_action="read",
-            **kwargs
+            **kwargs,
         ).execute()
 
         return self.result_list(
