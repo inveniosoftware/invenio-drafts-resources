@@ -9,6 +9,12 @@
 Changes
 =======
 
+Version 1.0.5 (2023-08-30)
+
+- backport new version bug fix (see invenio-app-rdm#2197) for v11 STS
+- include ES/OS garbage collection timedelta
+- explicitly import invenio-i18n with v11 compatible versions since flask-babelex directly used
+
 Version 1.0.4 (2023-02-22)
 
 - service: allow to ignore field-level permission checks in validate_draft
