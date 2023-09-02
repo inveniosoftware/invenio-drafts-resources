@@ -9,8 +9,6 @@
 
 """Primary service for working with records and drafts."""
 
-import itertools
-
 from flask import current_app
 from invenio_db import db
 from invenio_records_resources.services import LinksTemplate
@@ -27,6 +25,8 @@ from invenio_search.engine import dsl
 from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
+
+from .uow import ParentRecordCommitOp
 
 
 class RecordService(RecordServiceBase):
@@ -291,7 +291,7 @@ class RecordService(RecordServiceBase):
             uow=uow,
             expand=expand,
         )
-        uow.register(RecordCommitOp(res._record.parent))
+        uow.register(ParentRecordCommitOp(res._record.parent))
         return res
 
     @unit_of_work()
@@ -611,29 +611,6 @@ class RecordService(RecordServiceBase):
         parent = draft.parent
 
         return draft, parent
-
-    @unit_of_work()
-    def _index_related_records(self, record, parent, uow=None):
-        """Index all records that are related to the specified ones.
-
-        Soft deleted records (including published drafts) will not be indexed
-        because the JSON payload is empty.
-        """
-        _parent = parent or record.parent
-        siblings = self.record_cls.get_records_by_parent(_parent, include_deleted=False)
-
-        if self.draft_cls is not None:
-            # if drafts are available, reindex them as well
-            drafts = self.draft_cls.get_records_by_parent(
-                _parent, include_deleted=False
-            )
-            siblings = itertools.chain(siblings, drafts)
-
-        # TODO only index the current record immediately;
-        #      all siblings should be sent to a high-priority celery task
-        #      instead (requires bulk indexing to work)
-        for sibling in siblings:
-            uow.register(RecordIndexOp(sibling, indexer=self.indexer))
 
     @unit_of_work()
     def cleanup_drafts(self, timedelta, uow=None, search_gc_deletes=60):

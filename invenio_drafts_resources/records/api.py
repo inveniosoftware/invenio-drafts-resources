@@ -90,16 +90,38 @@ class Record(RecordBase):
     versions = VersionsField(create=True, set_latest=True)
 
     @classmethod
-    def get_records_by_parent(cls, parent, include_deleted=True):
+    def get_records_by_parent(cls, parent, with_deleted=True, ids_only=False):
         """Get all sibling records for the specified parent record."""
-        versions = cls.model_cls.query.filter_by(parent_id=parent.id)
-        if not include_deleted:
-            versions = versions.filter_by(is_deleted=False)
+        rec_models = cls.model_cls.query.filter_by(parent_id=parent.id)
+        if not with_deleted:
+            rec_models = rec_models.filter_by(is_deleted=False)
 
-        return (
-            cls(rec_model.data, model=rec_model, parent=parent)
-            for rec_model in versions
-        )
+        if ids_only:
+            return (rec_model.id for rec_model in rec_models)
+        else:
+            return (
+                cls(rec_model.data, model=rec_model, parent=parent)
+                for rec_model in rec_models
+            )
+
+    @classmethod
+    def get_latest_by_parent(cls, parent, id_only=False):
+        """Get the latest record for the specified parent record.
+
+        It might return None if there is no latest published version yet.
+        """
+        version = cls.versions_model_cls.query.filter_by(
+            parent_id=parent.id
+        ).one_or_none()
+        has_latest = version and version.latest_id
+        if not has_latest:
+            return None
+
+        rec_model = cls.model_cls.query.filter_by(id=version.latest_id).one()
+        if id_only:
+            return rec_model.id
+        else:
+            return cls(rec_model.data, model=rec_model, parent=parent)
 
     @classmethod
     def publish(cls, draft):

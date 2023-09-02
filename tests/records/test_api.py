@@ -360,7 +360,7 @@ def test_get_records_by_parent(app, db, location):
     drafts = list(Draft.get_records_by_parent(parent))
     assert len(drafts) == 1
     assert id(parent) == id(drafts[0].parent)
-    drafts = list(Draft.get_records_by_parent(parent, include_deleted=False))
+    drafts = list(Draft.get_records_by_parent(parent, with_deleted=False))
     assert len(drafts) == 0
     records = list(Record.get_records_by_parent(parent))
     assert len(records) == 1
@@ -395,7 +395,7 @@ def test_get_records_by_parent(app, db, location):
     parent = record_v2.parent
     drafts = list(Draft.get_records_by_parent(parent))
     assert len(drafts) == 2
-    drafts = list(Draft.get_records_by_parent(parent, include_deleted=False))
+    drafts = list(Draft.get_records_by_parent(parent, with_deleted=False))
     assert len(drafts) == 0
     records = list(Record.get_records_by_parent(parent))
     assert len(records) == 2
@@ -406,3 +406,39 @@ def test_get_records_by_parent(app, db, location):
     assert state.latest_id == record_v2.id
     assert state.latest_index == 2
     assert state.next_draft_id is None
+
+
+#
+# Get latest by parent
+#
+def test_get_latest_by_parent(app, db, location):
+    """Test get latest by parent."""
+    draft_v1 = Draft.create({})
+    db.session.commit()
+    parent = draft_v1.parent
+
+    # nothing published yet
+    assert not Draft.get_latest_by_parent(parent)
+    assert not Record.get_latest_by_parent(parent)
+
+    record_v1 = Record.publish(draft_v1)
+    draft_v1.delete()  # simulate service `publish`, will soft delete drafts
+    db.session.commit()
+    parent = record_v1.parent
+
+    assert not Draft.get_latest_by_parent(parent)
+    assert Record.get_latest_by_parent(parent).id == record_v1.id
+
+    draft_v2 = Draft.new_version(record_v1)
+    draft_v2.commit()
+    db.session.commit()
+
+    assert Draft.get_latest_by_parent(parent).id == record_v1.id
+    assert Record.get_latest_by_parent(parent).id == record_v1.id
+
+    record_v2 = Record.publish(draft_v2)
+    draft_v2.delete()  # simulate service `publish`, will soft delete drafts
+    db.session.commit()
+
+    assert not Draft.get_latest_by_parent(parent)
+    assert Record.get_latest_by_parent(parent).id == record_v2.id
