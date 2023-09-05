@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.10.0 (2023-09-05)
+
+- uow: add ParentRecordCommitOp uow
+
 Version 1.9.0 (2023-09-05)
 
 - service: allow passing of 'extra_filter' via kwargs to searches

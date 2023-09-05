@@ -29,19 +29,11 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
         requirements-level: [pypi]
         db-service: [postgresql12, postgresql14]
         search-service: [opensearch2, elasticsearch7]
         exclude:
-          - python-version: 3.7
-            db-service: postgresql14
-            search-service: opensearch2
-
-          - python-version: 3.7
-            db-service: postgresql14
-            search-service: elasticsearch7
-
           - python-version: 3.8
             db-service: postgresql12
             search-service: opensearch2
@@ -58,9 +50,6 @@ jobs:
             db-service: postgresql12
             search-service: elasticsearch7
         include:
-          - db-service: postgresql12
-            DB_EXTRAS: "postgresql"
-
           - db-service: postgresql14
             DB_EXTRAS: "postgresql"
 
@@ -69,7 +58,6 @@ jobs:
 
           - search-service: elasticsearch7
             SEARCH_EXTRAS: "elasticsearch7"
-
     env:
       DB: ${{ matrix.db-service }}
       SEARCH: ${{ matrix.search-service }}
