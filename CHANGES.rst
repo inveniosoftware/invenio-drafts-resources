@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.9.0 (2023-09-05)
+
+- service: allow passing of 'extra_filter' via kwargs to searches
+
 Version 1.8.1 (2023-08-25)
 
 - tasks: add margin time window for search to purge deleted documents
