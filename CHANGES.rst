@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.10.1 (2023-09-18)
+
+- models: avoid flushing when getting records
+
 Version 1.10.0 (2023-09-05)
 
 - uow: add ParentRecordCommitOp uow
