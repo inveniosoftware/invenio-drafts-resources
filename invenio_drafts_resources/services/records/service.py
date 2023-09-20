@@ -99,20 +99,26 @@ class RecordService(RecordServiceBase):
         raise NotImplementedError("Records should be updated via their draft.")
 
     def search_drafts(
-        self, identity, params=None, search_preference=None, expand=False, **kwargs
+        self,
+        identity,
+        params=None,
+        search_preference=None,
+        expand=False,
+        extra_filter=None,
+        **kwargs,
     ):
         """Search for drafts records matching the querystring."""
         self.require_permission(identity, "search_drafts")
-
         # Prepare and execute the search
         params = params or {}
 
         # `has_draft` systemfield is not defined here. This is not ideal
         # but it helps avoid overriding the method. See how is used in
         # https://github.com/inveniosoftware/invenio-rdm-records
-        extra_filter = dsl.Q("term", has_draft=False)
-        if filter_ := kwargs.pop("extra_filter", None):
-            extra_filter = filter_ & extra_filter
+        search_draft_filter = dsl.Q("term", has_draft=False)
+
+        if extra_filter:
+            search_draft_filter &= extra_filter
 
         search_result = self._search(
             "search_drafts",
@@ -121,7 +127,7 @@ class RecordService(RecordServiceBase):
             search_preference,
             record_cls=self.draft_cls,
             search_opts=self.config.search_drafts,
-            extra_filter=extra_filter,
+            extra_filter=search_draft_filter,
             permission_action="read_draft",
             **kwargs,
         ).execute()
