@@ -20,4 +20,4 @@ class SearchRequestArgsSchema(SearchRequestArgsSchemaBase):
     """Extend schema with all versions field."""
 
     allversions = fields.Boolean()
-    is_admin = fields.Boolean()
+    include_deleted = fields.Boolean()
