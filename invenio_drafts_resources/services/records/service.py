@@ -207,7 +207,7 @@ class RecordService(RecordServiceBase):
             expand=expand,
         )
 
-    def read_latest(self, identity, id_, expand=False):
+    def read_latest(self, identity, id_, expand=False, include_deleted=False):
         """Retrieve latest record.
 
         If provided with the ID of a parent record it will resolve it and return the latest version of the record.
