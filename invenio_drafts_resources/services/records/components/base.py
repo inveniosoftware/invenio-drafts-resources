@@ -226,6 +226,19 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         # Teardown the bucket and files created in edit().
         self._purge_bucket_and_ovs(draft_files)
 
+    def _check_file_completed(self, file_record):
+        """Check if file upload has completed."""
+        # Check if RDMDraftFile file has OV assigned
+        # - if not, the upload is ongoing or has failed (fail handled elsewhere)
+        # prevents ambiguous errors when trying to publish a record with
+        # ongoing upload (cannot get storage class of None if OV is not set)
+        has_attached_object = file_record.file is not None
+        if not has_attached_object:
+            return
+        transfer = TransferType(file_record.file.storage_class)
+        if transfer.is_completed:
+            return True
+
     def publish(self, identity, draft=None, record=None):
         """Copy bucket and files to record."""
         draft_files = self.get_record_files(draft)
@@ -242,7 +255,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
                 )
         if draft_files.enabled:
             for file_record in draft_files.values():
-                if not TransferType(file_record.file.storage_class).is_completed:
+                if not self._check_file_completed(file_record):
                     raise ValidationError(
                         _(
                             "One or more files have not completed their transfer, please wait."
