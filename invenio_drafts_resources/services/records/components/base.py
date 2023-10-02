@@ -234,7 +234,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         # ongoing upload (cannot get storage class of None if OV is not set)
         has_attached_object = file_record.file is not None
         if not has_attached_object:
-            return
+            return False
         transfer = TransferType(file_record.file.storage_class)
         if transfer.is_completed:
             return True
