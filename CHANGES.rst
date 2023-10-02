@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.11.1 (2023-10-02)
+
+- components: replace ambiguous error on publish
+
 Version 1.11.0 (2023-09-21)
 
 - resources: add etag headers
