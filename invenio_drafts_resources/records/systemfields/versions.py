@@ -53,6 +53,11 @@ class VersionsManager:
         return self._record.model.parent_id
 
     @property
+    def record_model_cls(self):
+        """Get model cls of the record/draft."""
+        return self._record.model_cls
+
+    @property
     def index(self):
         """Get the version index of the record/draft."""
         return self._record.model.index
@@ -94,7 +99,16 @@ class VersionsManager:
     @property
     def next_index(self):
         """Get the next parent index."""
-        return self.latest_index + 1 if self.latest_index is not None else 1
+        latest_index_by_parent = None
+        with db.session.no_autoflush:
+            rec_model = (
+                self.record_model_cls.query.filter_by(parent_id=self.parent_id)
+                .order_by(self.record_model_cls.index.desc())
+                .first()
+            )
+            if rec_model:
+                latest_index_by_parent = rec_model.index
+        return latest_index_by_parent + 1 if latest_index_by_parent is not None else 1
 
     #
     # State management methods
