@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.12.0 (2023-10-09)
+
+- versions: set the next index to the max index of all record versions
+
 Version 1.11.2 (2023-10-02)
 
 - components: handle disabled state on draft delete action
