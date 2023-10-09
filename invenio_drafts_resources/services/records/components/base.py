@@ -186,11 +186,12 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
 
     def _purge_bucket_and_ovs(self, files):
         """Purge associated bucket and object versions."""
-        if files.bucket.locked:
-            files.unlock()
-        if files.enabled:
-            files.delete_all(softdelete_obj=False, remove_rf=True)
-        files.remove_bucket(force=True)
+        if files.bucket:
+            if files.bucket.locked:
+                files.unlock()
+            if files.enabled:
+                files.delete_all(softdelete_obj=False, remove_rf=True)
+            files.remove_bucket(force=True)
 
     def _publish_new(self, identity, draft, record):
         """Action when publishing a new draft."""
@@ -275,7 +276,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         """
         draft_files = self.get_record_files(draft)
 
-        # Teardown the bucket and files.
+        # Teardown the bucket and files if any.
         self._purge_bucket_and_ovs(draft_files)
 
     def import_files(self, identity, draft=None, record=None):
