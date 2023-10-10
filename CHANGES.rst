@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.12.1 (2023-10-10)
+
+- service: allow passing permission_action in kwargs for search versions
+
 Version 1.12.0 (2023-10-09)
 
 - versions: set the next index to the max index of all record versions
