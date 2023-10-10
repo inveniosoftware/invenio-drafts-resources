@@ -146,7 +146,14 @@ class RecordService(RecordServiceBase):
         )
 
     def search_versions(
-        self, identity, id_, params=None, search_preference=None, expand=False, **kwargs
+        self,
+        identity,
+        id_,
+        params=None,
+        search_preference=None,
+        expand=False,
+        permission_action="read",
+        **kwargs,
     ):
         """Search for record's versions."""
         try:
@@ -170,7 +177,7 @@ class RecordService(RecordServiceBase):
             record_cls=self.record_cls,
             search_opts=self.config.search_versions,
             extra_filter=extra_filter,
-            permission_action="read",
+            permission_action=permission_action,
             **kwargs,
         ).execute()
 
