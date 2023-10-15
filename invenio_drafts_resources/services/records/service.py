@@ -11,6 +11,7 @@
 
 from flask import current_app
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
@@ -197,7 +198,15 @@ class RecordService(RecordServiceBase):
     def read_draft(self, identity, id_, expand=False):
         """Retrieve a draft."""
         # Resolve and require permission
-        draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        try:
+            draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        except NoResultFound:
+            # Happens when record is published and not being edited (i.e. PID
+            # with object id exists for the published record, but object
+            # getter fails to get the draft object because only the record
+            # object exists).
+            raise PIDDoesNotExistError(self.draft_cls.pid.field._pid_type, id_)
+
         self.require_permission(identity, "read_draft", record=draft)
 
         # Run components

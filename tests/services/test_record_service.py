@@ -131,7 +131,7 @@ def test_publish_draft(app, service, identity_simple, input_data):
         assert record[key] == value
 
     # Check draft deletion
-    with pytest.raises(NoResultFound):
+    with pytest.raises(PIDDoesNotExistError):
         # NOTE: Draft and Record have the same `id`
         draft = service.read_draft(identity_simple, record.id)
 
