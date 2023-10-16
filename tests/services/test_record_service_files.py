@@ -269,6 +269,21 @@ def test_edit_draft_files(
     )
 
 
+def test_publish_draft_media_files_no_bucket(
+    app, db, service, service_with_media_files, input_data, identity_simple, monkeypatch
+):
+    """Test edit and publish."""
+    input_data["media_files"] = {"enabled": True}
+    input_data["files"] = {"enabled": False}
+    # Create, publish and edit draft.
+    draft = service.create(identity_simple, input_data)
+    draft._record.media_bucket = None
+    draft._record.commit()
+    assert draft._record.media_bucket is None
+    record = service.publish(identity_simple, draft.id)
+    assert record._record.is_published
+
+
 def test_new_version(app, db, service, input_data, identity_simple, monkeypatch):
     """Test new version."""
     # Create and publish

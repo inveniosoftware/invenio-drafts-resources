@@ -81,6 +81,22 @@ class _DraftMediaFilesComponent(BaseRecordFilesComponent):
                 }
             )
 
+    def _publish_new(self, identity, draft, record):
+        """Action when publishing a new draft."""
+        # For unpublished drafts (new and new version), we move the draft
+        # bucket from the draft to the record (instead of creating a new, and
+        # deleting one). For consistency, we keep a bucket for all records
+        # independently of if they have files enabled or not.
+        draft_files = self.get_record_files(draft)
+        draft_bucket = self.get_record_bucket(draft)
+
+        if draft_bucket is None:
+            # legacy compatibility safety check - create bucket if missing
+            draft_files.create_bucket()
+            draft_bucket = self.get_record_bucket(draft)
+
+        super()._publish_new(identity, draft, record)
+
     def edit(self, identity, draft=None, record=None):
         """Edit callback."""
         draft_files = self.get_record_files(draft)
