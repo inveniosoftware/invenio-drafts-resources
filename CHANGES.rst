@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.13.0 (2023-10-16)
+
+- media files: create missing buckets on new publish
+
 Version 1.12.2 (2023-10-15)
 
 - service: change from NoResultFound to PIDDoesNotExistsError for consistency
