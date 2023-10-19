@@ -161,7 +161,9 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         draft_files = self.get_record_files(draft)
         record_files = self.get_record_files(record)
         draft_bucket = self.get_record_bucket(draft)
-        lock_files = self.service.config.lock_edit_published_files(record)
+        lock_files = self.service.config.lock_edit_published_files(
+            self.service, identity, record=draft
+        )
 
         if draft_bucket is None:
             # Happens, when a soft-deleted draft is un-deleted.
