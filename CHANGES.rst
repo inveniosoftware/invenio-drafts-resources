@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 1.13.1 (2023-10-19)
+
+- service: handle soft-deleted drafts
+
 Version 1.13.0 (2023-10-16)
 
 - media files: create missing buckets on new publish
