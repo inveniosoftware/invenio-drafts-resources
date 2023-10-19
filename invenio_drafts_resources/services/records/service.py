@@ -329,7 +329,12 @@ class RecordService(RecordServiceBase):
             return self.result_item(
                 self, identity, draft, links_tpl=self.links_item_tpl
             )
-        except NoResultFound:
+        except (NoResultFound, PIDDoesNotExistError):
+            # We catch PIDDoesNotExistError because a published record with
+            # a soft-deleted draft will raise this error. The lines below
+            # will catch the case that a id does not exists and raise a
+            # PIDDoesNotExistError that can be handled as 404 in the resource
+            # layer.
             pass
 
         # Draft does not exist - so get the main record we want to edit and
