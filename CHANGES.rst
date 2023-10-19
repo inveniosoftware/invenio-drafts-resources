@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 2.0.0 (2023-10-19)
+
+- service: lock files conditionally (breaking change `#267`)
+
 Version 1.13.1 (2023-10-19)
 
 - service: handle soft-deleted drafts
