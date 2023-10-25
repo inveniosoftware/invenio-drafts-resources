@@ -18,12 +18,15 @@ class ParentRecordCommitOp(RecordCommitOp):
         self,
         parent,
         indexer_context=None,
+        bulk_index=True,
     ):
         """Initialize the parent record commit operation.
 
         :params indexer_context: a dict containing record/draft cls and indexers,
             or service. Expected keys: `record_cls, draft_cls, indexer, draft_indexer`.
             `None` if indexing disabled.
+        :params bulk_index: if ``True`` will send to bulk indexing queue. Otherwise will
+            index synchronously.
         """
         super().__init__(parent, indexer=None)
         self._indexer_context = indexer_context
@@ -39,6 +42,7 @@ class ParentRecordCommitOp(RecordCommitOp):
                 self._draft_cls = indexer_context["draft_cls"]
                 self._record_indexer = indexer_context["indexer"]
                 self._draft_indexer = indexer_context["draft_indexer"]
+        self._bulk_index = bulk_index
 
     def _get_siblings(self):
         """Get all record and draft versions by parent.
@@ -64,6 +68,14 @@ class ParentRecordCommitOp(RecordCommitOp):
         if self._indexer_context is not None:
             records_ids, drafts_ids = self._get_siblings()
             if records_ids:
-                self._record_indexer.bulk_index(records_ids)
+                if self._bulk_index:
+                    self._record_indexer.bulk_index(records_ids)
+                else:
+                    for record_id in records_ids:
+                        self._record_indexer.index_by_id(record_id)
             if drafts_ids:
-                self._draft_indexer.bulk_index(drafts_ids)
+                if self._bulk_index:
+                    self._draft_indexer.bulk_index(drafts_ids)
+                else:
+                    for draft_id in drafts_ids:
+                        self._draft_indexer.index_by_id(draft_id)
