@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 2.0.1 (2023-10-26)
+
+- fix: TypeError multiple values for record
+
 Version 2.0.0 (2023-10-19)
 
 - service: lock files conditionally (breaking change `#267`)
