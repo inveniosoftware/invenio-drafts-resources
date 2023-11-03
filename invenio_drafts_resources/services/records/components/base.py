@@ -191,9 +191,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         if files.bucket:
             if files.bucket.locked:
                 files.unlock()
-            if files.enabled:
-                files.delete_all(softdelete_obj=False, remove_rf=True)
-            files.remove_bucket(force=True)
+            files.teardown(full=True)
 
     def _publish_new(self, identity, draft, record):
         """Action when publishing a new draft."""
@@ -213,7 +211,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         # Cleanup
         if draft_files.enabled:
             # Hard delete all draft file records but keep the object versions
-            draft_files.delete_all(remove_obj=False, remove_rf=True)
+            draft_files.teardown(full=False)
         draft_files.unset_bucket()
 
     def _publish_edit(self, identity, draft, record):
