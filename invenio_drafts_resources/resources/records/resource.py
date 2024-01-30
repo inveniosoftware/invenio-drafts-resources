@@ -19,6 +19,9 @@ from flask_resources import (
     with_content_negotiation,
 )
 from invenio_records_resources.resources import RecordResource as RecordResourceBase
+from invenio_records_resources.resources import (
+    RecordResourceConfig as RecordResourceConfigBase,
+)
 from invenio_records_resources.resources.records.headers import etag_headers
 from invenio_records_resources.resources.records.resource import (
     request_data,
@@ -166,7 +169,10 @@ class RecordResource(RecordResourceBase):
     @request_view_args
     @with_content_negotiation(
         response_handlers={
-            "application/json": ResponseHandler(JSONSerializer(), headers=etag_headers)
+            "application/vnd.inveniordm.v1+json": RecordResourceConfigBase.response_handlers[
+                "application/json"
+            ],
+            **RecordResourceConfigBase.response_handlers,
         },
         default_accept_mimetype="application/json",
     )
