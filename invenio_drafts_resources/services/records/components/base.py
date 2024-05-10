@@ -162,7 +162,7 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         record_files = self.get_record_files(record)
         draft_bucket = self.get_record_bucket(draft)
         lock_files = self.service.config.lock_edit_published_files(
-            self.service, identity, record=draft
+            self.service, identity, record=record, draft=draft
         )
 
         if draft_bucket is None:

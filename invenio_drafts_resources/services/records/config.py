@@ -36,7 +36,7 @@ def is_record(record, ctx):
 
 
 @staticmethod
-def lock_edit_published_files(service, identity, record=None):
+def lock_edit_published_files(service, identity, record=None, draft=None):
     """Should published files be locked from editing in current record version."""
     return True
 
