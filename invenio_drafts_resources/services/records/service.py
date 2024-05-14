@@ -258,10 +258,11 @@ class RecordService(RecordServiceBase):
 
     @unit_of_work()
     def update_draft(
-        self, identity, id_, data, revision_id=None, uow=None, expand=False
+        self, identity, id_, data, revision_id=None, uow=None, expand=False, draft=None
     ):
         """Replace a draft."""
-        draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+        if draft:
+            draft = self.draft_cls.pid.resolve(id_, registered_only=False)
 
         self.check_revision_id(draft, revision_id)
 
