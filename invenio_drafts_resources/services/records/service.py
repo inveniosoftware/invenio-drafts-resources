@@ -27,6 +27,7 @@ from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
 
+from ...resources.records.errors import DraftNotCreatedError
 from .uow import ParentRecordCommitOp
 
 
@@ -205,7 +206,7 @@ class RecordService(RecordServiceBase):
             # with object id exists for the published record, but object
             # getter fails to get the draft object because only the record
             # object exists).
-            raise PIDDoesNotExistError(self.draft_cls.pid.field._pid_type, id_)
+            raise DraftNotCreatedError(self.draft_cls.pid.field._pid_type, id_)
 
         self.require_permission(identity, "read_draft", record=draft)
 
