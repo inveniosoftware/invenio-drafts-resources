@@ -12,6 +12,7 @@
 import json
 
 from flask_resources.errors import HTTPJSONException
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 
 class RedirectException(HTTPJSONException):
@@ -42,3 +43,7 @@ class RedirectException(HTTPJSONException):
             "location": self.location,
         }
         return json.dumps(body)
+
+
+class DraftNotCreatedError(PIDDoesNotExistError):
+    """Draft is not created for published record error."""
