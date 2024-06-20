@@ -29,6 +29,7 @@ class VersionsManager:
         """Initialize the versions manager."""
         self._record = record
         self._state = None
+        self.versions_count = None
         if dump is not None:
             self.load(dump)
 
@@ -87,6 +88,18 @@ class VersionsManager:
     def is_latest(self):
         """Check if the record/draft id is the latest published record id."""
         return self.latest_id == self._record.id
+
+    @property
+    def versions_count(self):
+        """Get number of record's active versions."""
+        if self._versions_count is None:
+            self._versions_count = self._record.versions_count
+        return self._versions_count
+
+    @versions_count.setter
+    def versions_count(self, value):
+        """Set number of record's active versions."""
+        self._versions_count = value
 
     @property
     def is_latest_draft(self):
@@ -153,6 +166,7 @@ class VersionsManager:
             next_draft_id=self.next_draft_id,
             is_latest=self.is_latest,
             is_latest_draft=self.is_latest_draft,
+            versions_count=self.versions_count,
             index=self.index,
         )
 
@@ -166,6 +180,7 @@ class VersionsManager:
         )
         if self.index != dump["index"]:
             self._record.model.index = dump["index"]
+        self.versions_count = dump.get("versions_count", None) or dump["index"]
 
     def __repr__(self):
         """Return repr(self)."""
@@ -173,7 +188,8 @@ class VersionsManager:
             f"<{type(self).__name__} (parent_id: {self.parent_id}, "
             f"index: {self.index}, latest_id: {self.latest_id}, "
             f"latest_index: {self.latest_index}, "
-            f"next_draft_id: {self.next_draft_id})>"
+            f"next_draft_id: {self.next_draft_id}, "
+            f"versions_count: {self.versions_count})>"
         )
 
 
