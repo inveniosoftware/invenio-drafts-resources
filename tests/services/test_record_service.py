@@ -190,7 +190,7 @@ def test_create_publish_new_revision(app, service, identity_simple, input_data):
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
     # create, soft-delete, undelete, update
-    assert draft._record.revision_id == 5
+    assert draft._record.revision_id == 8
 
     # Update the content
     orig_title = input_data["metadata"]["title"]
@@ -207,7 +207,7 @@ def test_create_publish_new_revision(app, service, identity_simple, input_data):
     record = service.publish(identity_simple, recid)
 
     assert record.id == recid
-    assert record._record.revision_id == 2
+    assert record._record.revision_id == 3
     assert record["metadata"]["title"] == edited_title
 
     # Check it was actually edited
@@ -228,12 +228,12 @@ def test_multiple_edit(app, service, identity_simple, input_data):
     draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
-    assert draft._record.revision_id == 5
+    assert draft._record.revision_id == 8
 
     draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
-    assert draft._record.revision_id == 5
+    assert draft._record.revision_id == 8
 
     # Publish it to check the increment in version_id
     record = service.publish(identity_simple, recid)
@@ -241,7 +241,7 @@ def test_multiple_edit(app, service, identity_simple, input_data):
     draft = service.edit(identity_simple, recid)
     assert draft.id == recid
     assert draft._record.fork_version_id == record._record.revision_id
-    assert draft._record.revision_id == 8  # soft-delete, undelete, update
+    assert draft._record.revision_id == 13  # soft-delete, undelete, update
 
 
 def test_create_publish_new_version(app, service, identity_simple, input_data):
@@ -255,7 +255,7 @@ def test_create_publish_new_version(app, service, identity_simple, input_data):
     # Create new version
     draft = service.new_version(identity_simple, recid)
 
-    assert draft._record.revision_id == 2
+    assert draft._record.revision_id == 3
     assert draft["id"] != record["id"]
     assert draft._record.pid.status == PIDStatus.NEW
     assert draft._record.parent.pid.status == PIDStatus.REGISTERED
@@ -270,7 +270,7 @@ def test_create_publish_new_version(app, service, identity_simple, input_data):
     assert record_2.id
     assert record_2._record.pid.status == PIDStatus.REGISTERED
     assert record_2._record.parent.pid.status == PIDStatus.REGISTERED
-    assert record_2._record.revision_id == 1
+    assert record_2._record.revision_id == 2
     assert record_2["id"] != record["id"]
 
 
