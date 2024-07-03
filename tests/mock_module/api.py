@@ -153,6 +153,7 @@ class Draft(DraftBase):
     files = FilesField(
         store=False,
         file_cls=FileDraft,
+        dump=False,
         # Don't delete, we'll manage in the service
         delete=False,
     )

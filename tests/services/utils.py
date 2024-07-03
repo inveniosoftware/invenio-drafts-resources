@@ -16,6 +16,6 @@ def create_and_publish(service, identity_simple, input_data):
     record = service.publish(identity_simple, draft.id)
 
     assert record.id == draft.id
-    assert record._record.revision_id == 1
+    assert record._record.revision_id == 2
 
     return record

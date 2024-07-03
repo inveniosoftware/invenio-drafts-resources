@@ -25,12 +25,18 @@ class DraftMetadata(db.Model, DraftMetadataBase, ParentRecordMixin):
     __tablename__ = "draft_mock_metadata"
     __parent_record_model__ = ParentRecordMetadata
 
+    bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id), index=True)
+    bucket = db.relationship(Bucket, foreign_keys=[bucket_id])
+
 
 class RecordMetadata(db.Model, RecordMetadataBase, ParentRecordMixin):
     """Model for mock module metadata."""
 
     __tablename__ = "record_mock_metadata"
     __parent_record_model__ = ParentRecordMetadata
+
+    bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id), index=True)
+    bucket = db.relationship(Bucket, foreign_keys=[bucket_id])
 
 
 class ParentState(db.Model, ParentRecordStateMixin):
