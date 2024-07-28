@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version 3.2.0 (released 2024-07-28)
+
+- errors: introduce an error for drafts not found when publish record exists
+
 Version 3.1.1 (released 2024-05-17)
 
 - services: fix permission for file edit
