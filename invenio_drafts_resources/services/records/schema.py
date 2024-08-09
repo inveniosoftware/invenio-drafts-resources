@@ -19,6 +19,7 @@ class VersionsSchema(Schema):
     is_latest = fields.Boolean()
     is_latest_draft = fields.Boolean()
     index = fields.Integer()
+    versions_count = fields.Integer()
 
 
 class ParentSchema(Schema):
