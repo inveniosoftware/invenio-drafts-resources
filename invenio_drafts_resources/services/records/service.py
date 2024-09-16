@@ -15,6 +15,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
 from invenio_records_resources.services import ServiceSchemaWrapper
+from invenio_records_resources.services.errors import CommunityNotSelectedError
 from invenio_records_resources.services.uow import (
     RecordBulkIndexOp,
     RecordCommitOp,
@@ -375,6 +376,15 @@ class RecordService(RecordServiceBase):
         """
         # Get the draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
+
+        # If config is True and there are no communities selected
+        # Then, check for permissions to upload without community
+        if (
+            current_app.config["RDM_RECORD_ALWAYS_IN_COMMUNITY"]
+            and len(draft.parent.communities.ids) == 0
+        ):
+            if not self.check_permission(identity, "publish", record=draft):
+                raise CommunityNotSelectedError()
         self.require_permission(identity, "publish", record=draft)
 
         # Validate the draft strictly - since a draft can be saved with errors
