@@ -10,7 +10,7 @@
 
 """RecordDraft Service API config."""
 
-from invenio_i18n import gettext as _
+from invenio_i18n import lazy_gettext as _
 from invenio_indexer.api import RecordIndexer
 from invenio_records_resources.services import (
     ConditionalLink,
