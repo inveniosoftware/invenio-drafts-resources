@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2020 Northwestern University.
+# Copyright (C) 2024 KTH Royal Institute of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -11,6 +12,7 @@
 
 from flask import current_app
 from invenio_db import db
+from invenio_i18n import gettext as _
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_resources.services import LinksTemplate
 from invenio_records_resources.services import RecordService as RecordServiceBase
@@ -98,7 +100,7 @@ class RecordService(RecordServiceBase):
 
     def update(self, *args, **kwargs):
         """Do not use."""
-        raise NotImplementedError("Records should be updated via their draft.")
+        raise NotImplementedError(_("Records should be updated via their draft."))
 
     def search_drafts(
         self,
@@ -244,7 +246,7 @@ class RecordService(RecordServiceBase):
             if version_state and version_state.latest_id:
                 record = self.record_cls.get_record(version_state.latest_id)
             else:
-                raise NoResultFound("Failed to fetch the record versions.")
+                raise NoResultFound(_("Failed to fetch the record versions."))
 
         self.require_permission(identity, "read", record=record)
 
@@ -504,7 +506,7 @@ class RecordService(RecordServiceBase):
     def import_files(self, identity, id_, uow=None):
         """Import files from previous record version."""
         if self.draft_files is None:
-            raise RuntimeError("Files support is not enabled.")
+            raise RuntimeError(_("Files support is not enabled."))
 
         # Read draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
