@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2021 CERN.
 # Copyright (C) 2021 TU Wien.
+# Copyright (C) 2024 KTH Royal Institute of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -12,6 +13,7 @@
 import json
 
 from flask_resources.errors import HTTPJSONException
+from invenio_i18n import lazy_gettext as _
 from invenio_pidstore.errors import PIDDoesNotExistError
 
 
@@ -28,7 +30,7 @@ class RedirectException(HTTPJSONException):
     def __init__(self, location, **kwargs):
         """Constructor."""
         self.location = location
-        kwargs.setdefault("description", "Redirecting...")
+        kwargs.setdefault("description", _("Redirecting..."))
         super().__init__(**kwargs)
 
     def get_headers(self, environ=None, scope=None):
