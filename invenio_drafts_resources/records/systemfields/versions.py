@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021-2023 CERN.
+# Copyright (C) 2024 TU Wien.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -148,9 +149,9 @@ class VersionsManager:
     def dump(self):
         """Dump the versions state to the index."""
         return dict(
-            latest_id=self.latest_id,
+            latest_id=str(self.latest_id) if self.latest_id else None,
             latest_index=self.latest_index,
-            next_draft_id=self.next_draft_id,
+            next_draft_id=str(self.next_draft_id) if self.next_draft_id else None,
             is_latest=self.is_latest,
             is_latest_draft=self.is_latest_draft,
             index=self.index,
