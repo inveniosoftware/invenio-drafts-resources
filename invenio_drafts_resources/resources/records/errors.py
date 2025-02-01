@@ -13,7 +13,7 @@
 import json
 
 from flask_resources.errors import HTTPJSONException
-from invenio_i18n import lazy_gettext as _
+from invenio_i18n import gettext as _
 from invenio_pidstore.errors import PIDDoesNotExistError
 
 

@@ -1,10 +1,14 @@
 """Example service."""
 
-from invenio_records_resources.services import ConditionalLink
+from invenio_records_resources.services import (
+    ConditionalLink,
+)
 from invenio_records_resources.services import (
     FileServiceConfig as BaseFileServiceConfig,
 )
-from invenio_records_resources.services import RecordLink
+from invenio_records_resources.services import (
+    RecordLink,
+)
 
 from invenio_drafts_resources.services import RecordServiceConfig
 from invenio_drafts_resources.services.records.components import (
