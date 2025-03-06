@@ -68,35 +68,38 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         """Assigns files.enabled.
 
         NOTE: `record` actually refers to the draft
-              (this interface is used in records-resources and rdm-records)
+            (this interface is used in records-resources and rdm-records)
         """
         draft = record
         files = self.get_record_files(draft)
         enabled = data.get(self.files_data_key, {}).get(
             "enabled", self.service.config.default_files_enabled
         )
+        can_toggle_files = self.service.check_permission(
+            identity, "manage_files", record=draft
+        )
 
-        if files.enabled != enabled:
-            if not self.service.check_permission(
-                identity, "manage_files", record=draft
-            ):
-                errors.append(
-                    {
-                        "field": f"{self.files_data_key}.enabled",
-                        "messages": [
-                            _("You don't have permissions to manage files options.")
-                        ],
-                    }
-                )
-                return  # exit early
+        if files.enabled != enabled and not can_toggle_files:
+            errors.append(
+                {
+                    "field": f"{self.files_data_key}.enabled",
+                    "messages": [
+                        _("You don't have permissions to manage files options.")
+                    ],
+                }
+            )
+            return  # exit early
 
         files.enabled = enabled
+        self._validate_missing_files(
+            errors, can_toggle_files, files.enabled, files.items()
+        )
 
     def update_draft(self, identity, data=None, record=None, errors=None):
         """Assigns files.enabled and warns if files are missing.
 
         NOTE: `record` actually refers to the draft
-              (this interface is used in records-resources and rdm-records)
+            (this interface is used in records-resources and rdm-records)
         """
         draft = record
         draft_files = self.get_record_files(draft)
@@ -109,17 +112,16 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
             "enabled", self.service.config.default_files_enabled
         )
 
-        if draft_files.enabled != enabled:
-            if not can_toggle_files:
-                errors.append(
-                    {
-                        "field": f"{self.files_data_key}.enabled",
-                        "messages": [
-                            _("You don't have permissions to manage files options.")
-                        ],
-                    }
-                )
-                return  # exit early
+        if draft_files.enabled != enabled and not can_toggle_files:
+            errors.append(
+                {
+                    "field": f"{self.files_data_key}.enabled",
+                    "messages": [
+                        _("You don't have permissions to manage files options.")
+                    ],
+                }
+            )
+            return  # exit early
 
         try:
             self.assign_files_enabled(draft, enabled)
@@ -129,25 +131,12 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
             )
             return  # exit early
 
-        if draft_files.enabled and not draft_files.items():
-            if can_toggle_files:
-                my_message = _(
-                    "Missing uploaded files. To disable files for this record please mark it as metadata-only."
-                )
-            else:
-                my_message = _("Missing uploaded files.")
-            errors.append(
-                {
-                    "field": f"{self.files_data_key}.enabled",
-                    "messages": [my_message],
-                }
-            )
+        self._validate_missing_files(
+            errors, can_toggle_files, draft_files.enabled, draft_files.items()
+        )
 
         try:
-            self.assign_files_default_preview(
-                draft,
-                default_preview,
-            )
+            self.assign_files_default_preview(draft, default_preview)
         except ValidationError as e:
             errors.append(
                 {
@@ -239,6 +228,23 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         transfer = TransferType(file_record.file.storage_class)
         if transfer.is_completed:
             return True
+
+    def _validate_missing_files(self, errors, can_toggle_files, enabled, files):
+        """Validates missing uploaded files."""
+        if enabled and not files:
+            my_message = (
+                _(
+                    "Missing uploaded files. To disable files for this record please mark it as metadata-only."
+                )
+                if can_toggle_files
+                else _("Missing uploaded files.")
+            )
+            errors.append(
+                {
+                    "field": f"{self.files_data_key}.enabled",
+                    "messages": [my_message],
+                }
+            )
 
     def publish(self, identity, draft=None, record=None):
         """Copy bucket and files to record."""
