@@ -522,12 +522,17 @@ def test_publish_with_fetch_files(
 def test_missing_files(app, service, identity_simple, input_data):
     # Test files.enabled = True when no files
     draft = service.create(identity_simple, input_data)
-    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Files should be enabled
     assert draft.data["files"]["enabled"] is True
 
     # Missing files should be reported
+    assert draft.errors[0]["field"] == "files.enabled"
+    assert "Missing uploaded files." in draft.errors[0]["messages"][0]
+
+    draft = service.update_draft(identity_simple, draft.id, input_data)
+
+    assert draft.data["files"]["enabled"] is True
     assert draft.errors[0]["field"] == "files.enabled"
     assert "Missing uploaded files." in draft.errors[0]["messages"][0]
 
