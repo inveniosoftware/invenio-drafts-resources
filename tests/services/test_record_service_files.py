@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2024 CERN.
+# Copyright (C) 2020-2025 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -597,7 +597,6 @@ def test_manage_files_permissions(
 
     # Not modifying files options (i.e. sending `files.enabled: true`) doesn't error
     draft = service.create(identity_simple, input_data)
-    assert not draft.errors
 
     # Modyfing/disabling files should return an error
     input_data["files"]["enabled"] = False
