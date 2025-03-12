@@ -84,8 +84,8 @@ ipython_config.py
 .python-version
 
 # pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control...
-#   of applications. This is a library. As such we don't want any of the pipenv files.
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control
+#   for applications. However this is a library, so we ignore all pipenv files.
 Pipfile
 Pipfile.lock
 
@@ -125,6 +125,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.DS_Store
+
 
 # IDE
 .idea/
+.vscode/
