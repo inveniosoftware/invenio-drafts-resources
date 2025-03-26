@@ -33,7 +33,7 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_draft_media_update_files = [AnyUser()]
     can_draft_media_delete_files = [AnyUser()]
 
-    # SystemProcess is needed for metadata extraction - 
+    # SystemProcess is needed for metadata extraction -
     # there is a 'create' action check there
     can_draft_create_files = [AnyUser(), SystemProcess()]
     can_draft_set_content_files = [AnyUser()]
