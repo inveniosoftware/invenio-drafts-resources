@@ -12,12 +12,17 @@
 
 from invenio_i18n import gettext as _
 from invenio_indexer.api import RecordIndexer
-from invenio_records_resources.services import ConditionalLink, RecordLink
+from invenio_records_resources.services import (
+    ConditionalLink,
+    RecordLink,
+)
 from invenio_records_resources.services import (
     RecordServiceConfig as RecordServiceConfigBase,
 )
 from invenio_records_resources.services import SearchOptions as SearchOptionsBase
-from invenio_records_resources.services import pagination_links
+from invenio_records_resources.services import (
+    pagination_links,
+)
 
 from .components import DraftMetadataComponent, PIDComponent
 from .permissions import RecordPermissionPolicy
