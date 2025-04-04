@@ -27,6 +27,8 @@ from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
 
+from invenio_audit_logs.proxies import current_audit_logs_service
+
 from ...resources.records.errors import DraftNotCreatedError
 from .uow import ParentRecordCommitOp
 
@@ -282,6 +284,17 @@ class RecordService(RecordServiceBase):
             raise_errors=False,
         )
 
+        current_audit_logs_service.create(
+            data=dict(
+                action="draft.edit",
+                resource_type="record",
+                resource_id=str(id_),
+                message=f" updated the draft.",
+            ),
+            identity=identity,
+            uow=uow,
+        )
+
         # Run components
         self.run_components(
             "update_draft", identity, record=draft, data=data, errors=errors, uow=uow
@@ -314,6 +327,17 @@ class RecordService(RecordServiceBase):
             uow=uow,
             expand=expand,
         )
+        current_audit_logs_service.create(
+            data=dict(
+                action="draft.create",
+                resource_type="record",
+                resource_id=str(res.id),
+                message=f" created the draft.",
+            ),
+            identity=identity,
+            uow=uow,
+        )
+
         uow.register(ParentRecordCommitOp(res._record.parent))
         return res
 
@@ -388,6 +412,17 @@ class RecordService(RecordServiceBase):
 
         # Run components
         self.run_components("publish", identity, draft=draft, record=record, uow=uow)
+
+        current_audit_logs_service.create(
+            data=dict(
+                action="record.publish",
+                resource_type="record",
+                resource_id=str(id_),
+                message=f" published the record.",
+            ),
+            identity=identity,
+            uow=uow,
+        )
 
         # Commit and index
         uow.register(RecordCommitOp(record, indexer=self.indexer))
