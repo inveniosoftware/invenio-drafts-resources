@@ -21,7 +21,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from invenio_files_rest.errors import BucketLockedError, InvalidOperationError
 from invenio_files_rest.models import Bucket, FileInstance, ObjectVersion
-from invenio_records_resources.services.files.transfer import TransferType
+from invenio_records_resources.services.files.transfer.constants import (
+    FETCH_TRANSFER_TYPE,
+)
 from marshmallow.exceptions import ValidationError
 from mock_module.models import DraftMetadata, FileDraftMetadata, FileRecordMetadata
 from mock_module.permissions import PermissionPolicy
@@ -486,17 +488,19 @@ def test_update_draft_set_default_file_preview_reports_error(
     assert draft.data["files"] == {"enabled": True}
 
 
-@patch("invenio_records_resources.services.files.transfer.fetch_file")
+@patch("invenio_records_resources.services.files.tasks.requests.get")
 def test_publish_with_fetch_files(
-    p_fetch_file, app, service, draft_file_service, input_data, identity_simple
+    p_response_raw, app, service, draft_file_service, input_data, identity_simple
 ):
     """Tests wether it is possible to submit a record if the file isn't fully downloaded."""
     draft = service.create(identity_simple, input_data)  # 1
     file_to_initialise = [
         {
             "key": "article.txt",
-            "uri": "https://inveniordm.test/files/article.txt",
-            "storage_class": "F",
+            "transfer": {
+                "type": FETCH_TRANSFER_TYPE,
+                "url": "https://inveniordm.test/files/article.txt",
+            },
         }
     ]
 
@@ -505,7 +509,7 @@ def test_publish_with_fetch_files(
     )
 
     for file_record in files.entries:
-        assert file_record["storage_class"] == TransferType.FETCH
+        assert file_record["transfer"]["type"] == FETCH_TRANSFER_TYPE
 
     with pytest.raises(ValidationError):
         service.publish(identity_simple, draft.id)
