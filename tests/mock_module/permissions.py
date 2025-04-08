@@ -1,6 +1,6 @@
 """Example of a permission policy."""
 
-from invenio_records_permissions.generators import AnyUser
+from invenio_records_permissions.generators import AnyUser, SystemProcess
 
 from invenio_drafts_resources.services.records.permissions import RecordPermissionPolicy
 
@@ -33,7 +33,9 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_draft_media_update_files = [AnyUser()]
     can_draft_media_delete_files = [AnyUser()]
 
-    can_draft_create_files = [AnyUser()]
+    # SystemProcess is needed for metadata extraction - 
+    # there is a 'create' action check there
+    can_draft_create_files = [AnyUser(), SystemProcess()]
     can_draft_set_content_files = [AnyUser()]
     can_draft_get_content_files = [AnyUser()]
     can_draft_commit_files = [AnyUser()]
