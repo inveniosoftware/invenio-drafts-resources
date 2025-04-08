@@ -9,7 +9,8 @@
 
 """Base class for service components."""
 from invenio_i18n import gettext as _
-from invenio_records_resources.services.files.transfer import TransferType
+from invenio_records_resources.proxies import current_transfer_registry
+from invenio_records_resources.services.files.transfer.base import TransferStatus
 from invenio_records_resources.services.records.components import (
     BaseRecordFilesComponent as _BaseRecordFilesComponent,
 )
@@ -236,8 +237,12 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         has_attached_object = file_record.file is not None
         if not has_attached_object:
             return False
-        transfer = TransferType(file_record.file.storage_class)
-        if transfer.is_completed:
+        transfer = current_transfer_registry.get_transfer(
+            record=file_record.record,
+            file_record=file_record,
+            file_service=self.service.draft_files,
+        )
+        if transfer.status == TransferStatus.COMPLETED:
             return True
 
     def publish(self, identity, draft=None, record=None):
