@@ -10,6 +10,7 @@
 """Primary service for working with records and drafts."""
 
 from flask import current_app
+from invenio_audit_logs.proxies import current_audit_logs_service
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_resources.services import LinksTemplate
@@ -26,8 +27,6 @@ from invenio_search.engine import dsl
 from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
-
-from invenio_audit_logs.proxies import current_audit_logs_service
 
 from ...resources.records.errors import DraftNotCreatedError
 from .uow import ParentRecordCommitOp
@@ -287,9 +286,7 @@ class RecordService(RecordServiceBase):
         current_audit_logs_service.create(
             data=dict(
                 action="draft.edit",
-                resource_type="record",
-                resource_id=str(id_),
-                message=f" updated the draft.",
+                resource=dict(type="record", id=str(id_)),
             ),
             identity=identity,
             uow=uow,
@@ -330,9 +327,7 @@ class RecordService(RecordServiceBase):
         current_audit_logs_service.create(
             data=dict(
                 action="draft.create",
-                resource_type="record",
-                resource_id=str(res.id),
-                message=f" created the draft.",
+                resource=dict(type="record", id=str(res.id)),
             ),
             identity=identity,
             uow=uow,
@@ -351,6 +346,16 @@ class RecordService(RecordServiceBase):
         try:
             draft = self.draft_cls.pid.resolve(id_, registered_only=False)
             self.require_permission(identity, "edit", record=draft)
+
+            current_audit_logs_service.create(
+                data=dict(
+                    action="draft.edit",
+                    resource=dict(type="record", id=str(id_)),
+                ),
+                identity=identity,
+                uow=uow,
+            )
+
             return self.result_item(
                 self, identity, draft, links_tpl=self.links_item_tpl
             )
@@ -370,6 +375,15 @@ class RecordService(RecordServiceBase):
 
         # Run components
         self.run_components("edit", identity, draft=draft, record=record, uow=uow)
+
+        current_audit_logs_service.create(
+            data=dict(
+                action="draft.create",
+                resource=dict(type="record", id=str(id_)),
+            ),
+            identity=identity,
+            uow=uow,
+        )
 
         uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
@@ -416,9 +430,7 @@ class RecordService(RecordServiceBase):
         current_audit_logs_service.create(
             data=dict(
                 action="record.publish",
-                resource_type="record",
-                resource_id=str(id_),
-                message=f" published the record.",
+                resource=dict(type="record", id=str(id_)),
             ),
             identity=identity,
             uow=uow,
@@ -469,6 +481,15 @@ class RecordService(RecordServiceBase):
             "new_version", identity, draft=next_draft, record=record, uow=uow
         )
 
+        current_audit_logs_service.create(
+            data=dict(
+                action="draft.new_version",
+                resource=dict(type="record", id=str(next_draft.pid.pid_value)),
+            ),
+            identity=identity,
+            uow=uow,
+        )
+
         # Commit and index
         uow.register(RecordCommitOp(next_draft, indexer=self.indexer))
 
@@ -508,6 +529,15 @@ class RecordService(RecordServiceBase):
         # Run components
         self.run_components(
             "delete_draft", identity, draft=draft, record=record, force=force, uow=uow
+        )
+
+        current_audit_logs_service.create(
+            data=dict(
+                action="draft.delete",
+                resource=dict(type="record", id=str(id_)),
+            ),
+            identity=identity,
+            uow=uow,
         )
 
         # Note, the parent record deletion logic is implemented in the
