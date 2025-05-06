@@ -283,6 +283,14 @@ class RecordService(RecordServiceBase):
             raise_errors=False,
         )
 
+        # Run components
+        self.run_components(
+            "update_draft", identity, record=draft, data=data, errors=errors, uow=uow
+        )
+
+        # Commit and index
+        uow.register(RecordCommitOp(draft, indexer=self.indexer))
+
         current_audit_logs_service.create(
             data=dict(
                 action="draft.edit",
@@ -291,14 +299,6 @@ class RecordService(RecordServiceBase):
             identity=identity,
             uow=uow,
         )
-
-        # Run components
-        self.run_components(
-            "update_draft", identity, record=draft, data=data, errors=errors, uow=uow
-        )
-
-        # Commit and index
-        uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
         return self.result_item(
             self,
@@ -324,6 +324,9 @@ class RecordService(RecordServiceBase):
             uow=uow,
             expand=expand,
         )
+
+        uow.register(ParentRecordCommitOp(res._record.parent))
+
         current_audit_logs_service.create(
             data=dict(
                 action="draft.create",
@@ -333,7 +336,6 @@ class RecordService(RecordServiceBase):
             uow=uow,
         )
 
-        uow.register(ParentRecordCommitOp(res._record.parent))
         return res
 
     @unit_of_work()
@@ -346,15 +348,6 @@ class RecordService(RecordServiceBase):
         try:
             draft = self.draft_cls.pid.resolve(id_, registered_only=False)
             self.require_permission(identity, "edit", record=draft)
-
-            current_audit_logs_service.create(
-                data=dict(
-                    action="draft.edit",
-                    resource=dict(type="record", id=str(id_)),
-                ),
-                identity=identity,
-                uow=uow,
-            )
 
             return self.result_item(
                 self, identity, draft, links_tpl=self.links_item_tpl
@@ -376,6 +369,12 @@ class RecordService(RecordServiceBase):
         # Run components
         self.run_components("edit", identity, draft=draft, record=record, uow=uow)
 
+        uow.register(RecordCommitOp(draft, indexer=self.indexer))
+
+        # Reindex the record to trigger update of computed values in the
+        # available dumpers of the record.
+        uow.register(RecordIndexOp(record, indexer=self.indexer))
+
         current_audit_logs_service.create(
             data=dict(
                 action="draft.create",
@@ -384,13 +383,6 @@ class RecordService(RecordServiceBase):
             identity=identity,
             uow=uow,
         )
-
-        uow.register(RecordCommitOp(draft, indexer=self.indexer))
-
-        # Reindex the record to trigger update of computed values in the
-        # available dumpers of the record.
-        uow.register(RecordIndexOp(record, indexer=self.indexer))
-
         return self.result_item(
             self,
             identity,
@@ -427,6 +419,13 @@ class RecordService(RecordServiceBase):
         # Run components
         self.run_components("publish", identity, draft=draft, record=record, uow=uow)
 
+        # Commit and index
+        uow.register(RecordCommitOp(record, indexer=self.indexer))
+        uow.register(RecordDeleteOp(draft, force=False, indexer=self.indexer))
+
+        if latest_id:
+            self._reindex_latest(latest_id, uow=uow)
+
         current_audit_logs_service.create(
             data=dict(
                 action="record.publish",
@@ -435,13 +434,6 @@ class RecordService(RecordServiceBase):
             identity=identity,
             uow=uow,
         )
-
-        # Commit and index
-        uow.register(RecordCommitOp(record, indexer=self.indexer))
-        uow.register(RecordDeleteOp(draft, force=False, indexer=self.indexer))
-
-        if latest_id:
-            self._reindex_latest(latest_id, uow=uow)
 
         return self.result_item(
             self,
@@ -481,6 +473,11 @@ class RecordService(RecordServiceBase):
             "new_version", identity, draft=next_draft, record=record, uow=uow
         )
 
+        # Commit and index
+        uow.register(RecordCommitOp(next_draft, indexer=self.indexer))
+
+        self._reindex_latest(next_draft.versions.latest_id, record=record, uow=uow)
+
         current_audit_logs_service.create(
             data=dict(
                 action="draft.new_version",
@@ -489,11 +486,6 @@ class RecordService(RecordServiceBase):
             identity=identity,
             uow=uow,
         )
-
-        # Commit and index
-        uow.register(RecordCommitOp(next_draft, indexer=self.indexer))
-
-        self._reindex_latest(next_draft.versions.latest_id, record=record, uow=uow)
 
         return self.result_item(
             self,
@@ -531,15 +523,6 @@ class RecordService(RecordServiceBase):
             "delete_draft", identity, draft=draft, record=record, force=force, uow=uow
         )
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="draft.delete",
-                resource=dict(type="record", id=str(id_)),
-            ),
-            identity=identity,
-            uow=uow,
-        )
-
         # Note, the parent record deletion logic is implemented in the
         # ParentField and will automatically take care of deleting the parent
         # record in case this is the only draft that exists for the parent.
@@ -562,6 +545,15 @@ class RecordService(RecordServiceBase):
             uow.register(
                 RecordIndexOp(record, indexer=self.indexer, index_refresh=True)
             )
+
+        current_audit_logs_service.create(
+            data=dict(
+                action="draft.delete",
+                resource=dict(type="record", id=str(id_)),
+            ),
+            identity=identity,
+            uow=uow,
+        )
 
         return True
 
