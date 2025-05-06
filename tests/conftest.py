@@ -43,6 +43,7 @@ def app_config(app_config):
 
     app_config["FILES_REST_DEFAULT_STORAGE_CLASS"] = "L"
 
+    app_config["THEME_FRONTPAGE"] = False
     return app_config
 
 
