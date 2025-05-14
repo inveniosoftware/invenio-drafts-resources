@@ -11,7 +11,7 @@
 """Primary service for working with records and drafts."""
 
 from flask import current_app
-from invenio_audit_logs.proxies import current_audit_logs_service
+from invenio_audit_logs.services import AuditLogOp
 from invenio_db import db
 from invenio_i18n import gettext as _
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -29,6 +29,14 @@ from invenio_search.engine import dsl
 from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
+
+from invenio_drafts_resources.auditlog_actions import (
+    DraftEditAuditLog,
+    DraftCreateAuditLog,
+    DraftDeleteAuditLog,
+    DraftNewVersionAuditLog,
+    RecordPublishAuditLog,
+)
 
 from ...resources.records.errors import DraftNotCreatedError
 from .uow import ParentRecordCommitOp
@@ -293,14 +301,7 @@ class RecordService(RecordServiceBase):
         # Commit and index
         uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="draft.edit",
-                resource=dict(type="record", id=str(id_)),
-            ),
-            identity=identity,
-            uow=uow,
-        )
+        uow.register(AuditLogOp(DraftEditAuditLog.build(id_, identity), identity))
 
         return self.result_item(
             self,
@@ -329,13 +330,8 @@ class RecordService(RecordServiceBase):
 
         uow.register(ParentRecordCommitOp(res._record.parent))
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="draft.create",
-                resource=dict(type="record", id=str(res.id)),
-            ),
-            identity=identity,
-            uow=uow,
+        uow.register(
+            AuditLogOp(DraftCreateAuditLog.build(str(res.id), identity), identity)
         )
 
         return res
@@ -377,14 +373,10 @@ class RecordService(RecordServiceBase):
         # available dumpers of the record.
         uow.register(RecordIndexOp(record, indexer=self.indexer))
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="draft.create",
-                resource=dict(type="record", id=str(id_)),
-            ),
-            identity=identity,
-            uow=uow,
+        uow.register(
+            AuditLogOp(DraftCreateAuditLog.build(str(id_), identity), identity)
         )
+
         return self.result_item(
             self,
             identity,
@@ -428,14 +420,7 @@ class RecordService(RecordServiceBase):
         if latest_id:
             self._reindex_latest(latest_id, uow=uow)
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="record.publish",
-                resource=dict(type="record", id=str(id_)),
-            ),
-            identity=identity,
-            uow=uow,
-        )
+        uow.register(AuditLogOp(RecordPublishAuditLog.build(id_, identity), identity))
 
         return self.result_item(
             self,
@@ -480,13 +465,11 @@ class RecordService(RecordServiceBase):
 
         self._reindex_latest(next_draft.versions.latest_id, record=record, uow=uow)
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="draft.new_version",
-                resource=dict(type="record", id=str(next_draft.pid.pid_value)),
-            ),
-            identity=identity,
-            uow=uow,
+        uow.register(
+            AuditLogOp(
+                DraftNewVersionAuditLog.build(str(next_draft.pid.pid_value), identity),
+                identity,
+            )
         )
 
         return self.result_item(
@@ -548,13 +531,8 @@ class RecordService(RecordServiceBase):
                 RecordIndexOp(record, indexer=self.indexer, index_refresh=True)
             )
 
-        current_audit_logs_service.create(
-            data=dict(
-                action="draft.delete",
-                resource=dict(type="record", id=str(id_)),
-            ),
-            identity=identity,
-            uow=uow,
+        uow.register(
+            AuditLogOp(DraftDeleteAuditLog.build(str(id_), identity), identity)
         )
 
         return True

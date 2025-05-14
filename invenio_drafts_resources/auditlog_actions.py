@@ -8,30 +8,57 @@
 
 """Action registration via entrypoint function."""
 
-from invenio_audit_logs.actions import AuditAction
+from invenio_audit_logs.services import AuditLogBuilder
 
 
-def record_actions():
-    """Function to add actions to the registry."""
-    return {
-        "draft.create": AuditAction(
-            name="draft.create",
-            message_template="User {user_id} created the draft {resource_id}.",
-        ),
-        "draft.edit": AuditAction(
-            name="draft.edit",
-            message_template="User {user_id} updated the draft {resource_id}.",
-        ),
-        "record.publish": AuditAction(
-            name="record.publish",
-            message_template="User {user_id} published the record {resource_id}.",
-        ),
-        "draft.delete": AuditAction(
-            name="draft.delete",
-            message_template="User {user_id} deleted the draft {resource_id}.",
-        ),
-        "draft.new_version": AuditAction(
-            name="draft.new_version",
-            message_template="User {user_id} created a new version {resource_id}.",
-        ),
-    }
+class RecordBaseAuditLog(AuditLogBuilder):
+    """Base class for audit log builders."""
+
+    resource_type = "record"
+
+    @classmethod
+    def build(cls, resource_id, identity):
+        """Build the log."""
+        return super().build(
+            resource={
+                "id": resource_id,
+                "type": cls.resource_type,
+            },
+            action=cls.action,
+            identity=identity,
+        )
+
+
+class DraftCreateAuditLog(RecordBaseAuditLog):
+    """Audit log for draft creation."""
+
+    action = "draft.create"
+    message_template = ("User {user_id} created the draft {resource_id}.",)
+
+
+class DraftEditAuditLog(RecordBaseAuditLog):
+    """Audit log for draft editing."""
+
+    action = "draft.edit"
+    message_template = ("User {user_id} updated the draft {resource_id}.",)
+
+
+class RecordPublishAuditLog(RecordBaseAuditLog):
+    """Audit log for record publication."""
+
+    action = "record.publish"
+    message_template = ("User {user_id} published the record {resource_id}.",)
+
+
+class DraftDeleteAuditLog(RecordBaseAuditLog):
+    """Audit log for draft deletion."""
+
+    action = "draft.delete"
+    message_template = ("User {user_id} deleted the draft {resource_id}.",)
+
+
+class DraftNewVersionAuditLog(RecordBaseAuditLog):
+    """Audit log for new draft version creation."""
+
+    action = "draft.new_version"
+    message_template = ("User {user_id} created a new version {resource_id}.",)
