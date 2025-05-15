@@ -31,9 +31,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
 
 from invenio_drafts_resources.auditlog_actions import (
-    DraftEditAuditLog,
     DraftCreateAuditLog,
     DraftDeleteAuditLog,
+    DraftEditAuditLog,
     DraftNewVersionAuditLog,
     RecordPublishAuditLog,
 )

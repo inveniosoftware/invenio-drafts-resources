@@ -8,16 +8,52 @@
 
 """Action registration via entrypoint function."""
 
+from invenio_access.permissions import system_identity
 from invenio_audit_logs.services import AuditLogBuilder
+from invenio_records.dictutils import dict_lookup, dict_set
+from invenio_records_resources.references.entity_resolvers import ServiceResultResolver
+
+
+class UserResolve:
+    """Payload generator for audit log using the service result resolvers."""
+
+    def __init__(self, key):
+        """Ctor."""
+        self.key = key
+
+    def __call__(self, resolver, log_data):
+        """Update required recipient information and add backend id."""
+        entity_ref = dict_lookup(log_data, self.key)
+        if entity_ref == system_identity.id:
+            entity_data = {
+                "id": str(system_identity.id),
+                "name": "system",
+                "email": "system@system.org",
+            }
+        else:
+            entity = resolver.get_entity_proxy({self.key: entity_ref}).resolve()
+            entity_data = {
+                "id": str(entity["id"]),
+                "name": entity["username"],
+                "email": entity["email"],
+            }
+        dict_set(log_data, self.key, entity_data)
 
 
 class RecordBaseAuditLog(AuditLogBuilder):
     """Base class for audit log builders."""
 
+    context = [
+        {
+            "resolver": ServiceResultResolver(service_id="users", type_key="user"),
+            "generator": UserResolve(key="user"),
+        },
+    ]
+
     resource_type = "record"
 
     @classmethod
-    def build(cls, resource_id, identity):
+    def build(cls, resource_id, identity, **kwargs):
         """Build the log."""
         return super().build(
             resource={
@@ -26,7 +62,18 @@ class RecordBaseAuditLog(AuditLogBuilder):
             },
             action=cls.action,
             identity=identity,
+            **kwargs,
         )
+
+    def resolve_context(self, log_data, **kwargs):
+        """Resolve all references in the audit log context."""
+        for context in self.context:
+            # Bypassing registry implementation (which matches the entity resolver to use)
+            # Directly using the UserResolve generator to resolve the user
+            # Cannot be kept in audit logs as it shouldn't depend on users service
+            entity_resolver = context["generator"]
+            entity_resolver(context["resolver"], log_data)
+        return log_data
 
 
 class DraftCreateAuditLog(RecordBaseAuditLog):
