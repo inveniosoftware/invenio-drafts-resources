@@ -8,104 +8,119 @@
 
 """Action registration via entrypoint function."""
 
-from invenio_access.permissions import system_identity
-from invenio_audit_logs.services import AuditLogBuilder
+from invenio_access.permissions import system_user_id
+from invenio_audit_logs.services import AuditLogAction
 from invenio_records.dictutils import dict_lookup, dict_set
-from invenio_records_resources.references.entity_resolvers import ServiceResultResolver
+from invenio_users_resources.entity_resolvers import UserResolver
 
 
-class UserResolve:
-    """Payload generator for audit log using the service result resolvers."""
+class UserContext:
+    """Payload generator for audit log using the user entity resolver."""
 
-    def __init__(self, key):
+    def __init__(self, key="user"):
         """Ctor."""
         self.key = key
+        self.resolver = UserResolver()
 
-    def __call__(self, resolver, log_data):
-        """Update required recipient information and add backend id."""
-        entity_ref = dict_lookup(log_data, self.key)
-        if entity_ref == system_identity.id:
+    def __call__(self, data, lookup_key="user_id", **kwargs):
+        """Update data with resolved user data."""
+        entity_ref = dict_lookup(data, lookup_key)
+        entity_proxy = self.resolver.get_entity_proxy({self.key: entity_ref})
+        if entity_ref == system_user_id:
+            entity_data = entity_proxy.system_record()
             entity_data = {
-                "id": str(system_identity.id),
-                "name": "system",
-                "email": "system@system.org",
+                "id": str(entity_data["id"]),
+                "name": str(entity_data["username"]),
+                "email": str(entity_data["email"]),
             }
         else:
-            entity = resolver.get_entity_proxy({self.key: entity_ref}).resolve()
+            entity_data = entity_proxy.resolve()
             entity_data = {
-                "id": str(entity["id"]),
-                "name": entity["username"],
-                "email": entity["email"],
+                "id": str(entity_data.id),
+                "name": entity_data.username,
+                "email": entity_data.email,
             }
-        dict_set(log_data, self.key, entity_data)
+        dict_set(data, self.key, entity_data)
 
 
-class RecordBaseAuditLog(AuditLogBuilder):
+class RecordContext:
+    """Payload generator for audit log to get record auditing metadata."""
+
+    def __init__(self, revision_id=False, parent_pid=False):
+        """Ctor."""
+        # Enable or Disable adding metadata
+        self.revision_id = revision_id
+        self.parent_pid = parent_pid
+
+    def __call__(self, data, **kwargs):
+        """Update data with resolved record data."""
+        record = kwargs.get("record", None)
+        if record is None:
+            return
+        if self.revision_id:
+            record_versions = record.model.versions.all()
+            dict_set(data, "metadata.revision_id", record_versions[-1].transaction_id)
+        if self.parent_pid:
+            dict_set(data, "metadata.parent_pid", record.parent.pid.pid_value)
+
+
+class RecordBaseAuditLog(AuditLogAction):
     """Base class for audit log builders."""
 
     context = [
-        {
-            "resolver": ServiceResultResolver(service_id="users", type_key="user"),
-            "generator": UserResolve(key="user"),
-        },
+        UserContext(),
     ]
 
     resource_type = "record"
 
     @classmethod
-    def build(cls, resource_id, identity, **kwargs):
+    def build(cls, identity, resource_id, **kwargs):
         """Build the log."""
         return super().build(
             resource={
                 "id": resource_id,
                 "type": cls.resource_type,
             },
-            action=cls.action,
+            action=cls.id,
             identity=identity,
             **kwargs,
         )
-
-    def resolve_context(self, log_data, **kwargs):
-        """Resolve all references in the audit log context."""
-        for context in self.context:
-            # Bypassing registry implementation (which matches the entity resolver to use)
-            # Directly using the UserResolve generator to resolve the user
-            # Cannot be kept in audit logs as it shouldn't depend on users service
-            entity_resolver = context["generator"]
-            entity_resolver(context["resolver"], log_data)
-        return log_data
 
 
 class DraftCreateAuditLog(RecordBaseAuditLog):
     """Audit log for draft creation."""
 
-    action = "draft.create"
-    message_template = ("User {user_id} created the draft {resource_id}.",)
+    id = "draft.create"
+    message_template = "User {user_id} created the draft {resource_id}."
 
 
 class DraftEditAuditLog(RecordBaseAuditLog):
     """Audit log for draft editing."""
 
-    action = "draft.edit"
-    message_template = ("User {user_id} updated the draft {resource_id}.",)
+    id = "draft.edit"
+    message_template = "User {user_id} updated the draft {resource_id}."
 
 
 class RecordPublishAuditLog(RecordBaseAuditLog):
     """Audit log for record publication."""
 
-    action = "record.publish"
-    message_template = ("User {user_id} published the record {resource_id}.",)
+    context = RecordBaseAuditLog.context + [
+        RecordContext(revision_id=True, parent_pid=True),
+    ]
+
+    id = "record.publish"
+    message_template = "User {user_id} published the record {resource_id}."
 
 
 class DraftDeleteAuditLog(RecordBaseAuditLog):
     """Audit log for draft deletion."""
 
-    action = "draft.delete"
-    message_template = ("User {user_id} deleted the draft {resource_id}.",)
+    id = "draft.delete"
+    message_template = "User {user_id} deleted the draft {resource_id}."
 
 
 class DraftNewVersionAuditLog(RecordBaseAuditLog):
     """Audit log for new draft version creation."""
 
-    action = "draft.new_version"
-    message_template = ("User {user_id} created a new version {resource_id}.",)
+    id = "draft.new_version"
+    message_template = "User {user_id} created a new version {resource_id}."

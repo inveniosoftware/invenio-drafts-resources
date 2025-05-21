@@ -301,7 +301,7 @@ class RecordService(RecordServiceBase):
         # Commit and index
         uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
-        uow.register(AuditLogOp(DraftEditAuditLog.build(id_, identity), identity))
+        uow.register(AuditLogOp(DraftEditAuditLog.build(identity, id_)))
 
         return self.result_item(
             self,
@@ -330,9 +330,7 @@ class RecordService(RecordServiceBase):
 
         uow.register(ParentRecordCommitOp(res._record.parent))
 
-        uow.register(
-            AuditLogOp(DraftCreateAuditLog.build(str(res.id), identity), identity)
-        )
+        uow.register(AuditLogOp(DraftCreateAuditLog.build(identity, str(res.id))))
 
         return res
 
@@ -373,9 +371,7 @@ class RecordService(RecordServiceBase):
         # available dumpers of the record.
         uow.register(RecordIndexOp(record, indexer=self.indexer))
 
-        uow.register(
-            AuditLogOp(DraftCreateAuditLog.build(str(id_), identity), identity)
-        )
+        uow.register(AuditLogOp(DraftCreateAuditLog.build(identity, str(id_))))
 
         return self.result_item(
             self,
@@ -420,7 +416,9 @@ class RecordService(RecordServiceBase):
         if latest_id:
             self._reindex_latest(latest_id, uow=uow)
 
-        uow.register(AuditLogOp(RecordPublishAuditLog.build(id_, identity), identity))
+        uow.register(
+            AuditLogOp(RecordPublishAuditLog.build(identity, id_, record=record))
+        )
 
         return self.result_item(
             self,
@@ -467,8 +465,7 @@ class RecordService(RecordServiceBase):
 
         uow.register(
             AuditLogOp(
-                DraftNewVersionAuditLog.build(str(next_draft.pid.pid_value), identity),
-                identity,
+                DraftNewVersionAuditLog.build(identity, str(next_draft.pid.pid_value)),
             )
         )
 
@@ -531,9 +528,7 @@ class RecordService(RecordServiceBase):
                 RecordIndexOp(record, indexer=self.indexer, index_refresh=True)
             )
 
-        uow.register(
-            AuditLogOp(DraftDeleteAuditLog.build(str(id_), identity), identity)
-        )
+        uow.register(AuditLogOp(DraftDeleteAuditLog.build(identity, str(id_))))
 
         return True
 
