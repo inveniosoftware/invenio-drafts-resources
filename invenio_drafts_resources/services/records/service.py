@@ -30,7 +30,7 @@ from kombu import Queue
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.local import LocalProxy
 
-from invenio_drafts_resources.auditlog_actions import (
+from invenio_drafts_resources.auditlog.actions import (
     DraftCreateAuditLog,
     DraftDeleteAuditLog,
     DraftEditAuditLog,
@@ -371,7 +371,7 @@ class RecordService(RecordServiceBase):
         # available dumpers of the record.
         uow.register(RecordIndexOp(record, indexer=self.indexer))
 
-        uow.register(AuditLogOp(DraftCreateAuditLog.build(identity, str(id_))))
+        uow.register(AuditLogOp(DraftCreateAuditLog.build(identity, id_)))
 
         return self.result_item(
             self,
@@ -465,7 +465,7 @@ class RecordService(RecordServiceBase):
 
         uow.register(
             AuditLogOp(
-                DraftNewVersionAuditLog.build(identity, str(next_draft.pid.pid_value)),
+                DraftNewVersionAuditLog.build(identity, next_draft.pid.pid_value),
             )
         )
 
@@ -528,7 +528,7 @@ class RecordService(RecordServiceBase):
                 RecordIndexOp(record, indexer=self.indexer, index_refresh=True)
             )
 
-        uow.register(AuditLogOp(DraftDeleteAuditLog.build(identity, str(id_))))
+        uow.register(AuditLogOp(DraftDeleteAuditLog.build(identity, id_)))
 
         return True
 
