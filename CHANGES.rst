@@ -1,5 +1,5 @@
 ..
-    Copyright (C) 2020-2024 CERN.
+    Copyright (C) 2020-2025 CERN.
     Copyright (C) 2020 Northwestern University.
     Copyright (C) 2024 Graz University of Technology.
 
@@ -9,6 +9,11 @@
 
 Changes
 =======
+
+Version 6.2.0 (release 2025-05-23)
+
+- auditlog: actions: update entrypoint registration
+- auditlog: context: Add context resolvers for User, Record and Resource
 
 Version 6.1.1 (release 2025-05-06)
 
