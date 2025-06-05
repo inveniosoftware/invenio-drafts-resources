@@ -23,7 +23,7 @@ from marshmallow import ValidationError
 class ServiceComponent(BaseServiceComponent):
     """Base service component."""
 
-    def read_draft(self, identity, draft=None):
+    def read_draft(self, identity, draft=None, errors=None):
         """Update draft handler."""
         pass
 
