@@ -15,6 +15,6 @@ from invenio_records_resources.services.records.components import (
 class RelationsComponent(RelationsComponentBase):
     """Relations service component."""
 
-    def read_draft(self, identity, draft=None):
+    def read_draft(self, identity, draft=None, errors=None):
         """Read draft handler."""
         draft.relations.dereference()

@@ -207,7 +207,7 @@ class RecordService(RecordServiceBase):
             expand=expand,
         )
 
-    def read_draft(self, identity, id_, expand=False):
+    def read_draft(self, identity, id_, expand=False, errors=None):
         """Retrieve a draft."""
         # Resolve and require permission
         try:
@@ -220,16 +220,17 @@ class RecordService(RecordServiceBase):
             raise DraftNotCreatedError(self.draft_cls.pid.field._pid_type, id_)
 
         self.require_permission(identity, "read_draft", record=draft)
-
+        errors = errors or {}
         # Run components
         for component in self.components:
             if hasattr(component, "read_draft"):
-                component.read_draft(identity, draft=draft)
+                component.read_draft(identity, draft=draft, errors=errors)
 
         return self.result_item(
             self,
             identity,
             draft,
+            errors=errors,
             links_tpl=self.links_item_tpl,
             expandable_fields=self.expandable_fields,
             expand=expand,
