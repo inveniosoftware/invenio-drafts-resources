@@ -547,7 +547,7 @@ class RecordService(RecordServiceBase):
 
         # Read draft
         draft = self.draft_cls.pid.resolve(id_, registered_only=False)
-        self.require_permission(identity, "draft_create_files", record=draft)
+        self.require_permission(identity, "update_draft", record=draft)
 
         # Retrieve latest record
         record = self.record_cls.get_record(draft.versions.latest_id)

@@ -1,6 +1,12 @@
 """Example of a permission policy."""
 
 from invenio_records_permissions.generators import AnyUser, SystemProcess
+from invenio_records_resources.services.files.generators import IfTransferType
+from invenio_records_resources.services.files.transfer import (
+    FETCH_TRANSFER_TYPE,
+    LOCAL_TRANSFER_TYPE,
+    REMOTE_TRANSFER_TYPE,
+)
 
 from invenio_drafts_resources.services.records.permissions import RecordPermissionPolicy
 
@@ -35,7 +41,12 @@ class PermissionPolicy(RecordPermissionPolicy):
 
     # SystemProcess is needed for metadata extraction -
     # there is a 'create' action check there
-    can_draft_create_files = [AnyUser(), SystemProcess()]
+    can_draft_create_files = [
+        IfTransferType(LOCAL_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(FETCH_TRANSFER_TYPE, AnyUser()),
+        IfTransferType(REMOTE_TRANSFER_TYPE, AnyUser()),
+        SystemProcess(),
+    ]
     can_draft_set_content_files = [AnyUser()]
     can_draft_get_content_files = [AnyUser()]
     can_draft_commit_files = [AnyUser()]
