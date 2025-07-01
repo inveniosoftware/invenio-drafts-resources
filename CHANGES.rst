@@ -10,6 +10,10 @@
 Changes
 =======
 
+Version v7.1.2 (released 2025-07-01)
+
+- fix: Bug in import files from published record permissions
+
 Version v7.1.1 (released 2025-06-25)
 
 - auditlog: fix context injection
