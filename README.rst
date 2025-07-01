@@ -28,6 +28,6 @@
 Invenio Drafts Resources module to create REST APIs
 
 TODO: Please provide feature overview of module
-
+//new add
 Further documentation is available on
 https://Invenio-Drafts-Resources.readthedocs.io/
