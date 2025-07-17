@@ -10,6 +10,11 @@
 Changes
 =======
 
+Version v7.2.0 (released 2025-07-17)
+
+- i18n: pulled translations
+- i18n: push translations
+
 Version v7.1.2 (released 2025-07-01)
 
 - fix: Bug in import files from published record permissions
