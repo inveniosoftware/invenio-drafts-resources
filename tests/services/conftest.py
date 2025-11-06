@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-2021 CERN.
-# Copyright (C) 2020-2021 Northwestern University.
+# Copyright (C) 2020-2025 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -14,10 +14,8 @@ fixtures are available.
 """
 
 import pytest
-from invenio_records_resources.services.files import FileService
 from mock_module.api import Draft
 from mock_module.service import (
-    FileServiceConfig,
     MediaFilesRecordServiceConfig,
     ServiceConfig,
 )
@@ -39,12 +37,6 @@ def service_with_media_files(media_file_service, media_draft_file_service):
         files_service=media_file_service,
         draft_files_service=media_draft_file_service,
     )
-
-
-@pytest.fixture(scope="module")
-def file_service():
-    """File service fixture."""
-    return FileService(FileServiceConfig)
 
 
 @pytest.fixture()

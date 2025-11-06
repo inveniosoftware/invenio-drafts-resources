@@ -14,14 +14,14 @@ from invenio_i18n import lazy_gettext as _
 from invenio_indexer.api import RecordIndexer
 from invenio_records_resources.services import (
     ConditionalLink,
-    RecordLink,
 )
 from invenio_records_resources.services import (
     RecordServiceConfig as RecordServiceConfigBase,
 )
 from invenio_records_resources.services import SearchOptions as SearchOptionsBase
-from invenio_records_resources.services import (
-    pagination_links,
+from invenio_records_resources.services.records.links import (
+    RecordEndpointLink,
+    pagination_endpoint_links,
 )
 
 from .components import DraftMetadataComponent, PIDComponent
@@ -164,26 +164,33 @@ class RecordServiceConfig(RecordServiceConfigBase):
     links_item = {
         "self": ConditionalLink(
             cond=is_record,
-            if_=RecordLink("{+api}/records/{id}"),
-            else_=RecordLink("{+api}/records/{id}/draft"),
+            if_=RecordEndpointLink("records.read"),
+            else_=RecordEndpointLink("records.read_draft"),
         ),
         "self_html": ConditionalLink(
             cond=is_record,
-            if_=RecordLink("{+ui}/records/{id}"),
-            else_=RecordLink("{+ui}/uploads/{id}"),
+            if_=RecordEndpointLink("invenio_app_rdm_records.record_detail"),
+            else_=RecordEndpointLink("invenio_app_rdm_records.deposit_edit"),
         ),
-        "latest": RecordLink("{+api}/records/{id}/versions/latest"),
-        "latest_html": RecordLink("{+ui}/records/{id}/latest"),
-        "draft": RecordLink("{+api}/records/{id}/draft", when=is_record),
-        "record": RecordLink("{+api}/records/{id}", when=is_draft),
-        "publish": RecordLink(
-            "{+api}/records/{id}/draft/actions/publish", when=is_draft
+        # Versioning
+        "latest": RecordEndpointLink("records.read_latest", when=is_record),
+        "latest_html": RecordEndpointLink(
+            "invenio_app_rdm_records.record_latest",
+            when=is_record,
         ),
-        "versions": RecordLink("{+api}/records/{id}/versions"),
+        "versions": RecordEndpointLink("records.search_versions"),
+        # Corresponding Draft/Record
+        "draft": RecordEndpointLink("records.read_draft", when=is_record),
+        "record": RecordEndpointLink("records.read", when=is_draft),
+        # Actions
+        "publish": RecordEndpointLink("records.publish", when=is_draft),
     }
 
-    links_search = pagination_links("{+api}/records{?args*}")
+    links_search = pagination_endpoint_links("records.search")
 
-    links_search_drafts = pagination_links("{+api}/user/records{?args*}")
+    links_search_drafts = pagination_endpoint_links("records.search_user_records")
 
-    links_search_versions = pagination_links("{+api}/records/{id}/versions{?args*}")
+    links_search_versions = pagination_endpoint_links(
+        "records.search_versions",
+        params=["pid_value"],
+    )

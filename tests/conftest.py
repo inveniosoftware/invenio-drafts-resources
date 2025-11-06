@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2025 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -15,13 +16,10 @@ fixtures are available.
 import pytest
 from flask_principal import Identity, Need, UserNeed
 from invenio_app.factory import create_api as _create_api
-from invenio_records_resources.services.files import FileService
-from mock_module.service import (
-    DraftFileServiceConfig,
-    DraftMediaFileServiceConfig,
-    FileServiceConfig,
-    MediaFileServiceConfig,
-)
+from mock_module.service import draft_file_service as _draft_file_service
+from mock_module.service import file_service as _file_service
+from mock_module.service import media_draft_file_service as _media_draft_file_service
+from mock_module.service import media_file_service as _media_file_service
 
 pytest_plugins = ("celery.contrib.pytest",)
 
@@ -62,6 +60,14 @@ def extra_entry_points():
         "invenio_search.mappings": [
             "draftsresources = mock_module.mappings",
         ],
+        "invenio_base.api_blueprints": [
+            "bp_builder_for_mocks_records = mock_module:create_bp_of_mocks_records",
+            "bp_builder_for_mocks_files = mock_module:create_bp_of_mocks_files",
+            "bp_builder_for_mocks_draft_files = mock_module:create_bp_of_mocks_draft_files",
+        ],
+        "invenio_base.api_finalize_app": [
+            "mock_module = mock_module:finalize_app",
+        ],
     }
 
 
@@ -83,25 +89,25 @@ def input_data():
 @pytest.fixture(scope="module")
 def file_service():
     """File service fixture."""
-    return FileService(FileServiceConfig)
+    return _file_service
 
 
 @pytest.fixture(scope="module")
 def draft_file_service():
     """File service fixture."""
-    return FileService(DraftFileServiceConfig)
+    return _draft_file_service
 
 
 @pytest.fixture(scope="module")
 def media_file_service():
     """File service fixture."""
-    return FileService(MediaFileServiceConfig)
+    return _media_file_service
 
 
 @pytest.fixture(scope="module")
 def media_draft_file_service():
     """File service fixture."""
-    return FileService(DraftMediaFileServiceConfig)
+    return _media_draft_file_service
 
 
 @pytest.fixture()

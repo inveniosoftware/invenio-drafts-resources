@@ -194,6 +194,7 @@ def test_multiple_edit(client, headers, input_data, location, search_clear):
 
     This tests the `edit` service method.
     """
+    input_data["media_files"] = {"enabled": False}
     recid = _create_and_publish(client, headers, input_data)
 
     # Create new draft of said record
