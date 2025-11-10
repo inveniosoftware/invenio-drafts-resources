@@ -222,9 +222,9 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
 
         # sync draft files with record
         record_files.unlock()
-        # we make sure that record files are enabled according to draft because
-        # files can be enabled after the first publish and thus the record will
-        # have an outdated value
+        # As the files can be enabled after the first publish, and thus the record will
+        # have an outdated value, we make sure that record files are enabled
+        # according to draft
         record_files.enabled = draft_files.enabled
         record_files.sync(draft_files, delete_extras=True)
         record_files.lock()

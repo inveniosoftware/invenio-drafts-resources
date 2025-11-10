@@ -53,3 +53,5 @@ class PermissionPolicy(RecordPermissionPolicy):
     can_draft_read_files = [AnyUser()]
     can_draft_update_files = [AnyUser()]
     can_manage_files = [AnyUser()]
+
+    can_modify_locked_files = [SystemProcess()]

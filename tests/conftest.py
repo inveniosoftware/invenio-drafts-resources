@@ -111,3 +111,12 @@ def identity_simple():
     i.provides.add(UserNeed(1))
     i.provides.add(Need(method="system_role", value="any_user"))
     return i
+
+
+@pytest.fixture()
+def identity_system():
+    """System identity fixture."""
+    i = Identity(2)
+    i.provides.add(Need(method="system_role", value="system_process"))
+    i.provides.add(Need(method="system_role", value="any_user"))
+    return i

@@ -670,9 +670,23 @@ def test_publish_with_remote_files(
 
 
 def test_enable_files_after_publish(
-    app, db, service, identity_simple, input_data, monkeypatch
+    app, db, service, identity_simple, identity_system, input_data, monkeypatch
 ):
     """Test enabling files after record is published (initially with files disabled)."""
+
+    def lock_edit_published_files(service, identity, record=None, draft=None):
+        can_modify = service.check_permission(
+            identity, "modify_locked_files", record=record
+        )
+        if can_modify:
+            return False
+        return True
+
+    # Configure RDM_LOCK_EDIT_PUBLISHED_FILES to allow editing of published files only for system process
+    monkeypatch.setattr(
+        service.config, "lock_edit_published_files", lock_edit_published_files
+    )
+
     # Create a record with files disabled
     input_data["files"] = {"enabled": False}
     input_data["media_files"] = {"enabled": False}
@@ -690,21 +704,14 @@ def test_enable_files_after_publish(
         add_file_to_draft(service.draft_files, draft.id, "file.txt", identity_simple)
     service.delete_draft(identity_simple, draft.id)
 
-    # Set RDM_LOCK_EDIT_PUBLISHED_FILES to False to allow editing of published files
-    monkeypatch.setattr(
-        service.config,
-        "lock_edit_published_files",
-        lambda service, identity, record=None, draft=None: False,
-    )
-
-    # Edit the draft to enable files
-    draft = service.edit(identity_simple, record.id)
+    # Edit the draft to enable files (only for system process)
+    draft = service.edit(identity_system, record.id)
     draft.data["files"] = {"enabled": True}
     draft.data["media_files"] = {"enabled": False}
-    draft = service.update_draft(identity_simple, draft.id, draft.data)
-    add_file_to_draft(service.draft_files, draft.id, "file2.txt", identity_simple)
+    draft = service.update_draft(identity_system, draft.id, draft.data)
+    add_file_to_draft(service.draft_files, draft.id, "file2.txt", identity_system)
 
-    record = service.publish(identity_simple, draft.id)
+    record = service.publish(identity_system, draft.id)
     assert record._record.files.enabled is True
     assert record._record.files.bucket.locked is True
     assert record._record.files.count == 1
