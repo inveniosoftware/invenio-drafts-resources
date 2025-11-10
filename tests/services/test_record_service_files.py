@@ -667,3 +667,44 @@ def test_publish_with_remote_files(
     assert files[1]["key"] == "article1.txt"
     assert files[1]["transfer"]["type"] == REMOTE_TRANSFER_TYPE
     assert files[1]["status"] == "completed"
+
+
+def test_enable_files_after_publish(
+    app, db, service, identity_simple, input_data, monkeypatch
+):
+    """Test enabling files after record is published (initially with files disabled)."""
+    # Create a record with files disabled
+    input_data["files"] = {"enabled": False}
+    input_data["media_files"] = {"enabled": False}
+    draft = service.create(identity_simple, input_data)
+    record = service.publish(identity_simple, draft.id)
+    assert record._record.files.enabled is False
+    assert record._record.media_files.enabled is False
+
+    # Enable files
+    draft = service.edit(identity_simple, record.id)
+    draft.data["files"] = {"enabled": True}
+    draft = service.update_draft(identity_simple, draft.id, draft.data)
+    with pytest.raises(InvalidOperationError):
+        # Normal user should not be able to add files to a published record
+        add_file_to_draft(service.draft_files, draft.id, "file.txt", identity_simple)
+    service.delete_draft(identity_simple, draft.id)
+
+    # Set RDM_LOCK_EDIT_PUBLISHED_FILES to False to allow editing of published files
+    monkeypatch.setattr(
+        service.config,
+        "lock_edit_published_files",
+        lambda service, identity, record=None, draft=None: False,
+    )
+
+    # Edit the draft to enable files
+    draft = service.edit(identity_simple, record.id)
+    draft.data["files"] = {"enabled": True}
+    draft.data["media_files"] = {"enabled": False}
+    draft = service.update_draft(identity_simple, draft.id, draft.data)
+    add_file_to_draft(service.draft_files, draft.id, "file2.txt", identity_simple)
+
+    record = service.publish(identity_simple, draft.id)
+    assert record._record.files.enabled is True
+    assert record._record.files.bucket.locked is True
+    assert record._record.files.count == 1
