@@ -27,6 +27,9 @@ from datetime import datetime, timedelta
 from invenio_db import db
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.providers.recordid_v2 import RecordIdProviderV2
+from invenio_rdm_records.records.systemfields.deletion_status import (
+    RecordDeletionStatusEnum,
+)
 from invenio_records.systemfields import ModelField
 from invenio_records_resources.records import Record as RecordBase
 from invenio_records_resources.records.systemfields import PIDField, PIDStatusCheckField
@@ -90,6 +93,14 @@ class Record(RecordBase):
     #: Version relationship
     versions = VersionsField(create=True, set_latest=True)
 
+    @property
+    def versions_count(self):
+        """Get number of record's active versions"""
+        records = list(
+            self.get_record_versions(parent_id=self.parent.id, include_deleted=False)
+        )
+        return len(records)
+
     @classmethod
     def get_records_by_parent(cls, parent, with_deleted=True, ids_only=False):
         """Get all sibling records for the specified parent record."""
@@ -105,6 +116,20 @@ class Record(RecordBase):
                     cls(rec_model.data, model=rec_model, parent=parent)
                     for rec_model in rec_models
                 )
+
+    @classmethod
+    def get_record_versions(cls, parent_id, include_deleted=True):
+        """Get record's versions."""
+        from invenio_rdm_records.records.models import RDMRecordMetadata
+
+        with db.session.no_autoflush:
+            rec_models = cls.model_cls.query.filter_by(parent_id=parent_id)
+            if not include_deleted and cls.model_cls is RDMRecordMetadata:
+                rec_models = rec_models.filter_by(
+                    deletion_status=RecordDeletionStatusEnum.PUBLISHED.value
+                )
+
+            return (rec_model.id for rec_model in rec_models)
 
     @classmethod
     def get_latest_by_parent(cls, parent, id_only=False):
