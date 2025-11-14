@@ -71,27 +71,8 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         NOTE: `record` actually refers to the draft
               (this interface is used in records-resources and rdm-records)
         """
-        draft = record
-        files = self.get_record_files(draft)
-        enabled = data.get(self.files_data_key, {}).get(
-            "enabled", self.service.config.default_files_enabled
-        )
-
-        if files.enabled != enabled:
-            if not self.service.check_permission(
-                identity, "manage_files", record=draft
-            ):
-                errors.append(
-                    {
-                        "field": f"{self.files_data_key}.enabled",
-                        "messages": [
-                            _("You don't have permissions to manage files options.")
-                        ],
-                    }
-                )
-                return  # exit early
-
-        files.enabled = enabled
+        self._assign_files_enabled(identity, data, record, errors)
+        self._check_files_exist(identity, record, errors)
 
     def update_draft(self, identity, data=None, record=None, errors=None):
         """Assigns files.enabled and warns if files are missing.
@@ -100,49 +81,10 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
               (this interface is used in records-resources and rdm-records)
         """
         draft = record
-        draft_files = self.get_record_files(draft)
         default_preview = data.get(self.files_data_key, {}).get("default_preview")
-        can_toggle_files = self.service.check_permission(
-            identity, "manage_files", record=draft
-        )
 
-        enabled = data.get(self.files_data_key, {}).get(
-            "enabled", self.service.config.default_files_enabled
-        )
-
-        if draft_files.enabled != enabled:
-            if not can_toggle_files:
-                errors.append(
-                    {
-                        "field": f"{self.files_data_key}.enabled",
-                        "messages": [
-                            _("You don't have permissions to manage files options.")
-                        ],
-                    }
-                )
-                return  # exit early
-
-        try:
-            self.assign_files_enabled(draft, enabled)
-        except ValidationError as e:
-            errors.append(
-                {"field": f"{self.files_data_key}.enabled", "messages": e.messages}
-            )
-            return  # exit early
-
-        if draft_files.enabled and not draft_files.items():
-            if can_toggle_files:
-                my_message = _(
-                    "Missing uploaded files. To disable files for this record please mark it as metadata-only."
-                )
-            else:
-                my_message = _("Missing uploaded files.")
-            errors.append(
-                {
-                    "field": f"{self.files_data_key}.enabled",
-                    "messages": [my_message],
-                }
-            )
+        self._assign_files_enabled(identity, data, record, errors)
+        self._check_files_exist(identity, record, errors)
 
         try:
             self.assign_files_default_preview(
@@ -186,6 +128,61 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         draft_files = self.get_record_files(draft)
         record_files = self.get_record_files(record)
         draft_files.enabled = record_files.enabled
+
+    def _assign_files_enabled(self, identity, data, draft, errors):
+        """Assign files.enabled."""
+        enabled = data.get(self.files_data_key, {}).get(
+            "enabled", self.service.config.default_files_enabled
+        )
+        if not self._check_can_manage(identity, data, draft, errors, enabled):
+            return
+
+        try:
+            self.assign_files_enabled(draft, enabled)
+        except ValidationError as e:
+            errors.append(
+                {"field": f"{self.files_data_key}.enabled", "messages": e.messages}
+            )
+
+    def _check_can_manage(self, identity, data, draft, errors, enabled):
+        """Check whether identity can manage files."""
+        files = self.get_record_files(draft)
+        can_manage_files = self.service.check_permission(
+            identity, "manage_files", record=draft
+        )
+        if files.enabled == enabled or can_manage_files:
+            return True
+
+        errors.append(
+            {
+                "field": f"{self.files_data_key}.enabled",
+                "messages": [_("You don't have permissions to manage files options.")],
+            }
+        )
+        return False
+
+    def _check_files_exist(self, identity, draft, errors):
+        """If files.enabled check whether there are files."""
+        draft_files = self.get_record_files(draft)
+        if not draft_files.enabled or draft_files.items():
+            return
+
+        can_toggle_files = self.service.check_permission(
+            identity, "manage_files", record=draft
+        )
+        my_message = (
+            _(
+                "Missing uploaded files. To disable files for this record please mark it as metadata-only."
+            )
+            if can_toggle_files
+            else _("Missing uploaded files.")
+        )
+        errors.append(
+            {
+                "field": f"{self.files_data_key}.enabled",
+                "messages": [my_message],
+            }
+        )
 
     def _purge_bucket_and_ovs(self, files):
         """Purge associated bucket and object versions."""
