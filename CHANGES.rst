@@ -10,6 +10,14 @@
 Changes
 =======
 
+Version v7.3.0 (released 2025-11-13)
+
+- refactor: remove deprecated usage of Link (and derivatives)
+- fix(components): Fix file enabling on metadata-only record
+- refactor(tests): test conditional lock_edit_published_files for files
+- i18n: pulled translations
+- tests: bump invenio-users-resources
+
 Version v7.2.0 (released 2025-07-17)
 
 - i18n: pulled translations
