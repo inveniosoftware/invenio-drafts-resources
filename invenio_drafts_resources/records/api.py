@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020-2023 CERN.
 # Copyright (C) 2021 Northwestern University.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -22,7 +23,7 @@ identifier.
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from invenio_db import db
 from invenio_pidstore.models import PIDStatus
@@ -269,7 +270,9 @@ class Draft(Record):
             setting `index.gc_deletes` (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-delete.html#delete-versioning),
             default to 60 seconds. Search cluster caches deleted documents for `index.gc_deletes` seconds.
         """
-        timestamp = datetime.utcnow() - td - timedelta(seconds=search_gc_deletes)
+        timestamp = (
+            datetime.now(timezone.utc) - td - timedelta(seconds=search_gc_deletes)
+        )
         draft_model = cls.model_cls
         models = draft_model.query.filter(
             draft_model.is_deleted == True,  # noqa

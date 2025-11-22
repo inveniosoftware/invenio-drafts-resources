@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -8,7 +9,7 @@
 
 """Draft Models API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from invenio_db import db
 from invenio_records.models import RecordMetadataBase
@@ -130,8 +131,8 @@ class DraftMetadataBase(RecordMetadataBase):
     """Version ID of the record."""
 
     expires_at = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
-        default=datetime.utcnow,
+        db.UTCDateTime(),
+        default=lambda: datetime.now(timezone.utc),
         nullable=True,
     )
     """Specifies when the draft expires. If `NULL` the draft doesn't expire."""
