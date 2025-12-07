@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Records-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -27,6 +28,4 @@ def example_draft(db, input_data, location):
 @pytest.fixture()
 def indexer():
     """Indexer instance with correct Record class."""
-    return RecordIndexer(
-        record_cls=Draft, record_to_index=lambda r: (r.index._name, "_doc")
-    )
+    return RecordIndexer(record_cls=Draft, record_to_index=lambda r: r.index._name)
