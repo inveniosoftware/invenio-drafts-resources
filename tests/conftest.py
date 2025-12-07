@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2020 CERN.
 # Copyright (C) 2025 Northwestern University.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -43,6 +44,7 @@ def app_config(app_config):
 
     app_config["THEME_FRONTPAGE"] = False
     app_config["RECORDS_RESOURCES_FILES_ALLOWED_REMOTE_DOMAINS"] = "inveniordm.test"
+    app_config["JSONSCHEMAS_HOST"] = "not-used"
 
     return app_config
 

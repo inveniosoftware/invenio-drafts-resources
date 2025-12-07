@@ -31,7 +31,7 @@ class ParentRecord(ParentRecordBase):
 
     # System fields
     schema = ConstantField(
-        "$schema", "http://localhost/schemas/records/parent-v1.0.0.json"
+        "$schema", "http://not-used/schemas/records/parent-v1.0.0.json"
     )
 
 
@@ -59,7 +59,7 @@ class Record(RecordBase):
 
     # System fields
     schema = ConstantField(
-        "$schema", "http://localhost/schemas/records/record-v1.0.0.json"
+        "$schema", "http://not-used/schemas/records/record-v1.0.0.json"
     )
 
     index = IndexField(
@@ -143,7 +143,7 @@ class Draft(DraftBase):
 
     # System fields
     schema = ConstantField(
-        "$schema", "http://localhost/schemas/records/record-v1.0.0.json"
+        "$schema", "http://not-used/schemas/records/record-v1.0.0.json"
     )
 
     index = IndexField(
