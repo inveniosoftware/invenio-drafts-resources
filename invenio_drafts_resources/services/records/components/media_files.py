@@ -9,6 +9,7 @@
 # details.
 
 """Records service component base classes."""
+
 from invenio_i18n import gettext as _
 from invenio_records_resources.services.base.config import _make_cls
 from marshmallow import ValidationError

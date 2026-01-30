@@ -7,6 +7,7 @@
 # details.
 
 """Data access layer tests."""
+
 from datetime import timedelta
 
 import pytest

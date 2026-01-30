@@ -8,6 +8,7 @@
 #
 
 """Base class for service components."""
+
 from invenio_i18n import gettext as _
 from invenio_records_resources.proxies import current_transfer_registry
 from invenio_records_resources.services.files.transfer.base import TransferStatus

@@ -7,6 +7,7 @@
 # details.
 
 """Records service component base classes."""
+
 from invenio_records_resources.services.base.config import _make_cls
 from invenio_records_resources.services.records.components.files import FilesAttrConfig
 
