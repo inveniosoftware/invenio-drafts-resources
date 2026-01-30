@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020-2025 CERN.
 # Copyright (C) 2020-2023 Northwestern University.
-# Copyright (C) 2024-2025 Graz University of Technology.
+# Copyright (C) 2024-2026 Graz University of Technology.
 # Copyright (C) 2025 KTH Royal Institute of Technology.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -11,6 +11,6 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-__version__ = "7.3.1"
+__version__ = "8.0.0"
 
 __all__ = ("__version__",)

@@ -1,7 +1,7 @@
 ..
     Copyright (C) 2020-2025 CERN.
     Copyright (C) 2020 Northwestern University.
-    Copyright (C) 2024-2025 Graz University of Technology.
+    Copyright (C) 2024-2026 Graz University of Technology.
     Copyright (C) 2025 KTH Royal Institute of Technology.
 
     Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -10,6 +10,15 @@
 
 Changes
 =======
+
+Version v8.0.0 (released 2026-01-30)
+
+- chore(setup): bump dependencies
+- chore(black): update formatting to >= 26.0
+- fix: DeprecationWarning from invenio-indexer
+- fix: RemovedInMarshmallow4Warning
+- fix: JSONSCHEMAS_HOST warning
+- fix(chore): DeprecationWarning stdlib
 
 Version v7.3.1 (released 2025-12-08)
 
