@@ -9,6 +9,7 @@
 """Action registration via entrypoint function."""
 
 from invenio_audit_logs.services import AuditLogAction
+from marshmallow import fields
 
 from .context import (
     RecordContext,
@@ -20,11 +21,33 @@ from .context import (
 class RecordBaseAuditLog(AuditLogAction):
     """Base class for audit log builders."""
 
+    resource_type = "record"
+
     context = [
         UserContext(),
         RequestContext(),
     ]
-    resource_type = "record"
+
+    metadata_schema = dict(
+        ip_address=fields.Str(
+            required=True,
+            metadata={
+                "description": "IP address of the client.",
+            },
+        ),
+        session=fields.Str(
+            required=True,
+            metadata={
+                "description": "Session identifier.",
+            },
+        ),
+        request_id=fields.Str(
+            required=False,
+            metadata={
+                "description": "Unique identifier for the request.",
+            },
+        ),
+    )
 
 
 class DraftCreateAuditLog(RecordBaseAuditLog):
@@ -44,12 +67,28 @@ class DraftEditAuditLog(RecordBaseAuditLog):
 class RecordPublishAuditLog(RecordBaseAuditLog):
     """Audit log for record publication."""
 
+    id = "record.publish"
+    message_template = "User {user_id} published the record {resource_id}."
+
     context = RecordBaseAuditLog.context + [
         RecordContext(),
     ]
 
-    id = "record.publish"
-    message_template = "User {user_id} published the record {resource_id}."
+    metadata_schema = {
+        **RecordBaseAuditLog.metadata_schema,
+        "parent_pid": fields.Str(
+            required=True,
+            metadata={
+                "description": "Record Parent PID.",
+            },
+        ),
+        "revision_id": fields.Int(
+            required=True,
+            metadata={
+                "description": "Record revision ID.",
+            },
+        ),
+    }
 
 
 class DraftDeleteAuditLog(RecordBaseAuditLog):
