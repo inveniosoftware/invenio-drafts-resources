@@ -8,7 +8,7 @@
 
 """Audit log context resolvers."""
 
-from flask import current_app, request
+from flask import request
 from invenio_records.dictutils import dict_lookup, dict_set
 from invenio_users_resources.entity_resolvers import UserResolver
 
@@ -35,11 +35,9 @@ class RecordContext(object):
     def __call__(self, data, **kwargs):
         """Update data with resolved record data."""
         record = kwargs["record"]
-        if current_app.config["AUDIT_LOGS_METADATA_FIELDS"]["revision_id"]:
-            record_versions = record.model.versions.all()
-            dict_set(data, "metadata.revision_id", record_versions[-1].transaction_id)
-        if current_app.config["AUDIT_LOGS_METADATA_FIELDS"]["parent_pid"]:
-            dict_set(data, "metadata.parent_pid", record.parent.pid.pid_value)
+        record_versions = record.model.versions.all()
+        dict_set(data, "metadata.revision_id", record_versions[-1].transaction_id)
+        dict_set(data, "metadata.parent_pid", record.parent.pid.pid_value)
 
 
 class RequestContext(object):
@@ -49,14 +47,10 @@ class RequestContext(object):
         """Update data with resolved request data."""
         # IMPORTANT! DON'T COPY THIS, PLEASE DON'T DO THIS EVER...
         if request:
-            if current_app.config["AUDIT_LOGS_METADATA_FIELDS"]["ip_address"]:
-                ip = request.headers.get("REMOTE_ADDR") or request.remote_addr
-                if ip:
-                    dict_set(data, "metadata.ip_address", ip)
+            ip = request.headers.get("REMOTE_ADDR") or request.remote_addr
+            if ip:
+                dict_set(data, "metadata.ip_address", ip)
 
-            if current_app.config["AUDIT_LOGS_METADATA_FIELDS"]["session"]:
-                session = request.cookies.get("SESSION") or request.cookies.get(
-                    "session"
-                )
-                if session:
-                    dict_set(data, "metadata.session", session)
+            session = request.cookies.get("SESSION") or request.cookies.get("session")
+            if session:
+                dict_set(data, "metadata.session", session)
