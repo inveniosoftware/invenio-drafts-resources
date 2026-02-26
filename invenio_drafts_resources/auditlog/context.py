@@ -11,6 +11,7 @@
 from flask import request
 from invenio_records.dictutils import dict_lookup, dict_set
 from invenio_users_resources.entity_resolvers import UserResolver
+from sqlalchemy import desc
 
 
 class UserContext(object):
@@ -34,10 +35,26 @@ class RecordContext(object):
 
     def __call__(self, data, **kwargs):
         """Update data with resolved record data."""
-        record = kwargs["record"]
-        record_versions = record.model.versions.all()
-        dict_set(data, "metadata.revision_id", record_versions[-1].transaction_id)
-        dict_set(data, "metadata.parent_pid", record.parent.pid.pid_value)
+        record = kwargs.get("record", None)
+        if record is None:
+            return
+        latest_revision = (
+            record.model.versions.order_by(None)
+            .order_by(desc("transaction_id"))
+            .first()
+        )
+        dict_set(data, "metadata.revision_id", latest_revision.transaction_id)
+
+
+class ParentContext(object):
+    """Payload generator for audit log to get parent data."""
+
+    def __call__(self, data, **kwargs):
+        """Update data with resolved parent data."""
+        parent = kwargs.get("parent", None)
+        if parent is None:
+            return
+        dict_set(data, "metadata.parent_pid", parent.pid.pid_value)
 
 
 class RequestContext(object):

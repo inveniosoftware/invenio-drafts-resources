@@ -309,7 +309,9 @@ class RecordService(RecordServiceBase):
         # Commit and index
         uow.register(RecordCommitOp(draft, indexer=self.indexer))
 
-        uow.register(AuditLogOp(DraftEditAuditLog.build(identity, id_)))
+        uow.register(
+            AuditLogOp(DraftEditAuditLog.build(identity, id_, parent=draft.parent))
+        )
 
         return self.result_item(
             self,
@@ -338,7 +340,13 @@ class RecordService(RecordServiceBase):
 
         uow.register(ParentRecordCommitOp(res._record.parent))
 
-        uow.register(AuditLogOp(DraftCreateAuditLog.build(identity, str(res.id))))
+        uow.register(
+            AuditLogOp(
+                DraftCreateAuditLog.build(
+                    identity, str(res.id), parent=res._record.parent
+                )
+            )
+        )
 
         return res
 
@@ -379,7 +387,9 @@ class RecordService(RecordServiceBase):
         # available dumpers of the record.
         uow.register(RecordIndexOp(record, indexer=self.indexer))
 
-        uow.register(AuditLogOp(DraftCreateAuditLog.build(identity, id_)))
+        uow.register(
+            AuditLogOp(DraftCreateAuditLog.build(identity, id_, parent=draft.parent))
+        )
 
         return self.result_item(
             self,
@@ -425,7 +435,11 @@ class RecordService(RecordServiceBase):
             self._reindex_latest(latest_id, uow=uow)
 
         uow.register(
-            AuditLogOp(RecordPublishAuditLog.build(identity, id_, record=record))
+            AuditLogOp(
+                RecordPublishAuditLog.build(
+                    identity, id_, record=record, parent=record.parent
+                )
+            )
         )
 
         return self.result_item(
@@ -473,7 +487,9 @@ class RecordService(RecordServiceBase):
 
         uow.register(
             AuditLogOp(
-                DraftNewVersionAuditLog.build(identity, next_draft.pid.pid_value),
+                DraftNewVersionAuditLog.build(
+                    identity, next_draft.pid.pid_value, parent=next_draft.parent
+                ),
             )
         )
 
@@ -536,7 +552,9 @@ class RecordService(RecordServiceBase):
                 RecordIndexOp(record, indexer=self.indexer, index_refresh=True)
             )
 
-        uow.register(AuditLogOp(DraftDeleteAuditLog.build(identity, id_)))
+        uow.register(
+            AuditLogOp(DraftDeleteAuditLog.build(identity, id_, parent=draft.parent))
+        )
 
         return True
 
