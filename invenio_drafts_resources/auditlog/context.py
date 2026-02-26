@@ -37,7 +37,15 @@ class RecordContext(object):
         record = kwargs["record"]
         record_versions = record.model.versions.all()
         dict_set(data, "metadata.revision_id", record_versions[-1].transaction_id)
-        dict_set(data, "metadata.parent_pid", record.parent.pid.pid_value)
+
+
+class ParentContext(object):
+    """Payload generator for audit log to get parent data."""
+
+    def __call__(self, data, **kwargs):
+        """Update data with resolved parent data."""
+        parent = kwargs["parent"]
+        dict_set(data, "metadata.parent_pid", parent.pid.pid_value)
 
 
 class RequestContext(object):
