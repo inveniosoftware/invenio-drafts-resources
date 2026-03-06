@@ -164,6 +164,37 @@ def test_new_draft_of_published_record_doesnt_override_next_draft_id(app, db, lo
         assert record.versions.latest_id == record.id
 
 
+def test_cleanup_drafts_preserves_next_version_draft(app, db, location):
+    """Cleanup must not clear parent state for an active next draft."""
+    draft_v1 = Draft.create({})
+    record_v1 = Record.publish(draft_v1)
+    draft_v1.delete(force=False)
+    db.session.commit()
+
+    next_version_draft = Draft.new_version(record_v1)
+    next_version_draft.commit()
+    db.session.commit()
+    assert record_v1.versions.next_draft_id == next_version_draft.id
+
+    # Simulate an edit draft that gets soft-deleted and later hard-deleted.
+    edit_draft = Draft.edit(record_v1)
+    edit_draft.delete(force=False)
+    db.session.commit()
+
+    # - service.cleanup_drafts()
+    # Simulate the cleanup of the draft
+    Draft.cleanup_drafts(timedelta(0), search_gc_deletes=0)
+
+    assert record_v1.versions.next_draft_id == next_version_draft.id
+
+    # Check if deleted next version draft is cleared from the versions state after cleanup
+    next_version_draft.delete(force=False)
+    db.session.commit()
+    Draft.cleanup_drafts(timedelta(0), search_gc_deletes=0)
+
+    assert record_v1.versions.next_draft_id is None
+
+
 def test_draft_parent_state_hard_delete_with_parent(app, db, location):
     """Test force deletion of a draft."""
     # Initial state: A previous reccord version exists, in addition to draft

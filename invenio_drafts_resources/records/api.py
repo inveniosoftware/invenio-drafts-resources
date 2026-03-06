@@ -282,7 +282,9 @@ class Draft(Record):
         # we need to clear the foreign keys in the version info
         for model in models:
             draft = cls(model.data, model=model)
-            draft.versions.clear_next()
+            # If the draft is the newest version draft, we need to clear the foreign key
+            if draft.id == draft.versions.next_draft_id:
+                draft.versions.clear_next()
 
         # now we can delete the drafts without violating foreign keys
         ids = [model.id for model in models]
