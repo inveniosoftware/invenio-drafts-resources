@@ -124,7 +124,12 @@ class _DraftMediaFilesComponent(BaseRecordFilesComponent):
         # have an outdated value, we make sure that record files are enabled
         # according to draft
         record_files.enabled = draft_files.enabled
-        record_files.sync(draft_files, delete_extras=True)
+        # If the draft files manager has a bucket associated with it, then we need to sync to
+        # propagate the changes to the record files manager regardless of whether files are enabled.
+        # The sync() method assumes the source file manager has a bucket, so we need to check for it.
+        draft_bucket = self.get_record_bucket(draft)
+        if draft_bucket:
+            record_files.sync(draft_files, delete_extras=True)
         record_files.lock()
         # Teardown the bucket and files created in edit().
         self._purge_bucket_and_ovs(draft_files)
