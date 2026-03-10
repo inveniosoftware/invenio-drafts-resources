@@ -9,22 +9,67 @@
 """Action registration via entrypoint function."""
 
 from invenio_audit_logs.services import AuditLogAction
+from marshmallow import fields
 
 from .context import (
+    ParentContext,
     RecordContext,
     RequestContext,
     UserContext,
 )
 
 
-class RecordBaseAuditLog(AuditLogAction):
+class BaseAuditLog(AuditLogAction):
     """Base class for audit log builders."""
 
+    # NOTE: This lives here instead of the audit-logs module because it was decided to not make the module depend
+    # on users-resources module to avoid circular dependencies and be able to add audit log actions for users in future.
     context = [
         UserContext(),
         RequestContext(),
     ]
+    """Base content resolvers for all audit log builders."""
+
+    metadata_schema = {
+        "ip_address": fields.Str(
+            required=True,
+            metadata={
+                "description": "IP address of the client.",
+            },
+        ),
+        "session": fields.Str(
+            required=True,
+            metadata={
+                "description": "Session identifier.",
+            },
+        ),
+        "request_id": fields.Str(
+            required=False,
+            metadata={
+                "description": "Unique identifier for the request.",
+            },
+        ),
+    }
+
+
+class RecordBaseAuditLog(BaseAuditLog):
+    """Base class for audit log builders for record."""
+
     resource_type = "record"
+
+    context = BaseAuditLog.context + [
+        ParentContext(),
+    ]
+
+    metadata_schema = {
+        **BaseAuditLog.metadata_schema,
+        "parent_pid": fields.Str(
+            required=True,
+            metadata={
+                "description": "Parent PID.",
+            },
+        ),
+    }
 
 
 class DraftCreateAuditLog(RecordBaseAuditLog):
@@ -44,12 +89,22 @@ class DraftEditAuditLog(RecordBaseAuditLog):
 class RecordPublishAuditLog(RecordBaseAuditLog):
     """Audit log for record publication."""
 
+    id = "record.publish"
+    message_template = "User {user_id} published the record {resource_id}."
+
     context = RecordBaseAuditLog.context + [
         RecordContext(),
     ]
 
-    id = "record.publish"
-    message_template = "User {user_id} published the record {resource_id}."
+    metadata_schema = {
+        **RecordBaseAuditLog.metadata_schema,
+        "revision_id": fields.Int(
+            required=True,
+            metadata={
+                "description": "Record revision ID.",
+            },
+        ),
+    }
 
 
 class DraftDeleteAuditLog(RecordBaseAuditLog):
