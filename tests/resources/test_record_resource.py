@@ -221,6 +221,33 @@ def test_multiple_edit(client, headers, input_data, location, search_clear):
     assert response.json["revision_id"] == 13
 
 
+def test_edit_with_large_payload(client, headers, input_data, location, search_clear):
+    """Test that editing a record with a large payload does not fail.
+
+    When clients send large/chunked payloads to POST /records/:pid_value/draft,
+    the endpoint must consume the unread request body to prevent connection
+    errors (e.g. ChunkedEncodingError). See invenio-app-rdm#3357.
+    """
+    recid = _create_and_publish(client, headers, input_data)
+
+    # Send a large payload (> 126KB) to the edit endpoint which does not
+    # expect a request body. Without the fix, this would cause the server
+    # to drop the connection before the client finishes sending.
+    large_payload = (
+        '{"metadata": {"title": "Large Payload", "pad": "' + ("x" * 200000) + '"}}'
+    )
+
+    response = client.post(
+        f"/mocks/{recid}/draft",
+        data=large_payload,
+        content_type="application/json",
+        headers=headers,
+    )
+
+    assert response.status_code == 201
+    assert response.json["id"] == recid
+
+
 def test_redirect_to_latest_version(client, headers, input_data, location):
     """Creates a new version of a record.
 
