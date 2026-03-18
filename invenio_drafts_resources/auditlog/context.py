@@ -8,9 +8,10 @@
 
 """Audit log context resolvers."""
 
-from flask import request
+from flask import has_request_context, request
 from invenio_records.dictutils import dict_lookup, dict_set
 from invenio_users_resources.entity_resolvers import UserResolver
+from sqlalchemy import desc
 
 
 class UserContext(object):
@@ -34,9 +35,15 @@ class RecordContext(object):
 
     def __call__(self, data, **kwargs):
         """Update data with resolved record data."""
-        record = kwargs["record"]
-        record_versions = record.model.versions.all()
-        dict_set(data, "metadata.revision_id", record_versions[-1].transaction_id)
+        record = kwargs.get("record", None)
+        if record is None:
+            return
+        latest_revision = (
+            record.model.versions.order_by(None)
+            .order_by(desc("transaction_id"))
+            .first()
+        )
+        dict_set(data, "metadata.revision_id", latest_revision.transaction_id)
 
 
 class ParentContext(object):
@@ -44,7 +51,9 @@ class ParentContext(object):
 
     def __call__(self, data, **kwargs):
         """Update data with resolved parent data."""
-        parent = kwargs["parent"]
+        parent = kwargs.get("parent", None)
+        if parent is None:
+            return
         dict_set(data, "metadata.parent_pid", parent.pid.pid_value)
 
 
@@ -54,11 +63,9 @@ class RequestContext(object):
     def __call__(self, data, **kwargs):
         """Update data with resolved request data."""
         # IMPORTANT! DON'T COPY THIS, PLEASE DON'T DO THIS EVER...
-        if request:
+        if has_request_context():
             ip = request.headers.get("REMOTE_ADDR") or request.remote_addr
-            if ip:
-                dict_set(data, "metadata.ip_address", ip)
+            dict_set(data, "metadata.ip_address", ip)
 
             session = request.cookies.get("SESSION") or request.cookies.get("session")
-            if session:
-                dict_set(data, "metadata.session", session)
+            dict_set(data, "metadata.session", session)
