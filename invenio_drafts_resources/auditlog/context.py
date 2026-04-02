@@ -8,7 +8,7 @@
 
 """Audit log context resolvers."""
 
-from flask import request
+from flask import has_request_context, request, session
 from invenio_records.dictutils import dict_lookup, dict_set
 from invenio_users_resources.entity_resolvers import UserResolver
 from sqlalchemy import desc
@@ -62,12 +62,14 @@ class RequestContext(object):
 
     def __call__(self, data, **kwargs):
         """Update data with resolved request data."""
-        # IMPORTANT! DON'T COPY THIS, PLEASE DON'T DO THIS EVER...
-        if request:
-            ip = request.headers.get("REMOTE_ADDR") or request.remote_addr
-            if ip:
-                dict_set(data, "metadata.ip_address", ip)
+        if has_request_context():
+            if "X-Forwarded-For" in request.headers:
+                remote_addr = request.headers.getlist("X-Forwarded-For")[0].rpartition(
+                    " "
+                )[-1]
+            else:
+                remote_addr = request.remote_addr or "untrackable"
+            dict_set(data, "metadata.ip_address", remote_addr)
 
-            session = request.cookies.get("SESSION") or request.cookies.get("session")
-            if session:
-                dict_set(data, "metadata.session", session)
+            session_id = session.get("_id", session.sid_s)
+            dict_set(data, "metadata.session", session_id)
