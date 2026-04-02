@@ -11,6 +11,12 @@
 Changes
 =======
 
+Version v9.0.0 (released 2026-04-02)
+
+- refactor(auditlog): RequestContext using X-Forwarded-for & flask session
+- refactor(auditlog): Add parent_pid to draft actions
+- refactor(auditlog): Define metadata schema dynamically
+
 Version v8.0.1 (released 2026-03-10)
 
 - fix(api): Cleanup next_draft_id in versions state only on latest draft
