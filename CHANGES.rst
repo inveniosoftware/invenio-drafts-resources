@@ -11,6 +11,10 @@
 Changes
 =======
 
+Version v9.0.1 (released 2026-04-10)
+
+- fix(request-context): provide fallback metadata for non-request ops
+
 Version v9.0.0 (released 2026-04-02)
 
 - refactor(auditlog): RequestContext using X-Forwarded-for & flask session
