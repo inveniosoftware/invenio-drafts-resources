@@ -73,3 +73,7 @@ class RequestContext(object):
 
             session_id = session.get("_id", session.sid_s)
             dict_set(data, "metadata.session", session_id)
+        else:
+            # No HTTP request context (e.g. background celery tasks).
+            dict_set(data, "metadata.ip_address", "N/A")
+            dict_set(data, "metadata.session", "N/A")
