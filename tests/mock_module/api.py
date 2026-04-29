@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2025 Northwestern University.
+# Copyright (C) 2026 CESNET z.s.p.o.
+#
+# Invenio-Drafts-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+
 """Example of a record draft API."""
 
 from invenio_records.systemfields import ConstantField, ModelField
@@ -12,14 +24,14 @@ from invenio_drafts_resources.services.records.components.media_files import (
 )
 
 from .models import (
-    DraftMetadata,
     FileDraftMetadata,
     FileRecordMetadata,
     MediaFileDraftMetadata,
     MediaFileRecordMetadata,
-    ParentRecordMetadata,
-    ParentState,
-    RecordMetadata,
+    MockDraftMetadata,
+    MockParentRecordMetadata,
+    MockParentState,
+    MockRecordMetadata,
 )
 
 
@@ -27,7 +39,7 @@ class ParentRecord(ParentRecordBase):
     """Example parent record."""
 
     # Configuration
-    model_cls = ParentRecordMetadata
+    model_cls = MockParentRecordMetadata
 
     # System fields
     schema = ConstantField(
@@ -53,8 +65,8 @@ class Record(RecordBase):
     """Example record API."""
 
     # Configuration
-    model_cls = RecordMetadata
-    versions_model_cls = ParentState
+    model_cls = MockRecordMetadata
+    versions_model_cls = MockParentState
     parent_record_cls = ParentRecord
 
     # System fields
@@ -137,8 +149,8 @@ class Draft(DraftBase):
     """Example record API."""
 
     # Configuration
-    model_cls = DraftMetadata
-    versions_model_cls = ParentState
+    model_cls = MockDraftMetadata
+    versions_model_cls = MockParentState
     parent_record_cls = ParentRecord
 
     # System fields

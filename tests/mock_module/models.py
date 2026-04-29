@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2020 CERN.
+# Copyright (C) 2025 Northwestern University.
+# Copyright (C) 2026 CESNET z.s.p.o.
+#
+# Invenio-Drafts-Resources is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+
 """Example of a record model."""
 
 from invenio_db import db
@@ -13,44 +25,44 @@ from invenio_drafts_resources.records import (
 )
 
 
-class ParentRecordMetadata(db.Model, RecordMetadataBase):
+class MockParentRecordMetadata(db.Model, RecordMetadataBase):
     """Model for mock module metadata."""
 
     __tablename__ = "parent_mock_metadata"
 
 
-class DraftMetadata(db.Model, DraftMetadataBase, ParentRecordMixin):
+class MockDraftMetadata(db.Model, DraftMetadataBase, ParentRecordMixin):
     """Model for mock module metadata."""
 
     __tablename__ = "draft_mock_metadata"
-    __parent_record_model__ = ParentRecordMetadata
+    __parent_record_model__ = MockParentRecordMetadata
 
     bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id), index=True)
     bucket = db.relationship(Bucket, foreign_keys=[bucket_id])
 
 
-class RecordMetadata(db.Model, RecordMetadataBase, ParentRecordMixin):
+class MockRecordMetadata(db.Model, RecordMetadataBase, ParentRecordMixin):
     """Model for mock module metadata."""
 
     __tablename__ = "record_mock_metadata"
-    __parent_record_model__ = ParentRecordMetadata
+    __parent_record_model__ = MockParentRecordMetadata
 
     bucket_id = db.Column(UUIDType, db.ForeignKey(Bucket.id), index=True)
     bucket = db.relationship(Bucket, foreign_keys=[bucket_id])
 
 
-class ParentState(db.Model, ParentRecordStateMixin):
+class MockParentState(db.Model, ParentRecordStateMixin):
     """Model for mock module for parent state."""
 
-    __parent_record_model__ = ParentRecordMetadata
-    __record_model__ = RecordMetadata
-    __draft_model__ = DraftMetadata
+    __parent_record_model__ = MockParentRecordMetadata
+    __record_model__ = MockRecordMetadata
+    __draft_model__ = MockDraftMetadata
 
 
 class FileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
     """Model for mock module record files."""
 
-    __record_model_cls__ = RecordMetadata
+    __record_model_cls__ = MockRecordMetadata
 
     __tablename__ = "mock_record_files"
 
@@ -58,7 +70,7 @@ class FileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
 class MediaFileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
     """Model for mock module record files."""
 
-    __record_model_cls__ = RecordMetadata
+    __record_model_cls__ = MockRecordMetadata
 
     __tablename__ = "mock_record_media_files"
 
@@ -66,7 +78,7 @@ class MediaFileRecordMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin
 class FileDraftMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
     """Model for mock module draft files."""
 
-    __record_model_cls__ = DraftMetadata
+    __record_model_cls__ = MockDraftMetadata
 
     __tablename__ = "mock_draft_files"
 
@@ -74,6 +86,6 @@ class FileDraftMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
 class MediaFileDraftMetadata(db.Model, RecordMetadataBase, FileRecordModelMixin):
     """File associated with a draft."""
 
-    __record_model_cls__ = DraftMetadata
+    __record_model_cls__ = MockDraftMetadata
 
     __tablename__ = "mock_drafts_media_files"
