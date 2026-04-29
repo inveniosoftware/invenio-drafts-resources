@@ -26,7 +26,7 @@ from invenio_records_resources.services.files.transfer.constants import (
     REMOTE_TRANSFER_TYPE,
 )
 from marshmallow.exceptions import ValidationError
-from mock_module.models import DraftMetadata, FileDraftMetadata, FileRecordMetadata
+from mock_module.models import FileDraftMetadata, FileRecordMetadata, MockDraftMetadata
 from mock_module.permissions import PermissionPolicy
 from mock_module.service import ServiceConfig
 
@@ -153,7 +153,9 @@ def test_edit_delete(app, db, service, input_data, identity_simple, monkeypatch)
     assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Cleanup deleted drafts.
-    c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
+    c = MockDraftMetadata.query.filter(
+        MockDraftMetadata.is_deleted == True
+    ).delete()  # noqa
     assert c == 1
     db.session.commit()
 
@@ -200,7 +202,9 @@ def test_edit_delete_media_files(
     assert_counts(buckets=2, objs=2, fileinstances=2, filedrafts=0, filerecords=1)
 
     # Cleanup deleted drafts.
-    c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
+    c = MockDraftMetadata.query.filter(
+        MockDraftMetadata.is_deleted == True
+    ).delete()  # noqa
     assert c == 1
     db.session.commit()
 
@@ -231,7 +235,9 @@ def test_edit_publish(app, db, service, input_data, identity_simple, monkeypatch
     assert_counts(buckets=2, objs=1, fileinstances=1, filedrafts=0, filerecords=1)
 
     # Cleanup deleted drafts.
-    c = DraftMetadata.query.filter(DraftMetadata.is_deleted == True).delete()  # noqa
+    c = MockDraftMetadata.query.filter(
+        MockDraftMetadata.is_deleted == True
+    ).delete()  # noqa
     assert c == 1
     db.session.commit()
 
