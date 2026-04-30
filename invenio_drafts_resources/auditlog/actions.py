@@ -38,7 +38,7 @@ class BaseAuditLog(AuditLogAction):
             },
         ),
         "session": fields.Str(
-            required=True,
+            required=False,
             metadata={
                 "description": "Session identifier.",
             },

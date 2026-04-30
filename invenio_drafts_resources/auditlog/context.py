@@ -71,9 +71,9 @@ class RequestContext(object):
                 remote_addr = request.remote_addr or "untrackable"
             dict_set(data, "metadata.ip_address", remote_addr)
 
-            session_id = session.get("_id", session.sid_s)
-            dict_set(data, "metadata.session", session_id)
+            session_id = session.get("_id", getattr(session, "sid_s", None))
+            if session_id:
+                dict_set(data, "metadata.session", session_id)
         else:
             # No HTTP request context (e.g. background celery tasks).
             dict_set(data, "metadata.ip_address", "N/A")
-            dict_set(data, "metadata.session", "N/A")
