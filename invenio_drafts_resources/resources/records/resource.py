@@ -9,7 +9,7 @@
 
 """Invenio Drafts Resources module to create REST APIs."""
 
-from flask import g
+from flask import g, request
 from flask_resources import (
     JSONSerializer,
     ResponseHandler,
@@ -147,6 +147,11 @@ class RecordResource(RecordResourceBase):
 
         POST /records/:pid_value/draft
         """
+        # Consume any unread request body to prevent connection errors
+        # when clients send large/chunked payloads that this endpoint
+        # does not use. The body is not cached since it is not needed.
+        # See invenio-app-rdm#3357.
+        request.get_data(cache=False)
         item = self.service.edit(
             g.identity,
             resource_requestctx.view_args["pid_value"],
