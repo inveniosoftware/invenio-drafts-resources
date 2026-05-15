@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2020-2024 CERN.
+# Copyright (C) 2020-2025 CERN.
 # Copyright (C) 2020-2021 Northwestern University.
 #
 # Invenio-Drafts-Resources is free software; you can redistribute it and/or
@@ -522,12 +522,17 @@ def test_publish_with_fetch_files(
 def test_missing_files(app, service, identity_simple, input_data):
     # Test files.enabled = True when no files
     draft = service.create(identity_simple, input_data)
-    draft = service.update_draft(identity_simple, draft.id, input_data)
 
     # Files should be enabled
     assert draft.data["files"]["enabled"] is True
 
     # Missing files should be reported
+    assert draft.errors[0]["field"] == "files.enabled"
+    assert "Missing uploaded files." in draft.errors[0]["messages"][0]
+
+    draft = service.update_draft(identity_simple, draft.id, input_data)
+
+    assert draft.data["files"]["enabled"] is True
     assert draft.errors[0]["field"] == "files.enabled"
     assert "Missing uploaded files." in draft.errors[0]["messages"][0]
 
@@ -592,7 +597,6 @@ def test_manage_files_permissions(
 
     # Not modifying files options (i.e. sending `files.enabled: true`) doesn't error
     draft = service.create(identity_simple, input_data)
-    assert not draft.errors
 
     # Modyfing/disabling files should return an error
     input_data["files"]["enabled"] = False
