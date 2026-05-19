@@ -15,10 +15,10 @@ from invenio_search import current_search_client
 from jsonschema import ValidationError
 from mock_module.api import Draft, ParentRecord, Record
 from mock_module.models import (
-    DraftMetadata,
-    ParentRecordMetadata,
-    ParentState,
-    RecordMetadata,
+    MockDraftMetadata,
+    MockParentRecordMetadata,
+    MockParentState,
+    MockRecordMetadata,
 )
 from sqlalchemy import inspect
 from sqlalchemy.orm.exc import NoResultFound
@@ -57,10 +57,10 @@ def test_draft_create_parent_state(app, db, location):
     db.session.commit()
 
     # Assert that associated objects were created
-    assert ParentState.query.count() == 1
-    assert DraftMetadata.query.count() == 1
-    assert ParentRecordMetadata.query.count() == 1
-    assert RecordMetadata.query.count() == 0
+    assert MockParentState.query.count() == 1
+    assert MockDraftMetadata.query.count() == 1
+    assert MockParentRecordMetadata.query.count() == 1
+    assert MockRecordMetadata.query.count() == 0
 
     def assert_state(d):
         # An initial draft is not published, so latest_id/index is None
@@ -129,10 +129,10 @@ def test_draft_parent_state_hard_delete(app, db, location):
     draft.delete(force=True)
     db.session.commit()
     # Make sure no parent and no parent state is left-behind
-    assert ParentState.query.count() == 0
-    assert ParentRecordMetadata.query.count() == 0
-    assert DraftMetadata.query.count() == 0
-    assert RecordMetadata.query.count() == 0
+    assert MockParentState.query.count() == 0
+    assert MockParentRecordMetadata.query.count() == 0
+    assert MockDraftMetadata.query.count() == 0
+    assert MockRecordMetadata.query.count() == 0
 
 
 def test_new_draft_of_published_record_doesnt_override_next_draft_id(app, db, location):
@@ -206,10 +206,10 @@ def test_draft_parent_state_hard_delete_with_parent(app, db, location):
     draft.delete(force=True)
     db.session.commit()
     # Make sure parent/parent state is still there
-    assert ParentState.query.count() == 1
-    assert ParentRecordMetadata.query.count() == 1
-    assert RecordMetadata.query.count() == 1
-    assert DraftMetadata.query.count() == 0
+    assert MockParentState.query.count() == 1
+    assert MockParentRecordMetadata.query.count() == 1
+    assert MockRecordMetadata.query.count() == 1
+    assert MockDraftMetadata.query.count() == 0
 
     record = Record.get_record(record.id)
     assert record.versions.next_draft_id is None
@@ -228,9 +228,9 @@ def test_draft_parent_state_soft_delete(app, db, location):
     draft.delete(force=False)
     db.session.commit()
 
-    assert ParentState.query.count() == 1
-    assert ParentRecordMetadata.query.count() == 1
-    assert RecordMetadata.query.count() == 1
+    assert MockParentState.query.count() == 1
+    assert MockParentRecordMetadata.query.count() == 1
+    assert MockRecordMetadata.query.count() == 1
 
     record = Record.get_record(record.id)
     assert record.versions.next_draft_id is None

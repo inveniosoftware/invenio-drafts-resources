@@ -12,14 +12,14 @@ from invenio_drafts_resources.services.records.components.media_files import (
 )
 
 from .models import (
-    DraftMetadata,
     FileDraftMetadata,
     FileRecordMetadata,
     MediaFileDraftMetadata,
     MediaFileRecordMetadata,
-    ParentRecordMetadata,
-    ParentState,
-    RecordMetadata,
+    MockDraftMetadata,
+    MockParentRecordMetadata,
+    MockParentState,
+    MockRecordMetadata,
 )
 
 
@@ -27,7 +27,7 @@ class ParentRecord(ParentRecordBase):
     """Example parent record."""
 
     # Configuration
-    model_cls = ParentRecordMetadata
+    model_cls = MockParentRecordMetadata
 
     # System fields
     schema = ConstantField(
@@ -53,8 +53,8 @@ class Record(RecordBase):
     """Example record API."""
 
     # Configuration
-    model_cls = RecordMetadata
-    versions_model_cls = ParentState
+    model_cls = MockRecordMetadata
+    versions_model_cls = MockParentState
     parent_record_cls = ParentRecord
 
     # System fields
@@ -137,8 +137,8 @@ class Draft(DraftBase):
     """Example record API."""
 
     # Configuration
-    model_cls = DraftMetadata
-    versions_model_cls = ParentState
+    model_cls = MockDraftMetadata
+    versions_model_cls = MockParentState
     parent_record_cls = ParentRecord
 
     # System fields
