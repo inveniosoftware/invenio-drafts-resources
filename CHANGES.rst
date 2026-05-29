@@ -11,6 +11,11 @@
 Changes
 =======
 
+Version v10.0.0 (released 2026-05-29)
+
+- chore(setup): bump dependencies
+- fix(tests): alembic tests
+
 Version v9.0.2 (released 2026-05-04)
 
 - fix(auditlog): don't require session to accommodate API calls
