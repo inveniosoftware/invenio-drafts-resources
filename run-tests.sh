@@ -48,8 +48,7 @@ if [[ ${keep_services} -eq 0 ]]; then
 	trap cleanup EXIT
 fi
 
-python -m check_manifest
-python -m setup extract_messages --output-file /dev/null
+pybabel extract -F pyproject.toml invenio_drafts_resources --output-file /dev/null
 python -m sphinx.cmd.build -qnNW docs docs/_build/html
 eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-opensearch} --env)"
 # Note: expansion of pytest_args looks like below to not cause an unbound
