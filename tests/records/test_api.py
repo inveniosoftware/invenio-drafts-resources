@@ -191,6 +191,30 @@ def test_cleanup_drafts_preserves_next_version_draft(app, db, location):
     assert record_v1.versions.next_draft_id is None
 
 
+def test_cleanup_drafts_batch_limits_and_counts(app, db, location):
+    """Cleanup handles one batch at a time and reports how many it deleted."""
+    draft_model = Draft.model_cls
+    ids = []
+    for _ in range(3):
+        draft = Draft.create({})
+        db.session.commit()
+        draft.delete(force=False)
+        db.session.commit()
+        ids.append(draft.id)
+
+    # A single call deletes at most max_drafts and returns that count.
+    deleted = Draft.cleanup_drafts(timedelta(0), search_gc_deletes=0, max_drafts=2)
+    db.session.commit()
+    assert deleted == 2
+    assert draft_model.query.filter(draft_model.id.in_(ids)).count() == 1
+
+    # Caller loops until it drains, then gets 0.
+    assert Draft.cleanup_drafts(timedelta(0), search_gc_deletes=0, max_drafts=2) == 1
+    db.session.commit()
+    assert Draft.cleanup_drafts(timedelta(0), search_gc_deletes=0, max_drafts=2) == 0
+    assert draft_model.query.filter(draft_model.id.in_(ids)).count() == 0
+
+
 def test_draft_parent_state_hard_delete_with_parent(app, db, location):
     """Test force deletion of a draft."""
     # Initial state: A previous reccord version exists, in addition to draft

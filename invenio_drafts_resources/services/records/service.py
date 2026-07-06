@@ -18,6 +18,7 @@ from invenio_records_resources.services.uow import (
     RecordCommitOp,
     RecordDeleteOp,
     RecordIndexOp,
+    UnitOfWork,
     unit_of_work,
 )
 from invenio_search.engine import dsl
@@ -693,17 +694,31 @@ class RecordService(RecordServiceBase):
 
         return draft, parent
 
-    @unit_of_work()
-    def cleanup_drafts(self, timedelta, uow=None, search_gc_deletes=60):
+    def cleanup_drafts(
+        self, timedelta, uow=None, search_gc_deletes=60, batch_size=1000
+    ):
         """Hard delete of soft deleted drafts.
+
+        Each batch of ``batch_size`` drafts is its own unit of work, so peak memory
+        stays bounded and progress is committed incrementally (a crash mid-run keeps
+        whatever was already deleted). ``uow`` is accepted for signature
+        compatibility but ignored: cleanup owns its own per-batch transactions.
 
         :param int timedelta: timedelta that should pass since
             the last update of the draft in order to be hard deleted.
         :param int search_gc_deletes: time in seconds, corresponding to the search cluster
             setting `index.gc_deletes` (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-delete.html#delete-versioning),
             default to 60 seconds. Search cluster caches deleted documents for `index.gc_deletes` seconds.
+        :param int batch_size: number of drafts to delete per batch (bounds memory).
         """
-        self.draft_cls.cleanup_drafts(timedelta, search_gc_deletes)
+        while True:
+            with UnitOfWork() as batch_uow:
+                deleted = self.draft_cls.cleanup_drafts(
+                    timedelta, search_gc_deletes, max_drafts=batch_size
+                )
+                batch_uow.commit()
+            if not deleted:
+                break
 
     @unit_of_work()
     def reindex_latest_first(
