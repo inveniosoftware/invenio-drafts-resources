@@ -3,10 +3,16 @@
     SPDX-FileCopyrightText: 2020 Northwestern University.
     SPDX-FileCopyrightText: 2024-2026 Graz University of Technology.
     SPDX-FileCopyrightText: 2025 KTH Royal Institute of Technology.
+    SPDX-FileCopyrightText: 2026 TU Wien.
     SPDX-License-Identifier: MIT
 
 Changes
 =======
+
+Version v11.0.x (released 2026-07-16)
+
+- chore(setup): migrate from setuptools to hatchling
+- chore(license): update license headers to use SPDX
 
 Version v11.0.0 (released 2026-06-16)
 
