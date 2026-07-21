@@ -8,6 +8,11 @@
 Changes
 =======
 
+Version v10.0.1 (released 2026-07-21)
+
+- chore(setup): migrate from setuptools to hatchling
+- chore(license): update license headers to use SPDX
+
 Version v10.0.0 (released 2026-05-29)
 
 - chore(setup): bump dependencies
