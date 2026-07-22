@@ -253,26 +253,38 @@ class Draft(Record):
         return draft
 
     @classmethod
-    def cleanup_drafts(cls, td, search_gc_deletes=60):
-        """Clean up (hard delete) all the soft deleted drafts.
+    def cleanup_drafts(cls, td, search_gc_deletes=60, max_drafts=1000):
+        """Hard delete up to ``max_drafts`` soft-deleted drafts; return how many.
 
         The soft-deleted drafts in the last timedelta span of time won't be deleted,
         including `search_gc_deletes` seconds timedelta. This ensures that only
         drafts fully removed from the search cluster can be hard-deleted (e.g. when
         `td` is very short), avoiding search conflicts.
 
+        At most ``max_drafts`` drafts are processed, so peak memory stays bounded.
+        The caller drives the loop (call until this returns 0) and owns the
+        transaction; see ``RecordService.cleanup_drafts``.
+
         :param int search_gc_deletes: time in seconds, corresponding to the search cluster
             setting `index.gc_deletes` (see https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-delete.html#delete-versioning),
             default to 60 seconds. Search cluster caches deleted documents for `index.gc_deletes` seconds.
+        :param int max_drafts: maximum number of drafts to delete in this call.
+        :returns: number of drafts hard-deleted (0 when none remain).
         """
         timestamp = (
             datetime.now(timezone.utc) - td - timedelta(seconds=search_gc_deletes)
         )
         draft_model = cls.model_cls
-        models = draft_model.query.filter(
-            draft_model.is_deleted == True,  # noqa
-            draft_model.updated < timestamp,
-        ).all()
+        models = (
+            draft_model.query.filter(
+                draft_model.is_deleted == True,  # noqa
+                draft_model.updated < timestamp,
+            )
+            .limit(max_drafts)
+            .all()
+        )
+        if not models:
+            return 0
 
         # we need to clear the foreign keys in the version info
         for model in models:
@@ -286,3 +298,4 @@ class Draft(Record):
         draft_model.query.filter(draft_model.id.in_(ids)).delete(
             synchronize_session=False
         )
+        return len(ids)
