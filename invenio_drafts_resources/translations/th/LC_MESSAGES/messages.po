@@ -5,7 +5,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 # 
 # Translators:
-# Matti Lassila <matti.lassila@gmail.com>, 2025
+# Suthep Yonphimai <tomztt@gmail.com>, 2026
 # 
 #, fuzzy
 msgid ""
@@ -14,64 +14,64 @@ msgstr ""
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2026-06-22 20:48+0000\n"
 "PO-Revision-Date: 2024-03-21 15:18+0000\n"
-"Last-Translator: Matti Lassila <matti.lassila@gmail.com>, 2025\n"
-"Language-Team: Finnish (https://app.transifex.com/inveniosoftware/teams/23537/fi/)\n"
+"Last-Translator: Suthep Yonphimai <tomztt@gmail.com>, 2026\n"
+"Language-Team: Thai (https://app.transifex.com/inveniosoftware/teams/23537/th/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
-"Language: fi\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: th\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: invenio_drafts_resources/resources/records/errors.py:28
 msgid "Redirecting..."
-msgstr "Uudelleenohjataan..."
+msgstr "กำลังเปลี่ยนเส้นทาง..."
 
 #: invenio_drafts_resources/services/records/config.py:49
 #: invenio_drafts_resources/services/records/config.py:78
 msgid "Best match"
-msgstr "Paras osuma"
+msgstr "ตรงที่สุด"
 
 #: invenio_drafts_resources/services/records/config.py:53
 #: invenio_drafts_resources/services/records/config.py:90
 msgid "Newest"
-msgstr "Uusin"
+msgstr "ใหม่ที่สุด"
 
 #: invenio_drafts_resources/services/records/config.py:57
 #: invenio_drafts_resources/services/records/config.py:94
 msgid "Oldest"
-msgstr "Vanhin"
+msgstr "เก่าที่สุด"
 
 #: invenio_drafts_resources/services/records/config.py:61
 #: invenio_drafts_resources/services/records/config.py:98
 #: invenio_drafts_resources/services/records/config.py:115
 msgid "Version"
-msgstr "Versio"
+msgstr "เวอร์ชัน"
 
 #: invenio_drafts_resources/services/records/config.py:82
 msgid "Recently updated"
-msgstr "Vasta päivitetty"
+msgstr "อัปเดตล่าสุด"
 
 #: invenio_drafts_resources/services/records/config.py:86
 msgid "Least recently updated"
-msgstr "Vanhimmin päivitetty"
+msgstr "อัปเดตนานที่สุด"
 
 #: invenio_drafts_resources/services/records/service.py:107
 msgid "Records should be updated via their draft."
-msgstr "Tietueet tulee päivittää luonnosversion kautta."
+msgstr "ระเบียนควรอัปเดตผ่านฉบับร่าง"
 
 #: invenio_drafts_resources/services/records/service.py:261
 msgid "Failed to fetch the record versions."
-msgstr "Tietueen versioiden hakeminen epäonnistui."
+msgstr "ไม่สามารถดึงข้อมูลเวอร์ชันระเบียนได้"
 
 #: invenio_drafts_resources/services/records/service.py:560
 msgid "Files support is not enabled."
-msgstr "Tuki tiedostoille ei ole käytössä."
+msgstr "ไม่ได้เปิดใช้งานการรองรับไฟล์"
 
 #: invenio_drafts_resources/services/records/components/base.py:84
 #: invenio_drafts_resources/services/records/components/base.py:115
 msgid "You don't have permissions to manage files options."
-msgstr "Sinulla ei ole oikeuksia hallita tiedostoasetuksia."
+msgstr "คุณไม่มีสิทธิ์จัดการตัวเลือกไฟล์"
 
 #: invenio_drafts_resources/services/records/components/base.py:132
 #: invenio_drafts_resources/services/records/components/base.py:250
@@ -80,25 +80,25 @@ msgid ""
 "Missing uploaded files. To disable files for this record please mark it as "
 "metadata-only."
 msgstr ""
-"Ladatut tiedostot puuttuvat. Kytke tiedostojen näyttö pois tältä tietueelta,"
-" merkitse se vain metatietoja sisältäväksi."
+"ไม่มีไฟล์ที่อัปโหลด หากต้องการปิดใช้งานไฟล์สำหรับระเบียนนี้ "
+"โปรดทำเครื่องหมายเป็นข้อมูลเมตาเท่านั้น"
 
 #: invenio_drafts_resources/services/records/components/base.py:135
 msgid "Missing uploaded files."
-msgstr "Ladatut tiedostot puuttuvat."
+msgstr "ไม่มีไฟล์ที่อัปโหลด"
 
 #: invenio_drafts_resources/services/records/components/base.py:260
 msgid "One or more files have not completed their transfer, please wait."
-msgstr "Yhden tai useamman tiedoston siirto ei ole vielä valmis, odota hetki."
+msgstr "ไฟล์หนึ่งรายการหรือมากกว่ายังโอนไม่เสร็จ โปรดรอสักครู่"
 
 #: invenio_drafts_resources/services/records/components/base.py:286
 msgid "Files support must be enabled."
-msgstr "Tiedostotuki on otettava käyttöön."
+msgstr "ต้องเปิดใช้งานการรองรับไฟล์"
 
 #: invenio_drafts_resources/services/records/components/base.py:292
 msgid "Please remove all files first."
-msgstr "Poista ensin kaikki tiedostot."
+msgstr "โปรดลบไฟล์ทั้งหมดก่อน"
 
 #: invenio_drafts_resources/services/records/components/base.py:298
 msgid "The record has no files."
-msgstr "Tietueella ei ole tiedostoja."
+msgstr "ระเบียนนี้ไม่มีไฟล์"
