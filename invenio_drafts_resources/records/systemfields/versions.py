@@ -104,6 +104,16 @@ class VersionsManager:
             )
             if rec_model:
                 latest_index_by_parent = rec_model.index
+
+        # Fall back to versions_state.latest_index when the draft query finds
+        # no rows or only the current (unflushed) draft with a stale copied
+        # index. This happens when cleanup_drafts() has hard-deleted all
+        # soft-deleted drafts, leaving the drafts table empty for this parent.
+        state_latest = self.state().latest_index
+        if state_latest is not None:
+            if latest_index_by_parent is None or latest_index_by_parent < state_latest:
+                latest_index_by_parent = state_latest
+
         return latest_index_by_parent + 1 if latest_index_by_parent is not None else 1
 
     #
