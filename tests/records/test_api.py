@@ -470,3 +470,62 @@ def test_get_latest_by_parent(app, db, location):
 
     assert not Draft.get_latest_by_parent(parent)
     assert Record.get_latest_by_parent(parent).id == record_v2.id
+
+
+def test_next_index_correct_after_draft_cleanup(app, db, location):
+    """Test new-version index is correct after cleanup_drafts has run.
+
+    When cleanup_drafts() hard-deletes soft-deleted drafts the drafts table
+    has no rows for the parent.  Before the fix, Draft.new_version() called
+    next_index which queried only the drafts table and found only the new
+    (not-yet-committed) draft carrying the *copied* index of the old version
+    it was created from (e.g. 2).  It therefore returned old_index+1 instead
+    of latest_published_index+1.
+
+    The fix makes next_index fall back to versions_state.latest_index so the
+    correct value is always returned regardless of draft cleanup state.
+    """
+    from datetime import timedelta
+
+    # Build up three published versions, soft-deleting each draft on publish
+    # (mirroring what the service does).
+    draft_v1 = Draft.create({})
+    record_v1 = Record.publish(draft_v1)
+    draft_v1.delete(force=False)
+    db.session.commit()
+
+    draft_v2 = Draft.new_version(record_v1)
+    record_v2 = Record.publish(draft_v2)
+    draft_v2.delete(force=False)
+    db.session.commit()
+
+    draft_v3 = Draft.new_version(record_v2)
+    record_v3 = Record.publish(draft_v3)
+    draft_v3.delete(force=False)
+    db.session.commit()
+
+    assert record_v3.versions.latest_index == 3
+    assert MockDraftMetadata.query.count() == 3  # three soft-deleted drafts
+
+    # Hard-delete all soft-deleted drafts (simulates cleanup_drafts task).
+    Draft.cleanup_drafts(timedelta(0), search_gc_deletes=0)
+    db.session.commit()
+    assert MockDraftMetadata.query.count() == 0
+
+    # Creating a new version from an older published version (V2, index=2).
+    # Without the fix: next_index sees only the new draft flushed at index=2
+    # (copied from V2) and returns 3.
+    # With the fix: next_index falls back to versions_state.latest_index=3
+    # and returns 4.
+    new_draft_from_old = Draft.new_version(record_v2)
+    db.session.commit()
+    assert new_draft_from_old.versions.index == 4
+    assert new_draft_from_old.model.index == 4
+
+    # Same correctness when starting from the latest version.
+    new_draft_from_old.delete(force=True)
+    db.session.commit()
+    new_draft_from_latest = Draft.new_version(record_v3)
+    db.session.commit()
+    assert new_draft_from_latest.versions.index == 4
+    assert new_draft_from_latest.model.index == 4
