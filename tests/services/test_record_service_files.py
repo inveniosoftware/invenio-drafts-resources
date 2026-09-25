@@ -488,7 +488,51 @@ def test_update_draft_set_default_file_preview_reports_error(
     # Default preview should NOT be set
     assert draft.errors[0]["field"] == "files.default_preview"
     assert draft.errors[0]["messages"]
-    assert draft.data["files"] == {"enabled": True}
+    assert draft._record.files.default_preview is None
+    assert draft.data["files"]["enabled"] is True
+
+
+def test_update_draft_set_files_order(app, location, service, identity_simple, input_data):
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "a.txt", identity_simple)
+    add_file_to_draft(service.draft_files, draft.id, "b.txt", identity_simple)
+
+    input_data["files"] = {"enabled": True, "order": ["b.txt", "a.txt"]}
+    draft = service.update_draft(identity_simple, draft.id, input_data)
+
+    assert draft.data["files"] == {"enabled": True, "order": ["b.txt", "a.txt"]}
+    assert draft._record.files.order == ["b.txt", "a.txt"]
+
+
+def test_edit_publish_files_order(app, service, input_data, identity_simple):
+    """Test that files order is copied to the record on publish."""
+    input_data["media_files"] = {"enabled": False}
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "a.txt", identity_simple)
+    add_file_to_draft(service.draft_files, draft.id, "b.txt", identity_simple)
+
+    data = draft.to_dict()
+    data["files"] = {"enabled": True, "order": ["b.txt", "a.txt"]}
+    data["media_files"] = {"enabled": False}
+    draft = service.update_draft(identity_simple, draft.id, data)
+
+    record = service.publish(identity_simple, draft.id)
+    assert record.data["files"]["order"] == ["b.txt", "a.txt"]
+
+
+def test_update_draft_set_files_order_reports_error(
+    app, location, service, identity_simple, input_data
+):
+    draft = service.create(identity_simple, input_data)
+    add_file_to_draft(service.draft_files, draft.id, "file.txt", identity_simple)
+
+    input_data["files"] = {"enabled": True, "order": ["missing.txt"]}
+    draft = service.update_draft(identity_simple, draft.id, input_data)
+
+    assert draft.errors[0]["field"] == "files.order"
+    assert draft.errors[0]["messages"]
+    assert draft._record.files.order == []
+    assert draft.data["files"]["enabled"] is True
 
 
 @patch("invenio_records_resources.services.files.tasks.requests.get")
