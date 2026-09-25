@@ -40,8 +40,9 @@ class _DraftMediaFilesComponent(BaseRecordFilesComponent):
         draft = record
         draft_files = self.get_record_files(draft)
         record_files = self.get_record_files(record)
-        enabled = data.get(self.files_data_key, {}).get("enabled", record_files.enabled)
-        default_preview = data.get(self.files_data_key, {}).get("default_preview")
+        files_data = data.get(self.files_data_key, {})
+        enabled = files_data.get("enabled", record_files.enabled)
+        default_preview = files_data.get("default_preview")
 
         try:
             self.assign_files_enabled(draft, enabled)
@@ -76,6 +77,20 @@ class _DraftMediaFilesComponent(BaseRecordFilesComponent):
                     "messages": e.messages,
                 }
             )
+
+        if "order" in files_data:
+            try:
+                self.assign_files_order(
+                    draft,
+                    files_data.get("order"),
+                )
+            except ValidationError as e:
+                errors.append(
+                    {
+                        "field": f"{self.files_data_key}.order",
+                        "messages": e.messages,
+                    }
+                )
 
     def _publish_new(self, identity, draft, record):
         """Action when publishing a new draft."""
