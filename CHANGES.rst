@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v11.0.4 (released 2026-10-12)
+
+- fix(cleanup): batch draft hard-deletion to bound memory
+
 Version v11.0.3 (released 2026-08-17)
 
 - fix(versions): fix versioning when older drafts are hard-deleted
