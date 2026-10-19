@@ -97,12 +97,13 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         """
         draft = record
         draft_files = self.get_record_files(draft)
-        default_preview = data.get(self.files_data_key, {}).get("default_preview")
+        files_data = data.get(self.files_data_key, {})
+        default_preview = files_data.get("default_preview")
         can_toggle_files = self.service.check_permission(
             identity, "manage_files", record=draft
         )
 
-        enabled = data.get(self.files_data_key, {}).get(
+        enabled = files_data.get(
             "enabled", self.service.config.default_files_enabled
         )
 
@@ -152,6 +153,20 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
                     "messages": e.messages,
                 }
             )
+
+        if "order" in files_data:
+            try:
+                self.assign_files_order(
+                    draft,
+                    files_data.get("order"),
+                )
+            except ValidationError as e:
+                errors.append(
+                    {
+                        "field": f"{self.files_data_key}.order",
+                        "messages": e.messages,
+                    }
+                )
 
     def edit(self, identity, draft=None, record=None):
         """Edit callback."""
