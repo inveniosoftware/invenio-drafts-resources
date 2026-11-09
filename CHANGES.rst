@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v12.0.0 (released 2026-11-10)
+
+- chore(setup): bump dependencies
+
 Version v11.0.4 (released 2026-10-12)
 
 - fix(cleanup): batch draft hard-deletion to bound memory
