@@ -8,7 +8,6 @@
 # Zacharias Zacharodimos <zacharias.zacharodimos@cern.ch>, 2024
 # Jesús Martín <jesusmartin@sallep.net>, 2025
 # 
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-drafts-resources 7.1.2\n"

@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2020 Northwestern University.
 # SPDX-FileCopyrightText: 2021-2026 TU Wien.
 # SPDX-FileCopyrightText: 2022-2026 Graz University of Technology.
+# SPDX-FileCopyrightText: 2026 KTH Royal Institute of Technology.
 # SPDX-License-Identifier: MIT
 
 [project]
@@ -77,7 +78,6 @@ build-backend = "hatchling.build"
 [tool.babel]
 [tool.babel.compile_catalog]
 directory = "invenio_drafts_resources/translations/"
-use_fuzzy = true
 
 [tool.babel.extract_messages]
 copyright_holder = "CERN"
